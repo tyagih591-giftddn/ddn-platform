@@ -23,7 +23,7 @@ async function loadBookings() {
     ).length;
 
     const completed = bookings.filter(
-      booking => booking.status === "Completed"
+      booking => booking.status === "Delivered"
     ).length;
 
     document.getElementById("pendingBookings").textContent = pending;
@@ -47,9 +47,43 @@ async function loadBookings() {
         <p><strong>Delivery:</strong> ${booking.deliveryLocation}</p>
 
         <p>
-          <strong>Status:</strong>
+          <strong>Current Status:</strong>
           <span class="status">${booking.status}</span>
         </p>
+
+        <label>
+          <strong>Update Status:</strong>
+        </label>
+
+        <select id="status-${booking.bookingId}">
+          <option value="Pending" ${booking.status === "Pending" ? "selected" : ""}>
+            Pending
+          </option>
+
+          <option value="Assigned" ${booking.status === "Assigned" ? "selected" : ""}>
+            Assigned
+          </option>
+
+          <option value="Picked Up" ${booking.status === "Picked Up" ? "selected" : ""}>
+            Picked Up
+          </option>
+
+          <option value="Out for Delivery" ${booking.status === "Out for Delivery" ? "selected" : ""}>
+            Out for Delivery
+          </option>
+
+          <option value="Delivered" ${booking.status === "Delivered" ? "selected" : ""}>
+            Delivered
+          </option>
+
+          <option value="Cancelled" ${booking.status === "Cancelled" ? "selected" : ""}>
+            Cancelled
+          </option>
+        </select>
+
+        <button onclick="updateStatus('${booking.bookingId}')">
+          Update Status
+        </button>
       </div>
     `).join("");
 
@@ -60,5 +94,45 @@ async function loadBookings() {
       "<p>Unable to connect to DDN backend.</p>";
   }
 }
+
+
+async function updateStatus(bookingId) {
+  const select = document.getElementById(`status-${bookingId}`);
+
+  const newStatus = select.value;
+
+  try {
+    const response = await fetch(
+      `${API_URL}/${bookingId}/status`,
+      {
+        method: "PATCH",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          status: newStatus
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Status update failed");
+    }
+
+    alert("Booking status updated successfully!");
+
+    loadBookings();
+
+  } catch (error) {
+    console.error(error);
+
+    alert("Unable to update booking status.");
+  }
+}
+
 
 loadBookings();
