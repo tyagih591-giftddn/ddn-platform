@@ -62,6 +62,47 @@ app.get("/api/bookings", (req, res) => {
   });
 });
 
+// Update booking status
+app.patch("/api/bookings/:bookingId/status", (req, res) => {
+  const { bookingId } = req.params;
+  const { status } = req.body;
+
+  const booking = bookings.find(
+    booking => booking.bookingId === bookingId
+  );
+
+  if (!booking) {
+    return res.status(404).json({
+      success: false,
+      message: "Booking not found"
+    });
+  }
+
+  const allowedStatuses = [
+    "Pending",
+    "Assigned",
+    "Picked Up",
+    "Out for Delivery",
+    "Delivered",
+    "Cancelled"
+  ];
+
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid status"
+    });
+  }
+
+  booking.status = status;
+
+  res.json({
+    success: true,
+    message: "Booking status updated successfully",
+    booking
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`DDN Backend running on port ${PORT}`);
 });
