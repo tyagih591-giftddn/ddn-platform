@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDN Admin Panel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>DDN Admin Panel</h1>
+    <p>District Delivery Network</p>
+
+    <div class="dashboard">
+      <div class="card">
+        <h3>Total Bookings</h3>
+        <h2 id="totalBookings">0</h2>
+      </div>
+
+      <div class="card">
+        <h3>Pending</h3>
+        <h2 id="pendingBookings">0</h2>
+      </div>
+
+      <div class="card">
+        <h3>Completed</h3>
+        <h2 id="completedBookings">0</h2>
+      </div>
+    </div>
+
+    <h2>Delivery Bookings</h2>
+
+    <button onclick="loadBookings()">Refresh Bookings</button>
+
+    <div id="bookingsContainer">
+      <p>Loading bookings...</p>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
