@@ -7,6 +7,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+const bookings = [];
+
 app.get("/", (req, res) => {
   res.json({
     message: "DDN Backend API is running",
@@ -44,10 +46,19 @@ app.post("/api/bookings", (req, res) => {
     createdAt: new Date().toISOString()
   };
 
+  bookings.push(booking);
+
   res.status(201).json({
     success: true,
     message: "Booking created successfully",
     booking
+  });
+});
+
+app.get("/api/bookings", (req, res) => {
+  res.json({
+    success: true,
+    bookings
   });
 });
 
