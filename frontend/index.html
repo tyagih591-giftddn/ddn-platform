@@ -1,4 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>DDN – District Delivery Network</title><link rel="stylesheet" href="style.css"></head>
-<body><main class="container"><h1>DDN</h1><p class="tagline">District Delivery Network</p><section class="card"><h2>Book a Delivery</h2><form><input placeholder="Pickup location" required><input placeholder="Delivery location" required><input placeholder="Customer name" required><input placeholder="Mobile number" required><button type="submit">Book Delivery</button></form></section></main><script src="app.js"></script></body></html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDN – District Delivery Network</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="container">
+    <h1>DDN</h1>
+    <p class="tagline">District Delivery Network</p>
+
+    <section class="card">
+      <h2>Book a Delivery</h2>
+
+      <form>
+        <input
+          type="text"
+          name="pickupLocation"
+          placeholder="Pickup location"
+          required
+        >
+
+        <input
+          type="text"
+          name="deliveryLocation"
+          placeholder="Delivery location"
+          required
+        >
+
+        <input
+          type="text"
+          name="customerName"
+          placeholder="Customer name"
+          required
+        >
+
+        <input
+          type="tel"
+          name="mobileNumber"
+          placeholder="Mobile number"
+          required
+        >
+
+        <button type="submit">Book Delivery</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
