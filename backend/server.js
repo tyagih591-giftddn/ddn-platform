@@ -153,6 +153,47 @@ app.get("/api/bookings", async (req, res) => {
   }
 });
 
+// Customer Booking Status Tracking
+app.get("/api/bookings/:bookingId", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const result = await pool.query(
+      "SELECT * FROM bookings WHERE booking_id = $1",
+      [bookingId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found"
+      });
+    }
+
+    const booking = result.rows[0];
+
+    res.json({
+      success: true,
+      booking: {
+        bookingId: booking.booking_id,
+        pickupLocation: booking.pickup_location,
+        deliveryLocation: booking.delivery_location,
+        customerName: booking.customer_name,
+        status: booking.status,
+        createdAt: booking.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error("Track booking error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to track booking"
+    });
+  }
+});
+
 // Update Booking Status
 app.patch("/api/bookings/:bookingId/status", async (req, res) => {
   try {
