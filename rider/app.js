@@ -1,40 +1,99 @@
-const API_URL = "https://ddn-platform.onrender.com/api/bookings";
+const API_URL =
+  "https://ddn-platform.onrender.com/api/bookings";
+
+const LOGIN_API =
+  "https://ddn-platform.onrender.com/api/auth/login";
+
 
 // ===============================
 // RIDER LOGIN
 // ===============================
 
-const RIDER_USERNAME = "rider";
-const RIDER_PASSWORD = "DDN@2026";
+const loginForm =
+  document.getElementById("loginForm");
 
-const loginForm = document.getElementById("loginForm");
+loginForm.addEventListener(
+  "submit",
+  async function (e) {
 
-loginForm.addEventListener("submit", function (e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const username =
-    document.getElementById("riderUsername").value.trim();
+    const username =
+      document
+        .getElementById("riderUsername")
+        .value
+        .trim();
 
-  const password =
-    document.getElementById("riderPassword").value;
+    const password =
+      document
+        .getElementById("riderPassword")
+        .value;
 
-  const loginMessage =
-    document.getElementById("loginMessage");
+    const loginMessage =
+      document
+        .getElementById("loginMessage");
 
-  if (
-    username === RIDER_USERNAME &&
-    password === RIDER_PASSWORD
-  ) {
-    localStorage.setItem("ddnRiderLoggedIn", "true");
-
-    showDashboard();
-  } else {
     loginMessage.textContent =
-      "Invalid username or password.";
+      "Logging in...";
 
-    loginMessage.style.color = "red";
+    try {
+
+      const response =
+        await fetch(LOGIN_API, {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            username,
+            password,
+
+            role: "rider"
+
+          })
+
+        });
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+
+        loginMessage.textContent =
+          data.message ||
+          "Invalid username or password.";
+
+        loginMessage.style.color =
+          "red";
+
+        return;
+      }
+
+      localStorage.setItem(
+        "ddnRiderLoggedIn",
+        "true"
+      );
+
+      showDashboard();
+
+    } catch (error) {
+
+      console.error(error);
+
+      loginMessage.textContent =
+        "Unable to connect to DDN server.";
+
+      loginMessage.style.color =
+        "red";
+    }
+
   }
-});
+);
 
 
 // ===============================
@@ -42,9 +101,16 @@ loginForm.addEventListener("submit", function (e) {
 // ===============================
 
 function showDashboard() {
-  document.getElementById("loginSection").style.display = "none";
 
-  document.getElementById("dashboardSection").style.display = "block";
+  document
+    .getElementById("loginSection")
+    .style.display =
+    "none";
+
+  document
+    .getElementById("dashboardSection")
+    .style.display =
+    "block";
 
   loadDeliveries();
 }
@@ -56,16 +122,30 @@ function showDashboard() {
 
 document
   .getElementById("logoutButton")
-  .addEventListener("click", function () {
+  .addEventListener(
+    "click",
+    function () {
 
-    localStorage.removeItem("ddnRiderLoggedIn");
+      localStorage.removeItem(
+        "ddnRiderLoggedIn"
+      );
 
-    document.getElementById("dashboardSection").style.display = "none";
+      document
+        .getElementById("dashboardSection")
+        .style.display =
+        "none";
 
-    document.getElementById("loginSection").style.display = "block";
+      document
+        .getElementById("loginSection")
+        .style.display =
+        "block";
 
-    document.getElementById("loginForm").reset();
-  });
+      document
+        .getElementById("loginForm")
+        .reset();
+
+    }
+  );
 
 
 // ===============================
@@ -73,9 +153,15 @@ document
 // ===============================
 
 if (
-  localStorage.getItem("ddnRiderLoggedIn") === "true"
+
+  localStorage.getItem(
+    "ddnRiderLoggedIn"
+  ) === "true"
+
 ) {
+
   showDashboard();
+
 }
 
 
@@ -84,20 +170,27 @@ if (
 // ===============================
 
 async function loadDeliveries() {
+
   const container =
-    document.getElementById("deliveriesContainer");
+    document
+      .getElementById(
+        "deliveriesContainer"
+      );
 
   container.innerHTML =
     "<p>Loading deliveries...</p>";
 
   try {
+
     const response =
       await fetch(API_URL);
 
     if (!response.ok) {
+
       throw new Error(
         "Unable to load deliveries"
       );
+
     }
 
     const data =
@@ -108,103 +201,183 @@ async function loadDeliveries() {
 
     const deliveries =
       bookings.filter(
+
         booking =>
-          booking.status === "Assigned" ||
-          booking.status === "Picked Up" ||
-          booking.status === "Out for Delivery"
+
+          booking.status ===
+            "Assigned" ||
+
+          booking.status ===
+            "Picked Up" ||
+
+          booking.status ===
+            "Out for Delivery"
+
       );
 
-    if (deliveries.length === 0) {
+    if (
+
+      deliveries.length ===
+      0
+
+    ) {
 
       container.innerHTML =
         "<p>No assigned deliveries found.</p>";
 
       return;
+
     }
 
     container.innerHTML =
-      deliveries.map(booking => `
 
-      <div class="delivery">
+      deliveries.map(
 
-        <h3>${booking.bookingId}</h3>
+        booking => `
 
-        <p>
-          <strong>Customer:</strong>
-          ${booking.customerName}
-        </p>
+        <div class="delivery">
 
-        <p>
-          <strong>Mobile:</strong>
-          ${booking.mobileNumber}
-        </p>
+          <h3>
+            ${booking.bookingId}
+          </h3>
 
-        <p>
-          <strong>Pickup:</strong>
-          ${booking.pickupLocation}
-        </p>
+          <p>
 
-        <p>
-          <strong>Delivery:</strong>
-          ${booking.deliveryLocation}
-        </p>
+            <strong>
+              Customer:
+            </strong>
 
-        <p>
-          <strong>Status:</strong>
+            ${booking.customerName}
 
-          <span class="status">
-            ${booking.status}
-          </span>
+          </p>
 
-        </p>
+          <p>
 
-        <button
-          class="status-button"
-          onclick="
-            updateStatus(
-              '${booking.bookingId}',
-              'Picked Up'
-            )
-          "
-        >
-          Mark Picked Up
-        </button>
+            <strong>
+              Mobile:
+            </strong>
 
-        <button
-          class="status-button"
-          onclick="
-            updateStatus(
-              '${booking.bookingId}',
-              'Out for Delivery'
-            )
-          "
-        >
-          Out for Delivery
-        </button>
+            ${booking.mobileNumber}
 
-        <button
-          class="status-button"
-          onclick="
-            updateStatus(
-              '${booking.bookingId}',
-              'Delivered'
-            )
-          "
-        >
-          Mark Delivered
-        </button>
+          </p>
 
-      </div>
+          <p>
 
-    `).join("");
+            <strong>
+              Pickup:
+            </strong>
 
-  } catch (error) {
+            ${booking.pickupLocation}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Delivery:
+            </strong>
+
+            ${booking.deliveryLocation}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Status:
+            </strong>
+
+            <span class="status">
+
+              ${booking.status}
+
+            </span>
+
+          </p>
+
+          <button
+
+            class="status-button"
+
+            onclick="
+
+              updateStatus(
+
+                '${booking.bookingId}',
+
+                'Picked Up'
+
+              )
+
+            "
+
+          >
+
+            Mark Picked Up
+
+          </button>
+
+          <button
+
+            class="status-button"
+
+            onclick="
+
+              updateStatus(
+
+                '${booking.bookingId}',
+
+                'Out for Delivery'
+
+              )
+
+            "
+
+          >
+
+            Out for Delivery
+
+          </button>
+
+          <button
+
+            class="status-button"
+
+            onclick="
+
+              updateStatus(
+
+                '${booking.bookingId}',
+
+                'Delivered'
+
+              )
+
+            "
+
+          >
+
+            Mark Delivered
+
+          </button>
+
+        </div>
+
+      `
+
+      ).join("");
+
+  }
+
+  catch (error) {
 
     console.error(error);
 
     container.innerHTML =
       "<p>Unable to connect to DDN backend.</p>";
+
   }
+
 }
 
 
@@ -213,27 +386,44 @@ async function loadDeliveries() {
 // ===============================
 
 async function updateStatus(
+
   bookingId,
+
   newStatus
+
 ) {
 
   try {
 
     const response =
+
       await fetch(
+
         `${API_URL}/${bookingId}/status`,
+
         {
-          method: "PATCH",
+
+          method:
+            "PATCH",
 
           headers: {
+
             "Content-Type":
               "application/json"
+
           },
 
-          body: JSON.stringify({
-            status: newStatus
-          })
+          body:
+
+            JSON.stringify({
+
+              status:
+                newStatus
+
+            })
+
         }
+
       );
 
     const data =
@@ -242,9 +432,12 @@ async function updateStatus(
     if (!response.ok) {
 
       throw new Error(
+
         data.message ||
         "Status update failed"
+
       );
+
     }
 
     alert(
@@ -253,12 +446,16 @@ async function updateStatus(
 
     loadDeliveries();
 
-  } catch (error) {
+  }
+
+  catch (error) {
 
     console.error(error);
 
     alert(
       "Unable to update delivery status."
     );
+
   }
+
 }
