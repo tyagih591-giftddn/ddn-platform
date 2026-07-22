@@ -6,11 +6,112 @@ const LOGIN_API =
 
 
 // ===============================
+// GET ADMIN TOKEN
+// ===============================
+
+function getAdminToken() {
+  return localStorage.getItem(
+    "ddnAdminToken"
+  );
+}
+
+
+// ===============================
+// CLEAR ADMIN LOGIN
+// ===============================
+
+function clearAdminLogin() {
+
+  localStorage.removeItem(
+    "ddnAdminLoggedIn"
+  );
+
+  localStorage.removeItem(
+    "ddnAdminToken"
+  );
+
+  localStorage.removeItem(
+    "ddnAdminUsername"
+  );
+
+}
+
+
+// ===============================
+// SHOW LOGIN SCREEN
+// ===============================
+
+function showLoginScreen(
+  message = ""
+) {
+
+  clearAdminLogin();
+
+  document
+    .getElementById("dashboardSection")
+    .style.display =
+    "none";
+
+  document
+    .getElementById("loginSection")
+    .style.display =
+    "block";
+
+  document
+    .getElementById("loginForm")
+    .reset();
+
+  const loginMessage =
+    document.getElementById(
+      "loginMessage"
+    );
+
+  loginMessage.textContent =
+    message;
+
+  loginMessage.style.color =
+    message
+      ? "red"
+      : "#333";
+
+}
+
+
+// ===============================
+// HANDLE AUTH ERROR
+// ===============================
+
+function handleAuthError(
+  response,
+  data
+) {
+
+  if (
+    response.status === 401 ||
+    response.status === 403
+  ) {
+
+    showLoginScreen(
+      data.message ||
+      "Your login session has expired. Please login again."
+    );
+
+    return true;
+  }
+
+  return false;
+
+}
+
+
+// ===============================
 // ADMIN LOGIN
 // ===============================
 
 const loginForm =
-  document.getElementById("loginForm");
+  document.getElementById(
+    "loginForm"
+  );
 
 loginForm.addEventListener(
   "submit",
@@ -20,17 +121,23 @@ loginForm.addEventListener(
 
     const username =
       document
-        .getElementById("adminUsername")
+        .getElementById(
+          "adminUsername"
+        )
         .value
         .trim();
 
     const password =
       document
-        .getElementById("adminPassword")
+        .getElementById(
+          "adminPassword"
+        )
         .value;
 
     const loginMessage =
-      document.getElementById("loginMessage");
+      document.getElementById(
+        "loginMessage"
+      );
 
     loginMessage.textContent =
       "Logging in...";
@@ -41,24 +148,23 @@ loginForm.addEventListener(
     try {
 
       const response =
-        await fetch(LOGIN_API, {
+        await fetch(
+          LOGIN_API,
+          {
+            method: "POST",
 
-          method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-
-            username,
-            password,
-            role: "admin"
-
-          })
-
-        });
+            body: JSON.stringify({
+              username,
+              password,
+              role: "admin"
+            })
+          }
+        );
 
       const data =
         await response.json();
@@ -75,10 +181,34 @@ loginForm.addEventListener(
         return;
       }
 
+      if (!data.token) {
+
+        loginMessage.textContent =
+          "Login token was not received.";
+
+        loginMessage.style.color =
+          "red";
+
+        return;
+      }
+
       localStorage.setItem(
         "ddnAdminLoggedIn",
         "true"
       );
+
+      localStorage.setItem(
+        "ddnAdminToken",
+        data.token
+      );
+
+      localStorage.setItem(
+        "ddnAdminUsername",
+        data.username || username
+      );
+
+      loginMessage.textContent =
+        "";
 
       showDashboard();
 
@@ -91,6 +221,7 @@ loginForm.addEventListener(
 
       loginMessage.style.color =
         "red";
+
     }
 
   }
@@ -103,6 +234,18 @@ loginForm.addEventListener(
 
 function showDashboard() {
 
+  const token =
+    getAdminToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
+
   document
     .getElementById("loginSection")
     .style.display =
@@ -114,6 +257,7 @@ function showDashboard() {
     "block";
 
   loadBookings();
+
 }
 
 
@@ -122,44 +266,41 @@ function showDashboard() {
 // ===============================
 
 document
-  .getElementById("logoutButton")
+  .getElementById(
+    "logoutButton"
+  )
   .addEventListener(
     "click",
     function () {
 
-      localStorage.removeItem(
-        "ddnAdminLoggedIn"
-      );
-
-      document
-        .getElementById("dashboardSection")
-        .style.display =
-        "none";
-
-      document
-        .getElementById("loginSection")
-        .style.display =
-        "block";
-
-      document
-        .getElementById("loginForm")
-        .reset();
+      showLoginScreen();
 
     }
   );
 
 
 // ===============================
-// CHECK LOGIN
+// CHECK SAVED LOGIN
 // ===============================
 
-if (
+const savedLogin =
   localStorage.getItem(
     "ddnAdminLoggedIn"
-  ) === "true"
+  );
+
+const savedToken =
+  getAdminToken();
+
+if (
+  savedLogin === "true" &&
+  savedToken
 ) {
 
   showDashboard();
+
+} else {
+
+  showLoginScreen();
 
 }
 
@@ -194,21 +335,53 @@ async function loadBookings() {
   container.innerHTML =
     "<p>Loading bookings...</p>";
 
+  const token =
+    getAdminToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
+
   try {
 
     const response =
-      await fetch(API_URL);
+      await fetch(
+        API_URL,
+        {
+          method: "GET",
+
+          headers: {
+            "Authorization":
+              `Bearer ${token}`
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      return;
+    }
 
     if (!response.ok) {
 
       throw new Error(
+        data.message ||
         "Unable to load bookings"
       );
 
     }
-
-    const data =
-      await response.json();
 
     const bookings =
       data.bookings || [];
@@ -489,8 +662,16 @@ async function loadBookings() {
 
     console.error(error);
 
-    container.innerHTML =
-      "<p>Unable to connect to DDN backend.</p>";
+    container.innerHTML = `
+      <p>
+        ${
+          escapeHtml(
+            error.message ||
+            "Unable to connect to DDN backend."
+          )
+        }
+      </p>
+    `;
 
   }
 
@@ -504,6 +685,18 @@ async function loadBookings() {
 async function assignRider(
   bookingId
 ) {
+
+  const token =
+    getAdminToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
 
   const riderInput =
     document.getElementById(
@@ -538,32 +731,35 @@ async function assignRider(
 
     const response =
       await fetch(
-
         `${API_URL}/${bookingId}/assign`,
-
         {
-
           method: "PATCH",
 
           headers: {
-
             "Content-Type":
-              "application/json"
+              "application/json",
 
+            "Authorization":
+              `Bearer ${token}`
           },
 
           body: JSON.stringify({
-
             rider
-
           })
-
         }
-
       );
 
     const data =
       await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      return;
+    }
 
     if (!response.ok) {
 
@@ -578,7 +774,7 @@ async function assignRider(
       `Rider "${rider}" assigned successfully!`
     );
 
-    loadBookings();
+    await loadBookings();
 
   } catch (error) {
 
@@ -588,6 +784,8 @@ async function assignRider(
       error.message ||
       "Unable to assign rider."
     );
+
+  } finally {
 
     if (button) {
 
@@ -611,6 +809,18 @@ async function updateStatus(
   bookingId
 ) {
 
+  const token =
+    getAdminToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
+
   const select =
     document.getElementById(
       `status-${bookingId}`
@@ -625,33 +835,35 @@ async function updateStatus(
 
     const response =
       await fetch(
-
         `${API_URL}/${bookingId}/status`,
-
         {
-
           method: "PATCH",
 
           headers: {
-
             "Content-Type":
-              "application/json"
+              "application/json",
 
+            "Authorization":
+              `Bearer ${token}`
           },
 
           body: JSON.stringify({
-
-            status:
-              newStatus
-
+            status: newStatus
           })
-
         }
-
       );
 
     const data =
       await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      return;
+    }
 
     if (!response.ok) {
 
@@ -666,7 +878,7 @@ async function updateStatus(
       "Booking status updated successfully!"
     );
 
-    loadBookings();
+    await loadBookings();
 
   } catch (error) {
 
@@ -676,6 +888,8 @@ async function updateStatus(
       error.message ||
       "Unable to update booking status."
     );
+
+  } finally {
 
     select.disabled = false;
 
