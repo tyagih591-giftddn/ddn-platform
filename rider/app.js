@@ -6,11 +6,121 @@ const LOGIN_API =
 
 
 // ===============================
+// GET RIDER TOKEN
+// ===============================
+
+function getRiderToken() {
+
+  return localStorage.getItem(
+    "ddnRiderToken"
+  );
+
+}
+
+
+// ===============================
+// CLEAR RIDER LOGIN
+// ===============================
+
+function clearRiderLogin() {
+
+  localStorage.removeItem(
+    "ddnRiderLoggedIn"
+  );
+
+  localStorage.removeItem(
+    "ddnRiderUsername"
+  );
+
+  localStorage.removeItem(
+    "ddnRiderToken"
+  );
+
+}
+
+
+// ===============================
+// SHOW LOGIN SCREEN
+// ===============================
+
+function showLoginScreen(
+  message = ""
+) {
+
+  clearRiderLogin();
+
+  document
+    .getElementById(
+      "dashboardSection"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "loginSection"
+    )
+    .style.display =
+    "block";
+
+  document
+    .getElementById(
+      "loginForm"
+    )
+    .reset();
+
+  const loginMessage =
+    document.getElementById(
+      "loginMessage"
+    );
+
+  loginMessage.textContent =
+    message;
+
+  loginMessage.style.color =
+    message
+      ? "red"
+      : "#333";
+
+}
+
+
+// ===============================
+// HANDLE AUTH ERROR
+// ===============================
+
+function handleAuthError(
+  response,
+  data
+) {
+
+  if (
+    response.status === 401 ||
+    response.status === 403
+  ) {
+
+    showLoginScreen(
+      data.message ||
+      "Your login session has expired. Please login again."
+    );
+
+    return true;
+
+  }
+
+  return false;
+
+}
+
+
+// ===============================
 // RIDER LOGIN
 // ===============================
 
 const loginForm =
-  document.getElementById("loginForm");
+  document.getElementById(
+    "loginForm"
+  );
 
 loginForm.addEventListener(
   "submit",
@@ -20,13 +130,17 @@ loginForm.addEventListener(
 
     const username =
       document
-        .getElementById("riderUsername")
+        .getElementById(
+          "riderUsername"
+        )
         .value
         .trim();
 
     const password =
       document
-        .getElementById("riderPassword")
+        .getElementById(
+          "riderPassword"
+        )
         .value;
 
     const loginMessage =
@@ -43,22 +157,23 @@ loginForm.addEventListener(
     try {
 
       const response =
-        await fetch(LOGIN_API, {
+        await fetch(
+          LOGIN_API,
+          {
+            method: "POST",
 
-          method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            username,
-            password,
-            role: "rider"
-          })
-
-        });
+            body: JSON.stringify({
+              username,
+              password,
+              role: "rider"
+            })
+          }
+        );
 
       const data =
         await response.json();
@@ -73,9 +188,21 @@ loginForm.addEventListener(
           "red";
 
         return;
+
       }
 
-      // Rider login और username save करें
+      if (!data.token) {
+
+        loginMessage.textContent =
+          "Login token was not received.";
+
+        loginMessage.style.color =
+          "red";
+
+        return;
+
+      }
+
       localStorage.setItem(
         "ddnRiderLoggedIn",
         "true"
@@ -83,8 +210,16 @@ loginForm.addEventListener(
 
       localStorage.setItem(
         "ddnRiderUsername",
-        username
+        data.username || username
       );
+
+      localStorage.setItem(
+        "ddnRiderToken",
+        data.token
+      );
+
+      loginMessage.textContent =
+        "";
 
       showDashboard();
 
@@ -97,6 +232,7 @@ loginForm.addEventListener(
 
       loginMessage.style.color =
         "red";
+
     }
 
   }
@@ -109,17 +245,43 @@ loginForm.addEventListener(
 
 function showDashboard() {
 
+  const token =
+    getRiderToken();
+
+  const riderUsername =
+    localStorage.getItem(
+      "ddnRiderUsername"
+    );
+
+  if (
+    !token ||
+    !riderUsername
+  ) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+
+  }
+
   document
-    .getElementById("loginSection")
+    .getElementById(
+      "loginSection"
+    )
     .style.display =
     "none";
 
   document
-    .getElementById("dashboardSection")
+    .getElementById(
+      "dashboardSection"
+    )
     .style.display =
     "block";
 
   loadDeliveries();
+
 }
 
 
@@ -128,39 +290,21 @@ function showDashboard() {
 // ===============================
 
 document
-  .getElementById("logoutButton")
+  .getElementById(
+    "logoutButton"
+  )
   .addEventListener(
     "click",
     function () {
 
-      localStorage.removeItem(
-        "ddnRiderLoggedIn"
-      );
-
-      localStorage.removeItem(
-        "ddnRiderUsername"
-      );
-
-      document
-        .getElementById("dashboardSection")
-        .style.display =
-        "none";
-
-      document
-        .getElementById("loginSection")
-        .style.display =
-        "block";
-
-      document
-        .getElementById("loginForm")
-        .reset();
+      showLoginScreen();
 
     }
   );
 
 
 // ===============================
-// CHECK LOGIN
+// CHECK SAVED LOGIN
 // ===============================
 
 const savedLogin =
@@ -173,22 +317,20 @@ const savedRiderUsername =
     "ddnRiderUsername"
   );
 
+const savedRiderToken =
+  getRiderToken();
+
 if (
   savedLogin === "true" &&
-  savedRiderUsername
+  savedRiderUsername &&
+  savedRiderToken
 ) {
 
   showDashboard();
 
 } else {
 
-  localStorage.removeItem(
-    "ddnRiderLoggedIn"
-  );
-
-  localStorage.removeItem(
-    "ddnRiderUsername"
-  );
+  clearRiderLogin();
 
 }
 
@@ -228,34 +370,63 @@ async function loadDeliveries() {
       "ddnRiderUsername"
     );
 
-  if (!riderUsername) {
+  const token =
+    getRiderToken();
 
-    container.innerHTML =
-      "<p>Please logout and login again.</p>";
+  if (
+    !riderUsername ||
+    !token
+  ) {
+
+    showLoginScreen(
+      "Please login again."
+    );
 
     return;
+
   }
 
   try {
 
     const response =
-      await fetch(API_URL);
+      await fetch(
+        API_URL,
+        {
+          method: "GET",
+
+          headers: {
+            "Authorization":
+              `Bearer ${token}`
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+
+      return;
+
+    }
 
     if (!response.ok) {
 
       throw new Error(
+        data.message ||
         "Unable to load deliveries"
       );
 
     }
 
-    const data =
-      await response.json();
-
     const bookings =
       data.bookings || [];
 
-    // केवल login किए हुए rider की bookings
     const deliveries =
       bookings.filter(
         booking => {
@@ -289,7 +460,7 @@ async function loadDeliveries() {
       container.innerHTML = `
 
         <p>
-          No deliveries assigned to
+          No active deliveries assigned to
           <strong>
             ${escapeHtml(
               riderUsername
@@ -300,127 +471,150 @@ async function loadDeliveries() {
       `;
 
       return;
+
     }
 
     container.innerHTML =
       deliveries.map(
-        booking => `
+        booking => {
 
-          <div class="delivery">
+          const bookingId =
+            escapeHtml(
+              booking.bookingId
+            );
 
-            <h3>
-              ${escapeHtml(
-                booking.bookingId
-              )}
-            </h3>
+          return `
 
-            <p>
-              <strong>
-                Assigned Rider:
-              </strong>
+            <div class="delivery">
 
-              ${escapeHtml(
-                booking.assignedRider
-              )}
-            </p>
+              <h3>
+                ${bookingId}
+              </h3>
 
-            <p>
-              <strong>
-                Customer:
-              </strong>
+              <p>
+                <strong>
+                  Assigned Rider:
+                </strong>
 
-              ${escapeHtml(
-                booking.customerName
-              )}
-            </p>
-
-            <p>
-              <strong>
-                Mobile:
-              </strong>
-
-              ${escapeHtml(
-                booking.mobileNumber
-              )}
-            </p>
-
-            <p>
-              <strong>
-                Pickup:
-              </strong>
-
-              ${escapeHtml(
-                booking.pickupLocation
-              )}
-            </p>
-
-            <p>
-              <strong>
-                Delivery:
-              </strong>
-
-              ${escapeHtml(
-                booking.deliveryLocation
-              )}
-            </p>
-
-            <p>
-              <strong>
-                Status:
-              </strong>
-
-              <span class="status">
                 ${escapeHtml(
-                  booking.status
+                  booking.assignedRider
                 )}
-              </span>
-            </p>
+              </p>
 
-            <button
-              class="status-button"
-              onclick="
-                updateStatus(
-                  '${escapeHtml(
-                    booking.bookingId
-                  )}',
-                  'Picked Up'
-                )
-              "
-            >
-              Mark Picked Up
-            </button>
+              <p>
+                <strong>
+                  Customer:
+                </strong>
 
-            <button
-              class="status-button"
-              onclick="
-                updateStatus(
-                  '${escapeHtml(
-                    booking.bookingId
-                  )}',
-                  'Out for Delivery'
-                )
-              "
-            >
-              Out for Delivery
-            </button>
+                ${escapeHtml(
+                  booking.customerName
+                )}
+              </p>
 
-            <button
-              class="status-button"
-              onclick="
-                updateStatus(
-                  '${escapeHtml(
-                    booking.bookingId
-                  )}',
-                  'Delivered'
-                )
-              "
-            >
-              Mark Delivered
-            </button>
+              <p>
+                <strong>
+                  Mobile:
+                </strong>
 
-          </div>
+                ${escapeHtml(
+                  booking.mobileNumber
+                )}
+              </p>
 
-        `
+              <p>
+                <strong>
+                  Pickup:
+                </strong>
+
+                ${escapeHtml(
+                  booking.pickupLocation
+                )}
+              </p>
+
+              <p>
+                <strong>
+                  Delivery:
+                </strong>
+
+                ${escapeHtml(
+                  booking.deliveryLocation
+                )}
+              </p>
+
+              <p>
+                <strong>
+                  Status:
+                </strong>
+
+                <span class="status">
+                  ${escapeHtml(
+                    booking.status
+                  )}
+                </span>
+              </p>
+
+              <button
+                class="status-button"
+                type="button"
+                onclick="
+                  updateStatus(
+                    '${bookingId}',
+                    'Picked Up'
+                  )
+                "
+                ${
+                  booking.status ===
+                  "Assigned"
+                    ? ""
+                    : "disabled"
+                }
+              >
+                Mark Picked Up
+              </button>
+
+              <button
+                class="status-button"
+                type="button"
+                onclick="
+                  updateStatus(
+                    '${bookingId}',
+                    'Out for Delivery'
+                  )
+                "
+                ${
+                  booking.status ===
+                  "Picked Up"
+                    ? ""
+                    : "disabled"
+                }
+              >
+                Out for Delivery
+              </button>
+
+              <button
+                class="status-button"
+                type="button"
+                onclick="
+                  updateStatus(
+                    '${bookingId}',
+                    'Delivered'
+                  )
+                "
+                ${
+                  booking.status ===
+                  "Out for Delivery"
+                    ? ""
+                    : "disabled"
+                }
+              >
+                Mark Delivered
+              </button>
+
+            </div>
+
+          `;
+
+        }
 
       ).join("");
 
@@ -428,8 +622,16 @@ async function loadDeliveries() {
 
     console.error(error);
 
-    container.innerHTML =
-      "<p>Unable to connect to DDN backend.</p>";
+    container.innerHTML = `
+      <p>
+        ${
+          escapeHtml(
+            error.message ||
+            "Unable to connect to DDN backend."
+          )
+        }
+      </p>
+    `;
 
   }
 
@@ -445,32 +647,65 @@ async function updateStatus(
   newStatus
 ) {
 
+  const token =
+    getRiderToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+
+  }
+
+  const confirmed =
+    confirm(
+      `Change delivery status to "${newStatus}"?`
+    );
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
   try {
 
     const response =
       await fetch(
-
         `${API_URL}/${bookingId}/status`,
-
         {
-
           method: "PATCH",
 
           headers: {
             "Content-Type":
-              "application/json"
+              "application/json",
+
+            "Authorization":
+              `Bearer ${token}`
           },
 
           body: JSON.stringify({
             status: newStatus
           })
-
         }
-
       );
 
     const data =
       await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+
+      return;
+
+    }
 
     if (!response.ok) {
 
@@ -485,7 +720,7 @@ async function updateStatus(
       "Status updated successfully!"
     );
 
-    loadDeliveries();
+    await loadDeliveries();
 
   } catch (error) {
 
