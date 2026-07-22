@@ -30,11 +30,15 @@ loginForm.addEventListener(
         .value;
 
     const loginMessage =
-      document
-        .getElementById("loginMessage");
+      document.getElementById(
+        "loginMessage"
+      );
 
     loginMessage.textContent =
       "Logging in...";
+
+    loginMessage.style.color =
+      "#333";
 
     try {
 
@@ -49,12 +53,9 @@ loginForm.addEventListener(
           },
 
           body: JSON.stringify({
-
             username,
             password,
-
             role: "rider"
-
           })
 
         });
@@ -74,9 +75,15 @@ loginForm.addEventListener(
         return;
       }
 
+      // Rider login और username save करें
       localStorage.setItem(
         "ddnRiderLoggedIn",
         "true"
+      );
+
+      localStorage.setItem(
+        "ddnRiderUsername",
+        username
       );
 
       showDashboard();
@@ -130,6 +137,10 @@ document
         "ddnRiderLoggedIn"
       );
 
+      localStorage.removeItem(
+        "ddnRiderUsername"
+      );
+
       document
         .getElementById("dashboardSection")
         .style.display =
@@ -152,15 +163,48 @@ document
 // CHECK LOGIN
 // ===============================
 
-if (
-
+const savedLogin =
   localStorage.getItem(
     "ddnRiderLoggedIn"
-  ) === "true"
+  );
 
+const savedRiderUsername =
+  localStorage.getItem(
+    "ddnRiderUsername"
+  );
+
+if (
+  savedLogin === "true" &&
+  savedRiderUsername
 ) {
 
   showDashboard();
+
+} else {
+
+  localStorage.removeItem(
+    "ddnRiderLoggedIn"
+  );
+
+  localStorage.removeItem(
+    "ddnRiderUsername"
+  );
+
+}
+
+
+// ===============================
+// SAFE TEXT
+// ===============================
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
 
@@ -172,13 +216,25 @@ if (
 async function loadDeliveries() {
 
   const container =
-    document
-      .getElementById(
-        "deliveriesContainer"
-      );
+    document.getElementById(
+      "deliveriesContainer"
+    );
 
   container.innerHTML =
     "<p>Loading deliveries...</p>";
+
+  const riderUsername =
+    localStorage.getItem(
+      "ddnRiderUsername"
+    );
+
+  if (!riderUsername) {
+
+    container.innerHTML =
+      "<p>Please logout and login again.</p>";
+
+    return;
+  }
 
   try {
 
@@ -199,177 +255,176 @@ async function loadDeliveries() {
     const bookings =
       data.bookings || [];
 
+    // केवल login किए हुए rider की bookings
     const deliveries =
       bookings.filter(
+        booking => {
 
-        booking =>
+          const belongsToRider =
+            booking.assignedRider ===
+            riderUsername;
 
-          booking.status ===
-            "Assigned" ||
+          const activeStatus =
+            booking.status ===
+              "Assigned" ||
 
-          booking.status ===
-            "Picked Up" ||
+            booking.status ===
+              "Picked Up" ||
 
-          booking.status ===
-            "Out for Delivery"
+            booking.status ===
+              "Out for Delivery";
 
+          return (
+            belongsToRider &&
+            activeStatus
+          );
+
+        }
       );
 
     if (
-
-      deliveries.length ===
-      0
-
+      deliveries.length === 0
     ) {
 
-      container.innerHTML =
-        "<p>No assigned deliveries found.</p>";
+      container.innerHTML = `
+
+        <p>
+          No deliveries assigned to
+          <strong>
+            ${escapeHtml(
+              riderUsername
+            )}
+          </strong>.
+        </p>
+
+      `;
 
       return;
-
     }
 
     container.innerHTML =
-
       deliveries.map(
-
         booking => `
 
-        <div class="delivery">
+          <div class="delivery">
 
-          <h3>
-            ${booking.bookingId}
-          </h3>
+            <h3>
+              ${escapeHtml(
+                booking.bookingId
+              )}
+            </h3>
 
-          <p>
+            <p>
+              <strong>
+                Assigned Rider:
+              </strong>
 
-            <strong>
-              Customer:
-            </strong>
+              ${escapeHtml(
+                booking.assignedRider
+              )}
+            </p>
 
-            ${booking.customerName}
+            <p>
+              <strong>
+                Customer:
+              </strong>
 
-          </p>
+              ${escapeHtml(
+                booking.customerName
+              )}
+            </p>
 
-          <p>
+            <p>
+              <strong>
+                Mobile:
+              </strong>
 
-            <strong>
-              Mobile:
-            </strong>
+              ${escapeHtml(
+                booking.mobileNumber
+              )}
+            </p>
 
-            ${booking.mobileNumber}
+            <p>
+              <strong>
+                Pickup:
+              </strong>
 
-          </p>
+              ${escapeHtml(
+                booking.pickupLocation
+              )}
+            </p>
 
-          <p>
+            <p>
+              <strong>
+                Delivery:
+              </strong>
 
-            <strong>
-              Pickup:
-            </strong>
+              ${escapeHtml(
+                booking.deliveryLocation
+              )}
+            </p>
 
-            ${booking.pickupLocation}
+            <p>
+              <strong>
+                Status:
+              </strong>
 
-          </p>
+              <span class="status">
+                ${escapeHtml(
+                  booking.status
+                )}
+              </span>
+            </p>
 
-          <p>
+            <button
+              class="status-button"
+              onclick="
+                updateStatus(
+                  '${escapeHtml(
+                    booking.bookingId
+                  )}',
+                  'Picked Up'
+                )
+              "
+            >
+              Mark Picked Up
+            </button>
 
-            <strong>
-              Delivery:
-            </strong>
+            <button
+              class="status-button"
+              onclick="
+                updateStatus(
+                  '${escapeHtml(
+                    booking.bookingId
+                  )}',
+                  'Out for Delivery'
+                )
+              "
+            >
+              Out for Delivery
+            </button>
 
-            ${booking.deliveryLocation}
+            <button
+              class="status-button"
+              onclick="
+                updateStatus(
+                  '${escapeHtml(
+                    booking.bookingId
+                  )}',
+                  'Delivered'
+                )
+              "
+            >
+              Mark Delivered
+            </button>
 
-          </p>
+          </div>
 
-          <p>
-
-            <strong>
-              Status:
-            </strong>
-
-            <span class="status">
-
-              ${booking.status}
-
-            </span>
-
-          </p>
-
-          <button
-
-            class="status-button"
-
-            onclick="
-
-              updateStatus(
-
-                '${booking.bookingId}',
-
-                'Picked Up'
-
-              )
-
-            "
-
-          >
-
-            Mark Picked Up
-
-          </button>
-
-          <button
-
-            class="status-button"
-
-            onclick="
-
-              updateStatus(
-
-                '${booking.bookingId}',
-
-                'Out for Delivery'
-
-              )
-
-            "
-
-          >
-
-            Out for Delivery
-
-          </button>
-
-          <button
-
-            class="status-button"
-
-            onclick="
-
-              updateStatus(
-
-                '${booking.bookingId}',
-
-                'Delivered'
-
-              )
-
-            "
-
-          >
-
-            Mark Delivered
-
-          </button>
-
-        </div>
-
-      `
+        `
 
       ).join("");
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(error);
 
@@ -386,41 +441,29 @@ async function loadDeliveries() {
 // ===============================
 
 async function updateStatus(
-
   bookingId,
-
   newStatus
-
 ) {
 
   try {
 
     const response =
-
       await fetch(
 
         `${API_URL}/${bookingId}/status`,
 
         {
 
-          method:
-            "PATCH",
+          method: "PATCH",
 
           headers: {
-
             "Content-Type":
               "application/json"
-
           },
 
-          body:
-
-            JSON.stringify({
-
-              status:
-                newStatus
-
-            })
+          body: JSON.stringify({
+            status: newStatus
+          })
 
         }
 
@@ -432,10 +475,8 @@ async function updateStatus(
     if (!response.ok) {
 
       throw new Error(
-
         data.message ||
         "Status update failed"
-
       );
 
     }
@@ -446,13 +487,12 @@ async function updateStatus(
 
     loadDeliveries();
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(error);
 
     alert(
+      error.message ||
       "Unable to update delivery status."
     );
 
