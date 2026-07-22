@@ -1,34 +1,130 @@
 const API_URL = "https://ddn-platform.onrender.com/api/bookings";
 
-async function loadDeliveries() {
-  const container = document.getElementById("deliveriesContainer");
+// ===============================
+// RIDER LOGIN
+// ===============================
 
-  container.innerHTML = "<p>Loading deliveries...</p>";
+const RIDER_USERNAME = "rider";
+const RIDER_PASSWORD = "DDN@2026";
+
+const loginForm = document.getElementById("loginForm");
+
+loginForm.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const username =
+    document.getElementById("riderUsername").value.trim();
+
+  const password =
+    document.getElementById("riderPassword").value;
+
+  const loginMessage =
+    document.getElementById("loginMessage");
+
+  if (
+    username === RIDER_USERNAME &&
+    password === RIDER_PASSWORD
+  ) {
+    localStorage.setItem("ddnRiderLoggedIn", "true");
+
+    showDashboard();
+  } else {
+    loginMessage.textContent =
+      "Invalid username or password.";
+
+    loginMessage.style.color = "red";
+  }
+});
+
+
+// ===============================
+// SHOW DASHBOARD
+// ===============================
+
+function showDashboard() {
+  document.getElementById("loginSection").style.display = "none";
+
+  document.getElementById("dashboardSection").style.display = "block";
+
+  loadDeliveries();
+}
+
+
+// ===============================
+// LOGOUT
+// ===============================
+
+document
+  .getElementById("logoutButton")
+  .addEventListener("click", function () {
+
+    localStorage.removeItem("ddnRiderLoggedIn");
+
+    document.getElementById("dashboardSection").style.display = "none";
+
+    document.getElementById("loginSection").style.display = "block";
+
+    document.getElementById("loginForm").reset();
+  });
+
+
+// ===============================
+// CHECK LOGIN
+// ===============================
+
+if (
+  localStorage.getItem("ddnRiderLoggedIn") === "true"
+) {
+  showDashboard();
+}
+
+
+// ===============================
+// LOAD DELIVERIES
+// ===============================
+
+async function loadDeliveries() {
+  const container =
+    document.getElementById("deliveriesContainer");
+
+  container.innerHTML =
+    "<p>Loading deliveries...</p>";
 
   try {
-    const response = await fetch(API_URL);
+    const response =
+      await fetch(API_URL);
 
     if (!response.ok) {
-      throw new Error("Unable to load deliveries");
+      throw new Error(
+        "Unable to load deliveries"
+      );
     }
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
-    const bookings = data.bookings || [];
+    const bookings =
+      data.bookings || [];
 
-    const deliveries = bookings.filter(
-      booking =>
-        booking.status === "Assigned" ||
-        booking.status === "Picked Up" ||
-        booking.status === "Out for Delivery"
-    );
+    const deliveries =
+      bookings.filter(
+        booking =>
+          booking.status === "Assigned" ||
+          booking.status === "Picked Up" ||
+          booking.status === "Out for Delivery"
+      );
 
     if (deliveries.length === 0) {
-      container.innerHTML = "<p>No assigned deliveries found.</p>";
+
+      container.innerHTML =
+        "<p>No assigned deliveries found.</p>";
+
       return;
     }
 
-    container.innerHTML = deliveries.map(booking => `
+    container.innerHTML =
+      deliveries.map(booking => `
+
       <div class="delivery">
 
         <h3>${booking.bookingId}</h3>
@@ -55,33 +151,55 @@ async function loadDeliveries() {
 
         <p>
           <strong>Status:</strong>
+
           <span class="status">
             ${booking.status}
           </span>
+
         </p>
 
         <button
           class="status-button"
-          onclick="updateStatus('${booking.bookingId}', 'Picked Up')">
+          onclick="
+            updateStatus(
+              '${booking.bookingId}',
+              'Picked Up'
+            )
+          "
+        >
           Mark Picked Up
         </button>
 
         <button
           class="status-button"
-          onclick="updateStatus('${booking.bookingId}', 'Out for Delivery')">
+          onclick="
+            updateStatus(
+              '${booking.bookingId}',
+              'Out for Delivery'
+            )
+          "
+        >
           Out for Delivery
         </button>
 
         <button
           class="status-button"
-          onclick="updateStatus('${booking.bookingId}', 'Delivered')">
+          onclick="
+            updateStatus(
+              '${booking.bookingId}',
+              'Delivered'
+            )
+          "
+        >
           Mark Delivered
         </button>
 
       </div>
+
     `).join("");
 
   } catch (error) {
+
     console.error(error);
 
     container.innerHTML =
@@ -90,32 +208,48 @@ async function loadDeliveries() {
 }
 
 
-async function updateStatus(bookingId, newStatus) {
+// ===============================
+// UPDATE DELIVERY STATUS
+// ===============================
+
+async function updateStatus(
+  bookingId,
+  newStatus
+) {
 
   try {
 
-    const response = await fetch(
-      `${API_URL}/${bookingId}/status`,
-      {
-        method: "PATCH",
+    const response =
+      await fetch(
+        `${API_URL}/${bookingId}/status`,
+        {
+          method: "PATCH",
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        body: JSON.stringify({
-          status: newStatus
-        })
-      }
-    );
+          body: JSON.stringify({
+            status: newStatus
+          })
+        }
+      );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Status update failed");
+
+      throw new Error(
+        data.message ||
+        "Status update failed"
+      );
     }
 
-    alert("Status updated successfully!");
+    alert(
+      "Status updated successfully!"
+    );
 
     loadDeliveries();
 
@@ -123,11 +257,8 @@ async function updateStatus(bookingId, newStatus) {
 
     console.error(error);
 
-    alert("Unable to update delivery status.");
-
+    alert(
+      "Unable to update delivery status."
+    );
   }
-
 }
-
-
-loadDeliveries();
