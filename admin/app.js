@@ -35,6 +35,9 @@ loginForm.addEventListener(
     loginMessage.textContent =
       "Logging in...";
 
+    loginMessage.style.color =
+      "#333";
+
     try {
 
       const response =
@@ -51,7 +54,6 @@ loginForm.addEventListener(
 
             username,
             password,
-
             role: "admin"
 
           })
@@ -152,14 +154,28 @@ document
 // ===============================
 
 if (
-
   localStorage.getItem(
     "ddnAdminLoggedIn"
   ) === "true"
-
 ) {
 
   showDashboard();
+
+}
+
+
+// ===============================
+// SAFE TEXT
+// ===============================
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
 
@@ -171,10 +187,9 @@ if (
 async function loadBookings() {
 
   const container =
-    document
-      .getElementById(
-        "bookingsContainer"
-      );
+    document.getElementById(
+      "bookingsContainer"
+    );
 
   container.innerHTML =
     "<p>Loading bookings...</p>";
@@ -207,20 +222,16 @@ async function loadBookings() {
 
     const pending =
       bookings.filter(
-
         booking =>
           booking.status ===
           "Pending"
-
       ).length;
 
     const completed =
       bookings.filter(
-
         booking =>
           booking.status ===
           "Delivered"
-
       ).length;
 
     document
@@ -249,173 +260,343 @@ async function loadBookings() {
 
     container.innerHTML =
       bookings.map(
+        booking => {
 
-        booking => `
+          const bookingId =
+            escapeHtml(
+              booking.bookingId
+            );
 
-        <div class="booking">
+          const assignedRider =
+            booking.assignedRider
+              ? escapeHtml(
+                  booking.assignedRider
+                )
+              : "Not Assigned";
 
-          <h3>
-            ${booking.bookingId}
-          </h3>
+          return `
 
-          <p>
-            <strong>
-              Customer:
-            </strong>
+            <div class="booking">
 
-            ${booking.customerName}
-          </p>
+              <h3>
+                ${bookingId}
+              </h3>
 
-          <p>
-            <strong>
-              Mobile:
-            </strong>
+              <p>
+                <strong>
+                  Customer:
+                </strong>
 
-            ${booking.mobileNumber}
-          </p>
+                ${escapeHtml(
+                  booking.customerName
+                )}
+              </p>
 
-          <p>
-            <strong>
-              Pickup:
-            </strong>
+              <p>
+                <strong>
+                  Mobile:
+                </strong>
 
-            ${booking.pickupLocation}
-          </p>
+                ${escapeHtml(
+                  booking.mobileNumber
+                )}
+              </p>
 
-          <p>
-            <strong>
-              Delivery:
-            </strong>
+              <p>
+                <strong>
+                  Pickup:
+                </strong>
 
-            ${booking.deliveryLocation}
-          </p>
+                ${escapeHtml(
+                  booking.pickupLocation
+                )}
+              </p>
 
-          <p>
+              <p>
+                <strong>
+                  Delivery:
+                </strong>
 
-            <strong>
-              Current Status:
-            </strong>
+                ${escapeHtml(
+                  booking.deliveryLocation
+                )}
+              </p>
 
-            <span class="status">
+              <p>
+                <strong>
+                  Current Status:
+                </strong>
 
-              ${booking.status}
+                <span class="status">
+                  ${escapeHtml(
+                    booking.status
+                  )}
+                </span>
+              </p>
 
-            </span>
+              <p>
+                <strong>
+                  Assigned Rider:
+                </strong>
 
-          </p>
+                <span>
+                  ${assignedRider}
+                </span>
+              </p>
 
-          <label>
+              <hr>
 
-            <strong>
-              Update Status:
-            </strong>
+              <label
+                for="rider-${bookingId}"
+              >
+                <strong>
+                  Assign Rider:
+                </strong>
+              </label>
 
-          </label>
+              <input
+                type="text"
+                id="rider-${bookingId}"
+                placeholder="Enter rider username"
+                value="${
+                  booking.assignedRider
+                    ? escapeHtml(
+                        booking.assignedRider
+                      )
+                    : ""
+                }"
+              >
 
-          <select
-            id="status-${booking.bookingId}"
-          >
+              <button
+                type="button"
+                onclick="
+                  assignRider(
+                    '${bookingId}'
+                  )
+                "
+              >
+                Assign Rider
+              </button>
 
-            <option
-              value="Pending"
-              ${
-                booking.status ===
-                "Pending"
-                  ? "selected"
-                  : ""
-              }
-            >
-              Pending
-            </option>
+              <br><br>
 
-            <option
-              value="Assigned"
-              ${
-                booking.status ===
-                "Assigned"
-                  ? "selected"
-                  : ""
-              }
-            >
-              Assigned
-            </option>
+              <label
+                for="status-${bookingId}"
+              >
+                <strong>
+                  Update Status:
+                </strong>
+              </label>
 
-            <option
-              value="Picked Up"
-              ${
-                booking.status ===
-                "Picked Up"
-                  ? "selected"
-                  : ""
-              }
-            >
-              Picked Up
-            </option>
+              <select
+                id="status-${bookingId}"
+              >
 
-            <option
-              value="Out for Delivery"
-              ${
-                booking.status ===
-                "Out for Delivery"
-                  ? "selected"
-                  : ""
-              }
-            >
-              Out for Delivery
-            </option>
+                <option
+                  value="Pending"
+                  ${
+                    booking.status ===
+                    "Pending"
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  Pending
+                </option>
 
-            <option
-              value="Delivered"
-              ${
-                booking.status ===
-                "Delivered"
-                  ? "selected"
-                  : ""
-              }
-            >
-              Delivered
-            </option>
+                <option
+                  value="Assigned"
+                  ${
+                    booking.status ===
+                    "Assigned"
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  Assigned
+                </option>
 
-            <option
-              value="Cancelled"
-              ${
-                booking.status ===
-                "Cancelled"
-                  ? "selected"
-                  : ""
-              }
-            >
-              Cancelled
-            </option>
+                <option
+                  value="Picked Up"
+                  ${
+                    booking.status ===
+                    "Picked Up"
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  Picked Up
+                </option>
 
-          </select>
+                <option
+                  value="Out for Delivery"
+                  ${
+                    booking.status ===
+                    "Out for Delivery"
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  Out for Delivery
+                </option>
 
-          <button
-            onclick="
-              updateStatus(
-                '${booking.bookingId}'
-              )
-            "
-          >
+                <option
+                  value="Delivered"
+                  ${
+                    booking.status ===
+                    "Delivered"
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  Delivered
+                </option>
 
-            Update Status
+                <option
+                  value="Cancelled"
+                  ${
+                    booking.status ===
+                    "Cancelled"
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  Cancelled
+                </option>
 
-          </button>
+              </select>
 
-        </div>
+              <button
+                type="button"
+                onclick="
+                  updateStatus(
+                    '${bookingId}'
+                  )
+                "
+              >
+                Update Status
+              </button>
 
-      `
+            </div>
+
+          `;
+
+        }
 
       ).join("");
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(error);
 
     container.innerHTML =
       "<p>Unable to connect to DDN backend.</p>";
+
+  }
+
+}
+
+
+// ===============================
+// ASSIGN RIDER
+// ===============================
+
+async function assignRider(
+  bookingId
+) {
+
+  const riderInput =
+    document.getElementById(
+      `rider-${bookingId}`
+    );
+
+  const rider =
+    riderInput.value.trim();
+
+  if (!rider) {
+
+    alert(
+      "Please enter rider username."
+    );
+
+    return;
+  }
+
+  const button =
+    riderInput.nextElementSibling;
+
+  if (button) {
+
+    button.disabled = true;
+
+    button.textContent =
+      "Assigning...";
+
+  }
+
+  try {
+
+    const response =
+      await fetch(
+
+        `${API_URL}/${bookingId}/assign`,
+
+        {
+
+          method: "PATCH",
+
+          headers: {
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+          body: JSON.stringify({
+
+            rider
+
+          })
+
+        }
+
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Rider assignment failed"
+      );
+
+    }
+
+    alert(
+      `Rider "${rider}" assigned successfully!`
+    );
+
+    loadBookings();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      error.message ||
+      "Unable to assign rider."
+    );
+
+    if (button) {
+
+      button.disabled = false;
+
+      button.textContent =
+        "Assign Rider";
+
+    }
 
   }
 
@@ -438,6 +619,8 @@ async function updateStatus(
   const newStatus =
     select.value;
 
+  select.disabled = true;
+
   try {
 
     const response =
@@ -447,8 +630,7 @@ async function updateStatus(
 
         {
 
-          method:
-            "PATCH",
+          method: "PATCH",
 
           headers: {
 
@@ -457,13 +639,12 @@ async function updateStatus(
 
           },
 
-          body:
-            JSON.stringify({
+          body: JSON.stringify({
 
-              status:
-                newStatus
+            status:
+              newStatus
 
-            })
+          })
 
         }
 
@@ -475,10 +656,8 @@ async function updateStatus(
     if (!response.ok) {
 
       throw new Error(
-
         data.message ||
         "Status update failed"
-
       );
 
     }
@@ -489,15 +668,16 @@ async function updateStatus(
 
     loadBookings();
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(error);
 
     alert(
+      error.message ||
       "Unable to update booking status."
     );
+
+    select.disabled = false;
 
   }
 
