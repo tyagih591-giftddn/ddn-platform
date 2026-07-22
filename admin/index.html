@@ -9,12 +9,47 @@
 
 <body>
 
-  <div class="container">
+  <!-- Admin Login -->
+  <div id="loginSection" class="container">
+
+    <h1>DDN Admin Login</h1>
+    <p>District Delivery Network</p>
+
+    <form id="loginForm">
+
+      <input
+        type="text"
+        id="adminUsername"
+        placeholder="Admin Username"
+        required
+      >
+
+      <input
+        type="password"
+        id="adminPassword"
+        placeholder="Password"
+        required
+      >
+
+      <button type="submit">Login</button>
+
+      <p id="loginMessage"></p>
+
+    </form>
+
+  </div>
+
+
+  <!-- Admin Dashboard -->
+  <div id="dashboardSection" class="container" style="display: none;">
 
     <h1>DDN Admin Panel</h1>
     <p>District Delivery Network</p>
 
+    <button id="logoutButton">Logout</button>
+
     <div class="dashboard">
+
       <div class="card">
         <h3>Total Bookings</h3>
         <h2 id="totalBookings">0</h2>
@@ -29,17 +64,21 @@
         <h3>Completed</h3>
         <h2 id="completedBookings">0</h2>
       </div>
+
     </div>
 
     <h2>Delivery Bookings</h2>
 
-    <button onclick="loadBookings()">Refresh Bookings</button>
+    <button onclick="loadBookings()">
+      Refresh Bookings
+    </button>
 
     <div id="bookingsContainer">
       <p>Loading bookings...</p>
     </div>
 
   </div>
+
 
   <script src="app.js"></script>
 
