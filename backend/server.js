@@ -3,8 +3,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
-const { Pool } = require("pg");
 
+
+const pool = require("./config/database");
 const authenticateToken = require("./middleware/auth");
 const allowRoles = require("./middleware/roles");
 
@@ -18,13 +19,6 @@ app.use(express.json());
 // ===============================
 // DATABASE CONNECTION
 // ===============================
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
 
 
 // ===============================
