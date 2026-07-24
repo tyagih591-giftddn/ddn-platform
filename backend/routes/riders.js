@@ -4,6 +4,9 @@ const bcrypt = require("bcryptjs");
 const pool = require("../config/database");
 const authenticateToken = require("../middleware/auth");
 const allowRoles = require("../middleware/roles");
+const riderController = require(
+  "../controllers/riderController"
+);
 
 const router = express.Router();
 
@@ -20,16 +23,57 @@ function normalizeUsername(value) {
 function formatRider(rider) {
   return {
     id: rider.id,
+    riderCode: rider.rider_code,
     username: rider.username,
     fullName: rider.full_name,
     mobileNumber: rider.mobile_number,
+    email: rider.email,
+    address: rider.address,
+    workingArea: rider.working_area,
+    vehicleType: rider.vehicle_type,
+    vehicleNumber: rider.vehicle_number,
     availabilityStatus:
       rider.availability_status,
+    verificationStatus:
+      rider.verification_status,
+    applicationStatus:
+      rider.application_status,
     isActive: rider.is_active,
     createdAt: rider.created_at,
     updatedAt: rider.updated_at
   };
 }
+
+// ===============================
+// PUBLIC RIDER REGISTRATION
+// ===============================
+
+router.post(
+  "/riders/register",
+  riderController.registerRider
+);
+
+// ===============================
+// GET RIDER BY ID — ADMIN ONLY
+// ===============================
+
+router.get(
+  "/admin/riders/id/:riderId",
+  authenticateToken,
+  allowRoles("admin"),
+  riderController.getRiderById
+);
+
+// ===============================
+// GET RIDER BY USERNAME — ADMIN
+// ===============================
+
+router.get(
+  "/admin/riders/username/:username",
+  authenticateToken,
+  allowRoles("admin"),
+  riderController.getRiderByUsername
+);
 
 // ===============================
 // CREATE RIDER — ADMIN ONLY
@@ -110,16 +154,31 @@ router.post(
             username,
             password_hash,
             full_name,
-            mobile_number
+            mobile_number,
+            verification_status,
+            application_status,
+            is_active
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7
+          )
           RETURNING *
           `,
           [
             username,
             passwordHash,
             fullName,
-            mobileNumber || null
+            mobileNumber || null,
+            "verified",
+            "approved",
+            true
           ]
         );
 
@@ -169,10 +228,18 @@ router.get(
         await pool.query(`
           SELECT
             id,
+            rider_code,
             username,
             full_name,
             mobile_number,
+            email,
+            address,
+            working_area,
+            vehicle_type,
+            vehicle_number,
             availability_status,
+            verification_status,
+            application_status,
             is_active,
             created_at,
             updated_at

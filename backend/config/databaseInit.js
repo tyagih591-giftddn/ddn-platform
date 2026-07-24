@@ -55,9 +55,11 @@ async function createDefaultRider() {
       password_hash,
       full_name,
       availability_status,
-      is_active
+      is_active,
+      verification_status,
+      application_status
     )
-    VALUES ($1, $2, $3, $4, $5)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     `,
     [
       username,
@@ -66,7 +68,9 @@ async function createDefaultRider() {
         process.env.RIDER_FULL_NAME
       ) || "DDN Rider",
       "offline",
-      true
+      true,
+      "verified",
+      "approved"
     ]
   );
 
@@ -79,16 +83,27 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS bookings (
       id SERIAL PRIMARY KEY,
+
       booking_id VARCHAR(100)
         UNIQUE NOT NULL,
-      pickup_location TEXT NOT NULL,
-      delivery_location TEXT NOT NULL,
-      customer_name TEXT NOT NULL,
+
+      pickup_location TEXT
+        NOT NULL,
+
+      delivery_location TEXT
+        NOT NULL,
+
+      customer_name TEXT
+        NOT NULL,
+
       mobile_number VARCHAR(20)
         NOT NULL,
+
       status VARCHAR(50)
         DEFAULT 'Pending',
+
       assigned_rider VARCHAR(100),
+
       created_at TIMESTAMP
         DEFAULT CURRENT_TIMESTAMP
     )
@@ -107,7 +122,8 @@ async function initializeDatabase() {
       username VARCHAR(100)
         UNIQUE NOT NULL,
 
-      password_hash TEXT NOT NULL,
+      password_hash TEXT
+        NOT NULL,
 
       full_name VARCHAR(150)
         NOT NULL,
@@ -129,6 +145,138 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    rider_code VARCHAR(30)
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    email VARCHAR(150)
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    address TEXT
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    working_area VARCHAR(150)
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    vehicle_type VARCHAR(50)
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    vehicle_number VARCHAR(50)
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    verification_status VARCHAR(30)
+      NOT NULL DEFAULT 'pending'
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    application_status VARCHAR(30)
+      NOT NULL DEFAULT 'approved'
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS
+    idx_riders_rider_code
+    ON riders (rider_code)
+    WHERE rider_code IS NOT NULL
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS rider_documents (
+      id SERIAL PRIMARY KEY,
+
+      rider_id INTEGER
+        NOT NULL
+        REFERENCES riders(id)
+        ON DELETE CASCADE,
+
+      document_type VARCHAR(50)
+        NOT NULL,
+
+      file_path TEXT
+        NOT NULL,
+
+      document_number_last4 VARCHAR(10),
+
+      verification_status VARCHAR(30)
+        NOT NULL DEFAULT 'pending',
+
+      verification_notes TEXT,
+
+      created_at TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+      updated_at TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+      UNIQUE (rider_id, document_type)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS rider_emergency_contacts (
+      id SERIAL PRIMARY KEY,
+
+      rider_id INTEGER
+        NOT NULL
+        REFERENCES riders(id)
+        ON DELETE CASCADE,
+
+      contact_name VARCHAR(150)
+        NOT NULL,
+
+      relation VARCHAR(100),
+
+      mobile_number VARCHAR(20)
+        NOT NULL,
+
+      created_at TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS rider_verification_logs (
+      id SERIAL PRIMARY KEY,
+
+      rider_id INTEGER
+        NOT NULL
+        REFERENCES riders(id)
+        ON DELETE CASCADE,
+
+      verified_by VARCHAR(150),
+
+      action VARCHAR(50)
+        NOT NULL,
+
+      remarks TEXT,
+
+      created_at TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS
     idx_bookings_assigned_rider
     ON bookings (assigned_rider)
@@ -138,6 +286,18 @@ async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS
     idx_bookings_created_at
     ON bookings (created_at DESC)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS
+    idx_rider_documents_rider_id
+    ON rider_documents (rider_id)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS
+    idx_rider_verification_logs_rider_id
+    ON rider_verification_logs (rider_id)
   `);
 
   await createDefaultRider();
