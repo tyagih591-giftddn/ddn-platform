@@ -8,6 +8,15 @@ const riderController = require(
   "../controllers/riderController"
 );
 
+const {
+  riderDocumentUpload,
+  handleUploadError
+} = require("../middleware/upload");
+
+const {
+  generateRiderCode
+} = require("../utils/riderIdGenerator");
+
 const router = express.Router();
 
 function cleanText(value) {
@@ -44,6 +53,37 @@ function formatRider(rider) {
   };
 }
 
+function getDuplicateMessage(error) {
+  const constraint =
+    cleanText(error.constraint).toLowerCase();
+
+  const detail =
+    cleanText(error.detail).toLowerCase();
+
+  if (
+    constraint.includes("username") ||
+    detail.includes("(username)")
+  ) {
+    return "Rider username already exists";
+  }
+
+  if (
+    constraint.includes("mobile") ||
+    detail.includes("(mobile_number)")
+  ) {
+    return "Rider mobile number already exists";
+  }
+
+  if (
+    constraint.includes("rider_code") ||
+    detail.includes("(rider_code)")
+  ) {
+    return "Rider code already exists. Please try again.";
+  }
+
+  return "Rider already exists";
+}
+
 // ===============================
 // PUBLIC RIDER REGISTRATION
 // ===============================
@@ -51,6 +91,17 @@ function formatRider(rider) {
 router.post(
   "/riders/register",
   riderController.registerRider
+);
+
+// ===============================
+// RIDER DOCUMENT UPLOAD
+// ===============================
+
+router.post(
+  "/riders/:riderId/documents",
+  riderDocumentUpload,
+  handleUploadError,
+  riderController.uploadRiderDocuments
 );
 
 // ===============================
@@ -75,15 +126,13 @@ router.get(
   riderController.getRiderByUsername
 );
 
-// ===============================
-// CREATE RIDER — ADMIN ONLY
-// ===============================
-
 router.post(
   "/admin/riders",
   authenticateToken,
   allowRoles("admin"),
   async (req, res) => {
+    let client;
+
     try {
       const username =
         normalizeUsername(
@@ -121,9 +170,7 @@ router.post(
         /^[a-z0-9._-]{3,50}$/;
 
       if (
-        !usernamePattern.test(
-          username
-        )
+        !usernamePattern.test(username)
       ) {
         return res.status(400).json({
           success: false,
@@ -146,11 +193,22 @@ router.post(
           12
         );
 
+      client =
+        await pool.connect();
+
+      await client.query("BEGIN");
+
+      const riderCode =
+        await generateRiderCode(
+          client
+        );
+
       const result =
-        await pool.query(
+        await client.query(
           `
           INSERT INTO riders
           (
+            rider_code,
             username,
             password_hash,
             full_name,
@@ -167,11 +225,13 @@ router.post(
             $4,
             $5,
             $6,
-            $7
+            $7,
+            $8
           )
           RETURNING *
           `,
           [
+            riderCode,
             username,
             passwordHash,
             fullName,
@@ -182,6 +242,10 @@ router.post(
           ]
         );
 
+      await client.query(
+        "COMMIT"
+      );
+
       return res.status(201).json({
         success: true,
         message:
@@ -191,8 +255,18 @@ router.post(
             result.rows[0]
           )
       });
+
     } catch (error) {
-      if (error.code === "23505") {
+
+      if (client) {
+        await client.query(
+          "ROLLBACK"
+        );
+      }
+
+      if (
+        error.code === "23505"
+      ) {
         return res.status(409).json({
           success: false,
           message:
@@ -210,6 +284,13 @@ router.post(
         message:
           "Failed to create rider"
       });
+
+    } finally {
+
+      if (client) {
+        client.release();
+      }
+
     }
   }
 );
@@ -264,6 +345,79 @@ router.get(
         success: false,
         message:
           "Failed to load riders"
+      });
+    }
+  }
+);
+
+// ===============================
+// APPROVE RIDER — ADMIN ONLY
+// ===============================
+
+router.patch(
+  "/admin/riders/:username/approve",
+  authenticateToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const username =
+        normalizeUsername(
+          req.params.username
+        );
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rider username is required"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE riders
+          SET
+            verification_status =
+              'verified',
+            application_status =
+              'approved',
+            is_active = TRUE,
+            updated_at =
+              CURRENT_TIMESTAMP
+          WHERE username = $1
+          RETURNING *
+          `,
+          [username]
+        );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Rider not found"
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Rider approved successfully",
+        rider:
+          formatRider(
+            result.rows[0]
+          )
+      });
+    } catch (error) {
+      console.error(
+        "Approve rider error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to approve rider"
       });
     }
   }

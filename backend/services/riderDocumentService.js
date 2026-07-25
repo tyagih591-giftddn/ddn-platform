@@ -1,14 +1,10 @@
-const riderService = require(
-  "../services/riderService"
-);
-
+const riderService = require("../services/riderService");
 const riderDocumentService = require(
   "../services/riderDocumentService"
 );
 
 function sendError(res, error) {
-  const statusCode =
-    error.statusCode || 500;
+  const statusCode = error.statusCode || 500;
 
   const message =
     statusCode === 500
@@ -69,16 +65,12 @@ async function getRiderById(req, res) {
   }
 }
 
-async function getRiderByUsername(
-  req,
-  res
-) {
+async function getRiderByUsername(req, res) {
   try {
     const rider =
-      await riderService
-        .findRiderByUsername(
-          req.params.username
-        );
+      await riderService.findRiderByUsername(
+        req.params.username
+      );
 
     if (!rider) {
       return res.status(404).json({
@@ -101,39 +93,32 @@ async function uploadRiderDocuments(
   res
 ) {
   try {
-    const riderId =
-      req.params.riderId;
-
-    if (!riderId) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Rider ID is required"
-      });
-    }
+    const riderId = Number(
+      req.params.riderId
+    );
 
     if (
-      !req.files ||
-      Object.keys(req.files).length === 0
+      !riderId ||
+      Number.isNaN(riderId)
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "At least one document is required"
+          "Valid rider ID is required"
       });
     }
 
-    const documents =
+    const uploadedDocuments =
       await riderDocumentService.saveDocuments(
         riderId,
         req.files
       );
 
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
       message:
-        "Rider documents uploaded successfully",
-      documents
+        "Documents uploaded successfully",
+      documents: uploadedDocuments
     });
   } catch (error) {
     return sendError(res, error);
