@@ -42,15 +42,13 @@ function formatBooking(booking) {
 function getNextRiderStatus(
   currentStatus
 ) {
-  const transitions = {
-    Accepted: "Picked Up",
-    "Picked Up":
-      "Out for Delivery",
-    "Out for Delivery":
-      "Reached Drop Location",
-    "Reached Drop Location":
-      "Delivered"
-  };
+const transitions = {
+  Assigned: "Accepted",
+  Accepted: "Picked Up",
+  "Picked Up": "Out for Delivery",
+  "Out for Delivery": "Reached Drop Location",
+  "Reached Drop Location": "Delivered"
+};
 
   return transitions[currentStatus] || null;
 }
@@ -66,15 +64,14 @@ function canAdminChangeStatus(
     ].includes(currentStatus);
   }
 
-  const transitions = {
-    Accepted: "Picked Up",
-    "Picked Up":
-      "Out for Delivery",
-    "Out for Delivery":
-      "Reached Drop Location",
-    "Reached Drop Location":
-      "Delivered"
-  };
+ const transitions = {
+  Pending: "Assigned",
+  Assigned: "Accepted",
+  Accepted: "Picked Up",
+  "Picked Up": "Out for Delivery",
+  "Out for Delivery": "Reached Drop Location",
+  "Reached Drop Location": "Delivered"
+};
 
   return (
     transitions[currentStatus] ===

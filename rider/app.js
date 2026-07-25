@@ -350,7 +350,6 @@ function escapeHtml(value) {
 
 }
 
-
 // ===============================
 // LOAD DELIVERIES
 // ===============================
@@ -435,15 +434,18 @@ async function loadDeliveries() {
             booking.assignedRider ===
             riderUsername;
 
+          const activeStatuses = [
+            "Assigned",
+            "Accepted",
+            "Picked Up",
+            "Out for Delivery",
+            "Reached Drop Location"
+          ];
+
           const activeStatus =
-            booking.status ===
-              "Assigned" ||
-
-            booking.status ===
-              "Picked Up" ||
-
-            booking.status ===
-              "Out for Delivery";
+            activeStatuses.includes(
+              booking.status
+            );
 
           return (
             belongsToRider &&
@@ -559,12 +561,31 @@ async function loadDeliveries() {
                 onclick="
                   updateStatus(
                     '${bookingId}',
-                    'Picked Up'
+                    'Accepted'
                   )
                 "
                 ${
                   booking.status ===
                   "Assigned"
+                    ? ""
+                    : "disabled"
+                }
+              >
+                Accept Delivery
+              </button>
+
+              <button
+                class="status-button"
+                type="button"
+                onclick="
+                  updateStatus(
+                    '${bookingId}',
+                    'Picked Up'
+                  )
+                "
+                ${
+                  booking.status ===
+                  "Accepted"
                     ? ""
                     : "disabled"
                 }
@@ -597,12 +618,31 @@ async function loadDeliveries() {
                 onclick="
                   updateStatus(
                     '${bookingId}',
-                    'Delivered'
+                    'Reached Drop Location'
                   )
                 "
                 ${
                   booking.status ===
                   "Out for Delivery"
+                    ? ""
+                    : "disabled"
+                }
+              >
+                Reached Drop Location
+              </button>
+
+              <button
+                class="status-button"
+                type="button"
+                onclick="
+                  updateStatus(
+                    '${bookingId}',
+                    'Delivered'
+                  )
+                "
+                ${
+                  booking.status ===
+                  "Reached Drop Location"
                     ? ""
                     : "disabled"
                 }
@@ -636,7 +676,6 @@ async function loadDeliveries() {
   }
 
 }
-
 
 // ===============================
 // UPDATE DELIVERY STATUS
