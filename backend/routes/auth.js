@@ -266,6 +266,17 @@ router.post(
           });
         }
 
+        await pool.query(
+  `
+  UPDATE riders
+  SET
+    availability_status = 'online',
+    updated_at = CURRENT_TIMESTAMP
+  WHERE id = $1
+  `,
+  [rider.id]
+);
+
         tokenPayload = {
           riderId: rider.id,
           username: rider.username,

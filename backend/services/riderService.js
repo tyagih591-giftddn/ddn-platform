@@ -311,9 +311,66 @@ async function getRiderById(riderId) {
   return result.rows[0] || null;
 }
 
+async function updateRiderAvailability(
+  username,
+  availabilityStatus
+) {
+  const normalizedUsername =
+    normalizeUsername(username);
+
+  const normalizedStatus =
+    cleanText(
+      availabilityStatus
+    ).toLowerCase();
+
+  const allowedStatuses = [
+    "online",
+    "offline",
+    "busy"
+  ];
+
+  if (
+    !normalizedUsername ||
+    !allowedStatuses.includes(
+      normalizedStatus
+    )
+  ) {
+    const error = new Error(
+      "Invalid rider availability status"
+    );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = await pool.query(
+    `
+    UPDATE riders
+    SET
+      availability_status = $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE username = $2
+    RETURNING
+      id,
+      rider_code,
+      username,
+      availability_status,
+      is_active,
+      updated_at
+    `,
+    [
+      normalizedStatus,
+      normalizedUsername
+    ]
+  );
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   createRider,
   getRiderById,
   findRiderByUsername,
-  findRiderByMobileNumber
+  findRiderByMobileNumber,
+  updateRiderAvailability
 };
