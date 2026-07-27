@@ -554,6 +554,50 @@ async function loadDeliveries() {
                 )}
               </p>
 
+<div class="navigation-buttons">
+
+  <button
+    class="status-button"
+    type="button"
+    onclick="
+      openPickupNavigation(
+        '${escapeHtml(
+          booking.customerPickupLatitude
+        )}',
+        '${escapeHtml(
+          booking.customerPickupLongitude
+        )}',
+        '${escapeHtml(
+          booking.pickupLocation
+        )}'
+      )
+    "
+  >
+    📍 Navigate to Pickup
+  </button>
+
+  <button
+    class="status-button"
+    type="button"
+    onclick="
+      openDeliveryNavigation(
+        '${escapeHtml(
+          booking.customerDeliveryLatitude
+        )}',
+        '${escapeHtml(
+          booking.customerDeliveryLongitude
+        )}',
+        '${escapeHtml(
+          booking.deliveryLocation
+        )}'
+      )
+    "
+  >
+    📍 Navigate to Delivery
+  </button>
+
+</div>
+
               <p>
                 <strong>
                   Status:
@@ -1224,5 +1268,67 @@ async function updateStatus(
     );
 
   }
+
+}
+
+// ===============================
+// GOOGLE MAPS NAVIGATION
+// ===============================
+
+function openPickupNavigation(
+  latitude,
+  longitude,
+  address
+) {
+
+  if (
+    latitude &&
+    longitude &&
+    latitude !== "null" &&
+    longitude !== "null"
+  ) {
+
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
+      "_blank"
+    );
+
+    return;
+
+  }
+
+  window.open(
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+    "_blank"
+  );
+
+}
+
+function openDeliveryNavigation(
+  latitude,
+  longitude,
+  address
+) {
+
+  if (
+    latitude &&
+    longitude &&
+    latitude !== "null" &&
+    longitude !== "null"
+  ) {
+
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
+      "_blank"
+    );
+
+    return;
+
+  }
+
+  window.open(
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+    "_blank"
+  );
 
 }
