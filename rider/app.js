@@ -480,9 +480,14 @@ async function loadDeliveries() {
       deliveries.map(
         booking => {
 
+          const rawBookingId =
+            String(
+              booking.bookingId || ""
+            );
+
           const bookingId =
             escapeHtml(
-              booking.bookingId
+              rawBookingId
             );
 
           return `
@@ -560,7 +565,7 @@ async function loadDeliveries() {
                 type="button"
                 onclick="
                   updateStatus(
-                    '${bookingId}',
+                    '${rawBookingId}',
                     'Accepted'
                   )
                 "
@@ -574,31 +579,57 @@ async function loadDeliveries() {
                 Accept Delivery
               </button>
 
-              <button
-                class="status-button"
-                type="button"
-                onclick="
-                  updateStatus(
-                    '${bookingId}',
-                    'Picked Up'
-                  )
-                "
-                ${
-                  booking.status ===
-                  "Accepted"
-                    ? ""
-                    : "disabled"
-                }
-              >
-                Mark Picked Up
-              </button>
+              ${
+                booking.status ===
+                "Accepted"
+                  ? `
+
+                    <div class="proof-section">
+
+                      <p>
+                        <strong>
+                          Pickup Proof Photo:
+                        </strong>
+                      </p>
+
+                      <input
+                        id="pickup-photo-${rawBookingId}"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        capture="environment"
+                      >
+
+                      <br><br>
+
+                      <button
+                        class="status-button"
+                        type="button"
+                        onclick="
+                          uploadProof(
+                            '${rawBookingId}',
+                            'pickup'
+                          )
+                        "
+                      >
+                        Upload Pickup Photo
+                      </button>
+
+                      <p
+                        id="pickup-message-${rawBookingId}"
+                      ></p>
+
+                    </div>
+
+                  `
+                  : ""
+              }
 
               <button
                 class="status-button"
                 type="button"
                 onclick="
                   updateStatus(
-                    '${bookingId}',
+                    '${rawBookingId}',
                     'Out for Delivery'
                   )
                 "
@@ -617,7 +648,7 @@ async function loadDeliveries() {
                 type="button"
                 onclick="
                   updateStatus(
-                    '${bookingId}',
+                    '${rawBookingId}',
                     'Reached Drop Location'
                   )
                 "
@@ -631,24 +662,50 @@ async function loadDeliveries() {
                 Reached Drop Location
               </button>
 
-              <button
-                class="status-button"
-                type="button"
-                onclick="
-                  updateStatus(
-                    '${bookingId}',
-                    'Delivered'
-                  )
-                "
-                ${
-                  booking.status ===
-                  "Reached Drop Location"
-                    ? ""
-                    : "disabled"
-                }
-              >
-                Mark Delivered
-              </button>
+              ${
+                booking.status ===
+                "Reached Drop Location"
+                  ? `
+
+                    <div class="proof-section">
+
+                      <p>
+                        <strong>
+                          Delivery Proof Photo:
+                        </strong>
+                      </p>
+
+                      <input
+                        id="delivery-photo-${rawBookingId}"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        capture="environment"
+                      >
+
+                      <br><br>
+
+                      <button
+                        class="status-button"
+                        type="button"
+                        onclick="
+                          uploadProof(
+                            '${rawBookingId}',
+                            'delivery'
+                          )
+                        "
+                      >
+                        Upload Delivery Photo
+                      </button>
+
+                      <p
+                        id="delivery-message-${rawBookingId}"
+                      ></p>
+
+                    </div>
+
+                  `
+                  : ""
+              }
 
             </div>
 
@@ -672,6 +729,334 @@ async function loadDeliveries() {
         }
       </p>
     `;
+
+  }
+
+}
+
+
+// ===============================
+// GET CURRENT GPS LOCATION
+// ===============================
+
+function getCurrentLocation() {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      if (!navigator.geolocation) {
+
+        reject(
+          new Error(
+            "GPS location is not supported on this device."
+          )
+        );
+
+        return;
+
+      }
+
+      navigator.geolocation.getCurrentPosition(
+
+        position => {
+
+          resolve({
+            latitude:
+              position.coords.latitude,
+
+            longitude:
+              position.coords.longitude
+          });
+
+        },
+
+        error => {
+
+          let message =
+            "Unable to get GPS location.";
+
+          if (error.code === 1) {
+
+            message =
+              "Location permission denied. Please allow location access.";
+
+          } else if (
+            error.code === 2
+          ) {
+
+            message =
+              "Your current location is unavailable.";
+
+          } else if (
+            error.code === 3
+          ) {
+
+            message =
+              "Location request timed out. Please try again.";
+
+          }
+
+          reject(
+            new Error(message)
+          );
+
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0
+        }
+
+      );
+
+    }
+  );
+
+}
+
+
+// ===============================
+// UPLOAD PICKUP OR DELIVERY PROOF
+// ===============================
+
+async function uploadProof(
+  bookingId,
+  proofType
+) {
+
+  const token =
+    getRiderToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+
+  }
+
+  const isPickup =
+    proofType === "pickup";
+
+  const inputId =
+    isPickup
+      ? `pickup-photo-${bookingId}`
+      : `delivery-photo-${bookingId}`;
+
+  const messageId =
+    isPickup
+      ? `pickup-message-${bookingId}`
+      : `delivery-message-${bookingId}`;
+
+  const photoInput =
+    document.getElementById(
+      inputId
+    );
+
+  const messageElement =
+    document.getElementById(
+      messageId
+    );
+
+  if (
+    !photoInput ||
+    !photoInput.files ||
+    photoInput.files.length === 0
+  ) {
+
+    alert(
+      isPickup
+        ? "Please select a pickup proof photo."
+        : "Please select a delivery proof photo."
+    );
+
+    return;
+
+  }
+
+  const selectedFile =
+    photoInput.files[0];
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp"
+  ];
+
+  if (
+    !allowedTypes.includes(
+      selectedFile.type
+    )
+  ) {
+
+    alert(
+      "Only JPG, JPEG, PNG and WEBP images are allowed."
+    );
+
+    return;
+
+  }
+
+  const maximumFileSize =
+    5 * 1024 * 1024;
+
+  if (
+    selectedFile.size >
+    maximumFileSize
+  ) {
+
+    alert(
+      "Proof photo must be 5 MB or smaller."
+    );
+
+    return;
+
+  }
+
+  const confirmed =
+    confirm(
+      isPickup
+        ? "Upload pickup photo with your current GPS location?"
+        : "Upload delivery photo with your current GPS location?"
+    );
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
+  try {
+
+    if (messageElement) {
+
+      messageElement.textContent =
+        "Getting current GPS location...";
+
+      messageElement.style.color =
+        "#333";
+
+    }
+
+    const location =
+      await getCurrentLocation();
+
+    if (messageElement) {
+
+      messageElement.textContent =
+        "Uploading proof photo...";
+
+    }
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      "proofPhoto",
+      selectedFile
+    );
+
+    formData.append(
+      "latitude",
+      String(
+        location.latitude
+      )
+    );
+
+    formData.append(
+      "longitude",
+      String(
+        location.longitude
+      )
+    );
+
+    const routeName =
+      isPickup
+        ? "pickup-proof"
+        : "delivery-proof";
+
+    const response =
+      await fetch(
+        `${API_URL}/${bookingId}/${routeName}`,
+        {
+          method: "POST",
+
+          headers: {
+            "Authorization":
+              `Bearer ${token}`
+          },
+
+          body: formData
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+
+      return;
+
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Proof photo upload failed."
+      );
+
+    }
+
+    if (messageElement) {
+
+      messageElement.textContent =
+        data.message ||
+        "Proof photo uploaded successfully.";
+
+      messageElement.style.color =
+        "green";
+
+    }
+
+    alert(
+      data.message ||
+      "Proof photo uploaded successfully!"
+    );
+
+    await loadDeliveries();
+
+  } catch (error) {
+
+    console.error(
+      "Proof upload error:",
+      error
+    );
+
+    if (messageElement) {
+
+      messageElement.textContent =
+        error.message ||
+        "Unable to upload proof photo.";
+
+      messageElement.style.color =
+        "red";
+
+    }
+
+    alert(
+      error.message ||
+      "Unable to upload proof photo."
+    );
 
   }
 
