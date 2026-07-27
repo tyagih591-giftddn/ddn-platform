@@ -5,9 +5,13 @@ const authenticateToken = require("../middleware/auth");
 const allowRoles = require("../middleware/roles");
 
 const {
-  pickupProofUpload,
-  deliveryProofUpload
-} = require("../middleware/uploadProof");
+  uploadProofPhoto,
+  handleProofUploadError
+} = require("../middleware/proofUpload");
+
+const {
+  uploadBufferToCloudinary
+} = require("../services/cloudinaryService");
 
 const router = express.Router();
 
@@ -575,7 +579,8 @@ router.post(
   "/:bookingId/pickup-proof",
   authenticateToken,
   allowRoles("rider"),
-  pickupProofUpload.single("photo"),
+  uploadProofPhoto,
+  handleProofUploadError,
   async (req, res) => {
     try {
       const bookingId =
@@ -645,8 +650,14 @@ router.post(
         });
       }
 
-      const photoUrl =
-        `/uploads/pickup-proofs/${req.file.filename}`;
+  const uploadResult =
+  await uploadBufferToCloudinary({
+    buffer: req.file.buffer,
+    folder: "DDN/pickup-proofs",
+    publicId: `${bookingId}-${Date.now()}`
+  });
+
+const photoUrl = uploadResult.secure_url;
 
       const result =
         await pool.query(
@@ -671,7 +682,7 @@ router.post(
           `,
           [
             photoUrl,
-            req.file.filename,
+           uploadResult.public_id,
             req.file.size,
             req.file.mimetype,
             numericLatitude,
@@ -884,7 +895,8 @@ router.post(
   "/:bookingId/delivery-proof",
   authenticateToken,
   allowRoles("rider"),
-  deliveryProofUpload.single("photo"),
+  uploadProofPhoto,
+handleProofUploadError,
   async (req, res) => {
     try {
       const bookingId =
@@ -937,8 +949,14 @@ router.post(
         });
       }
 
-      const photoUrl =
-        `/uploads/delivery-proofs/${req.file.filename}`;
+     const uploadResult =
+  await uploadBufferToCloudinary({
+    buffer: req.file.buffer,
+    folder: "DDN/delivery-proofs",
+    publicId: `${bookingId}-${Date.now()}`
+  });
+
+const photoUrl = uploadResult.secure_url;
 
       const result =
         await pool.query(
@@ -960,7 +978,7 @@ router.post(
           `,
           [
             photoUrl,
-            req.file.filename,
+            uploadResult.public_id,
             req.file.size,
             req.file.mimetype,
             lat,
