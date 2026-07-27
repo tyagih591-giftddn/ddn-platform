@@ -37,6 +37,13 @@ function formatBooking(booking) {
       booking.delivery_location,
     customerName: booking.customer_name,
     mobileNumber: booking.mobile_number,
+
+pinCode: booking.pin_code,
+customerPickupLatitude: booking.customer_pickup_latitude,
+customerPickupLongitude: booking.customer_pickup_longitude,
+customerDeliveryLatitude: booking.customer_delivery_latitude,
+customerDeliveryLongitude: booking.customer_delivery_longitude,
+
     status: booking.status,
     assignedRider: booking.assigned_rider,
     createdAt: booking.created_at
@@ -122,6 +129,23 @@ router.post(
           req.body.mobileNumber
         );
 
+        const pinCode =
+  cleanText(
+    req.body.pinCode
+  );
+
+const pickupLatitude =
+  req.body.pickupLatitude;
+
+const pickupLongitude =
+  req.body.pickupLongitude;
+
+const deliveryLatitude =
+  req.body.deliveryLatitude;
+
+const deliveryLongitude =
+  req.body.deliveryLongitude;
+
       if (
         !pickupLocation ||
         !deliveryLocation ||
@@ -142,33 +166,48 @@ router.post(
         await pool.query(
           `
           INSERT INTO bookings
-          (
-            booking_id,
-            pickup_location,
-            delivery_location,
-            customer_name,
-            mobile_number,
-            status
-          )
+(
+  booking_id,
+  pickup_location,
+  delivery_location,
+  customer_name,
+  mobile_number,
+  pin_code,
+  customer_pickup_latitude,
+  customer_pickup_longitude,
+  customer_delivery_latitude,
+  customer_delivery_longitude,
+  status
+)
           VALUES
-          (
-            $1,
-            $2,
-            $3,
-            $4,
-            $5,
-            $6
-          )
-          RETURNING *
-          `,
-          [
-            bookingId,
-            pickupLocation,
-            deliveryLocation,
-            customerName,
-            mobileNumber,
-            "Pending"
-          ]
+(
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6,
+  $7,
+  $8,
+  $9,
+  $10,
+  $11
+)
+RETURNING *
+`,
+[
+  bookingId,
+  pickupLocation,
+  deliveryLocation,
+  customerName,
+  mobileNumber,
+  pinCode || null,
+  pickupLatitude || null,
+  pickupLongitude || null,
+  deliveryLatitude || null,
+  deliveryLongitude || null,
+  "Pending"
+]
         );
 
       return res.status(201).json({

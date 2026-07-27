@@ -116,6 +116,36 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    pin_code VARCHAR(6)
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    customer_pickup_latitude DOUBLE PRECISION
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    customer_pickup_longitude DOUBLE PRECISION
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    customer_delivery_latitude DOUBLE PRECISION
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    customer_delivery_longitude DOUBLE PRECISION
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS riders (
       id SERIAL PRIMARY KEY,
 
