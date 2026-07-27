@@ -4,6 +4,10 @@ const API_URL =
 const LOGIN_API =
   "https://ddn-platform.onrender.com/api/auth/login";
 
+const RIDER_LOCATION_API =
+  "https://ddn-platform.onrender.com/api/rider/location";
+
+let riderLocationInterval = null;
 
 // ===============================
 // GET RIDER TOKEN
@@ -281,6 +285,8 @@ function showDashboard() {
     "block";
 
   loadDeliveries();
+
+  startLiveLocationTracking();
 
 }
 
@@ -815,6 +821,68 @@ function getCurrentLocation() {
 
 }
 
+// ===============================
+// START LIVE RIDER LOCATION
+// ===============================
+
+async function sendRiderLocation() {
+
+  const token = getRiderToken();
+
+  if (!token) {
+    return;
+  }
+
+  try {
+
+    const location =
+      await getCurrentLocation();
+
+    await fetch(
+      RIDER_LOCATION_API,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+
+        body: JSON.stringify({
+          latitude: location.latitude,
+          longitude: location.longitude
+        })
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Location Update Error:",
+      error
+    );
+
+  }
+
+}
+
+function startLiveLocationTracking() {
+
+  if (riderLocationInterval) {
+    clearInterval(
+      riderLocationInterval
+    );
+  }
+
+  sendRiderLocation();
+
+  riderLocationInterval =
+    setInterval(
+      sendRiderLocation,
+      15000
+    );
+
+}
 
 // ===============================
 // UPLOAD PICKUP OR DELIVERY PROOF
