@@ -3,59 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>DDN – District Delivery Network</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <main class="container">
+
     <h1>DDN</h1>
-    <p class="tagline">District Delivery Network</p>
+
+    <p class="tagline">
+      District Delivery Network
+    </p>
 
     <!-- Book a Delivery -->
     <section class="card">
+
       <h2>Book a Delivery</h2>
 
       <form id="bookingForm">
-        <input
-          type="text"
-          name="pickupLocation"
-          placeholder="Pickup location"
-          required
-        >
 
-        <input
-          type="text"
-          name="deliveryLocation"
-          placeholder="Delivery location"
-          required
-        >
-
+        <!-- Customer Name -->
         <input
           type="text"
           name="customerName"
-          placeholder="Customer name"
+          placeholder="Customer Name"
           required
         >
 
+        <!-- Mobile Number -->
         <input
           type="tel"
           name="mobileNumber"
-          placeholder="Mobile number"
+          placeholder="Mobile Number"
+          maxlength="10"
+          pattern="[0-9]{10}"
+          inputmode="numeric"
           required
         >
 
-        <button type="submit">Book Delivery</button>
+        <!-- Pickup Address -->
+        <div class="location-field">
+
+          <input
+            type="text"
+            id="pickupLocation"
+            name="pickupLocation"
+            placeholder="Pickup Address"
+            required
+          >
+
+          <button
+            type="button"
+            id="usePickupLocationButton"
+            class="location-button"
+          >
+            📍 Use Current Pickup Location
+          </button>
+
+          <p
+            id="pickupLocationMessage"
+            class="location-message"
+          ></p>
+
+        </div>
+
+        <!-- Delivery Address -->
+        <div class="location-field">
+
+          <input
+            type="text"
+            id="deliveryLocation"
+            name="deliveryLocation"
+            placeholder="Delivery Address"
+            required
+          >
+
+          <button
+            type="button"
+            id="useDeliveryLocationButton"
+            class="location-button"
+          >
+            📍 Use Current Drop Location
+          </button>
+
+          <p
+            id="deliveryLocationMessage"
+            class="location-message"
+          ></p>
+
+        </div>
+
+        <!-- PIN Code -->
+        <input
+          type="text"
+          name="pinCode"
+          placeholder="PIN Code"
+          maxlength="6"
+          pattern="[0-9]{6}"
+          inputmode="numeric"
+          required
+        >
+
+        <!-- Submit Button -->
+        <button type="submit">
+          Book Delivery
+        </button>
+
       </form>
 
       <div id="bookingResult"></div>
+
     </section>
 
     <!-- Track My Delivery -->
     <section class="card">
+
       <h2>Track My Delivery</h2>
 
       <form id="trackingForm">
+
         <input
           type="text"
           id="trackingBookingId"
@@ -63,11 +132,16 @@
           required
         >
 
-        <button type="submit">Track Booking</button>
+        <button type="submit">
+          Track Booking
+        </button>
+
       </form>
 
       <div id="trackingResult"></div>
+
     </section>
+
   </main>
 
   <script src="app.js"></script>
