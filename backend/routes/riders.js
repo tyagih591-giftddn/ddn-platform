@@ -585,4 +585,79 @@ router.patch(
   }
 );
 
+// ===============================
+// RIDER LIVE LOCATION
+// ===============================
+
+router.post(
+  "/rider/location",
+  authenticateToken,
+  allowRoles("rider"),
+  async (req, res) => {
+    try {
+      const latitude = Number(req.body.latitude);
+      const longitude = Number(req.body.longitude);
+
+      if (
+        Number.isNaN(latitude) ||
+        Number.isNaN(longitude)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid latitude and longitude are required"
+        });
+      }
+
+      const result = await pool.query(
+        `
+        UPDATE riders
+        SET
+          current_latitude = $1,
+          current_longitude = $2,
+          last_location_updated_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+        RETURNING
+          id,
+          username,
+          current_latitude,
+          current_longitude,
+          last_location_updated_at
+        `,
+        [
+          latitude,
+          longitude,
+          req.user.riderId
+        ]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Rider not found"
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Location updated successfully",
+        location: result.rows[0]
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Update rider location error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update location"
+      });
+
+    }
+  }
+);
+
 module.exports = router;

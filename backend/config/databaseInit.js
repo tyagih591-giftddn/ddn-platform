@@ -194,6 +194,24 @@ async function initializeDatabase() {
       NOT NULL DEFAULT 'approved'
   `);
 
+    await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    current_latitude DOUBLE PRECISION
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    current_longitude DOUBLE PRECISION
+  `);
+
+  await pool.query(`
+    ALTER TABLE riders
+    ADD COLUMN IF NOT EXISTS
+    last_location_updated_at TIMESTAMPTZ
+  `);
+
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS
     idx_riders_rider_code
@@ -298,6 +316,12 @@ async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS
     idx_rider_verification_logs_rider_id
     ON rider_verification_logs (rider_id)
+  `);
+
+    await pool.query(`
+    CREATE INDEX IF NOT EXISTS
+    idx_riders_last_location_updated_at
+    ON riders (last_location_updated_at DESC)
   `);
 
   await createDefaultRider();
