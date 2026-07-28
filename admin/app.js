@@ -14,6 +14,14 @@ let adminMarkers = [];
 
 let adminRoutes = [];
 
+// ===============================
+// AUTO REFRESH
+// ===============================
+
+let autoRefreshInterval = null;
+
+const AUTO_REFRESH_TIME = 15000; // 15 seconds
+
 function clearAdminMap() {
 
   adminMarkers.forEach(marker => {
@@ -713,6 +721,8 @@ function showDashboard() {
 
   loadBookings();
 
+startAutoRefresh();
+
 }
 
 
@@ -1152,6 +1162,30 @@ loadAdminLiveMap(
 
 }
 
+// ===============================
+// START AUTO REFRESH
+// ===============================
+
+function startAutoRefresh() {
+
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+
+  autoRefreshInterval = setInterval(() => {
+
+    if (
+      document.hidden ||
+      !getAdminToken()
+    ) {
+      return;
+    }
+
+    loadBookings();
+
+  }, AUTO_REFRESH_TIME);
+
+}
 
 // ===============================
 // ASSIGN RIDER
