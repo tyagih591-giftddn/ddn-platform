@@ -33,16 +33,19 @@ function formatBooking(booking) {
   return {
     bookingId: booking.booking_id,
     pickupLocation: booking.pickup_location,
-    deliveryLocation:
-      booking.delivery_location,
+    deliveryLocation: booking.delivery_location,
     customerName: booking.customer_name,
     mobileNumber: booking.mobile_number,
 
-pinCode: booking.pin_code,
-customerPickupLatitude: booking.customer_pickup_latitude,
-customerPickupLongitude: booking.customer_pickup_longitude,
-customerDeliveryLatitude: booking.customer_delivery_latitude,
-customerDeliveryLongitude: booking.customer_delivery_longitude,
+    pinCode: booking.pin_code,
+    customerPickupLatitude:
+      booking.customer_pickup_latitude,
+    customerPickupLongitude:
+      booking.customer_pickup_longitude,
+    customerDeliveryLatitude:
+      booking.customer_delivery_latitude,
+    customerDeliveryLongitude:
+      booking.customer_delivery_longitude,
 
     status: booking.status,
     assignedRider: booking.assigned_rider,
@@ -1395,6 +1398,132 @@ router.patch(
           "Failed to update booking status"
       });
     }
+  }
+);
+
+// ===============================
+// LIVE CUSTOMER TRACKING — PUBLIC
+// ===============================
+
+router.get(
+  "/:bookingId/tracking",
+  async (req, res) => {
+
+    try {
+
+      const bookingId =
+        cleanText(
+          req.params.bookingId
+        );
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+            b.booking_id,
+            b.status,
+            b.pickup_location,
+            b.delivery_location,
+            b.customer_pickup_latitude,
+            b.customer_pickup_longitude,
+            b.customer_delivery_latitude,
+            b.customer_delivery_longitude,
+            b.assigned_rider,
+
+            r.current_latitude,
+            r.current_longitude,
+            r.last_location_updated_at
+
+          FROM bookings b
+
+          LEFT JOIN riders r
+          ON r.username = b.assigned_rider
+
+          WHERE b.booking_id = $1
+
+          LIMIT 1
+          `,
+          [bookingId]
+        );
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found"
+        });
+
+      }
+
+      const booking =
+        result.rows[0];
+
+      return res.json({
+
+        success: true,
+
+        tracking: {
+
+          bookingId:
+            booking.booking_id,
+
+          status:
+            booking.status,
+
+          pickupLocation:
+            booking.pickup_location,
+
+          deliveryLocation:
+            booking.delivery_location,
+
+          pickupLatitude:
+            booking.customer_pickup_latitude,
+
+          pickupLongitude:
+            booking.customer_pickup_longitude,
+
+          deliveryLatitude:
+            booking.customer_delivery_latitude,
+
+          deliveryLongitude:
+            booking.customer_delivery_longitude,
+
+          riderLatitude:
+            booking.current_latitude,
+
+          riderLongitude:
+            booking.current_longitude,
+
+          assignedRider:
+            booking.assigned_rider,
+
+          lastUpdated:
+            booking.last_location_updated_at
+
+        }
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Tracking API error:",
+        error
+      );
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Failed to load tracking"
+
+      });
+
+    }
+
   }
 );
 
