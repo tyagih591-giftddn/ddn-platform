@@ -1,6 +1,8 @@
 const API_BASE_URL =
   "https://ddn-platform.onrender.com/api/bookings";
 
+const AUTO_REFRESH_TIME = 15000;
+
 const bookingIdInput =
   document.getElementById("bookingId");
 
@@ -42,6 +44,7 @@ let pickupMarker = null;
 let deliveryMarker = null;
 let riderMarker = null;
 let routeLine = null;
+let mapAlreadyFitted = false;
 
 function showMessage(
   message,
@@ -66,13 +69,31 @@ function formatDate(dateValue) {
   return date.toLocaleString("en-IN");
 }
 
+function convertCoordinate(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue)) {
+    return null;
+  }
+
+  return numberValue;
+}
+
 function isValidCoordinate(
   latitude,
   longitude
 ) {
   return (
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
+    latitude !== null &&
+    longitude !== null &&
     latitude >= -90 &&
     latitude <= 90 &&
     longitude >= -180 &&
@@ -86,18 +107,22 @@ function createIcon(
 ) {
   return L.divIcon({
     className: "custom-map-marker",
+
     html: `
       <div class="marker-wrapper">
         <div class="marker-icon">
           ${emoji}
         </div>
+
         <div class="marker-label">
           ${label}
         </div>
       </div>
     `,
-    iconSize: [100, 50],
-    iconAnchor: [50, 25]
+
+    iconSize: [100, 58],
+    iconAnchor: [50, 45],
+    popupAnchor: [0, -40]
   });
 }
 
@@ -109,9 +134,13 @@ function initializeMap(
     return;
   }
 
-  map = L.map("trackingMap", {
-    zoomControl: true
-  }).setView(
+  map = L.map(
+    "trackingMap",
+    {
+      zoomControl: true,
+      preferCanvas: true
+    }
+  ).setView(
     [latitude, longitude],
     14
   );
@@ -119,33 +148,164 @@ function initializeMap(
   L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
+      minZoom: 3,
       maxZoom: 19,
+      tileSize: 256,
+      zoomOffset: 0,
       attribution:
-        '&copy; OpenStreetMap contributors'
+        "&copy; OpenStreetMap contributors"
     }
   ).addTo(map);
 }
 
-function updateInteractiveMap(
-  tracking
+function updateOrCreateMarker(
+  existingMarker,
+  position,
+  icon,
+  popupContent
 ) {
+  if (!existingMarker) {
+    existingMarker = L.marker(
+      position,
+      {
+        icon
+      }
+    ).addTo(map);
+  } else {
+    existingMarker.setLatLng(
+      position
+    );
+
+    existingMarker.setIcon(
+      icon
+    );
+  }
+
+  existingMarker.bindPopup(
+    popupContent
+  );
+
+  return existingMarker;
+}
+
+function removeMarker(marker) {
+  if (
+    marker &&
+    map
+  ) {
+    map.removeLayer(marker);
+  }
+
+  return null;
+}
+
+function resizeAndPositionMap(
+  visiblePoints,
+  forceFit = false
+) {
+  if (!map) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      map.invalidateSize({
+        pan: false,
+        animate: false
+      });
+
+      if (
+        visiblePoints.length === 0
+      ) {
+        return;
+      }
+
+      if (
+        visiblePoints.length === 1
+      ) {
+        if (
+          forceFit ||
+          !mapAlreadyFitted
+        ) {
+          map.setView(
+            visiblePoints[0],
+            15,
+            {
+              animate: false
+            }
+          );
+
+          mapAlreadyFitted = true;
+        }
+
+        return;
+      }
+
+      if (
+        forceFit ||
+        !mapAlreadyFitted
+      ) {
+        const bounds =
+          L.latLngBounds(
+            visiblePoints
+          );
+
+        map.fitBounds(
+          bounds,
+          {
+            padding: [55, 55],
+            maxZoom: 16,
+            animate: false
+          }
+        );
+
+        mapAlreadyFitted = true;
+      }
+    });
+  });
+}
+
+function updateInteractiveMap(
+  tracking,
+  forceFit = false
+) {
+  if (
+    typeof L === "undefined"
+  ) {
+    throw new Error(
+      "Map library could not load. Please refresh the page."
+    );
+  }
+
   const pickupLatitude =
-    Number(tracking.pickupLatitude);
+    convertCoordinate(
+      tracking.pickupLatitude
+    );
 
   const pickupLongitude =
-    Number(tracking.pickupLongitude);
+    convertCoordinate(
+      tracking.pickupLongitude
+    );
 
   const deliveryLatitude =
-    Number(tracking.deliveryLatitude);
+    convertCoordinate(
+      tracking.deliveryLatitude
+    );
 
   const deliveryLongitude =
-    Number(tracking.deliveryLongitude);
+    convertCoordinate(
+      tracking.deliveryLongitude
+    );
 
   const riderLatitude =
-    Number(tracking.riderLatitude);
+    convertCoordinate(
+      tracking.riderLatitude
+    );
 
   const riderLongitude =
-    Number(tracking.riderLongitude);
+    convertCoordinate(
+      tracking.riderLongitude
+    );
 
   const pickupValid =
     isValidCoordinate(
@@ -177,18 +337,23 @@ function updateInteractiveMap(
     return;
   }
 
-  let centerLatitude;
-  let centerLongitude;
+  let firstPosition;
 
   if (riderValid) {
-    centerLatitude = riderLatitude;
-    centerLongitude = riderLongitude;
+    firstPosition = [
+      riderLatitude,
+      riderLongitude
+    ];
   } else if (pickupValid) {
-    centerLatitude = pickupLatitude;
-    centerLongitude = pickupLongitude;
+    firstPosition = [
+      pickupLatitude,
+      pickupLongitude
+    ];
   } else {
-    centerLatitude = deliveryLatitude;
-    centerLongitude = deliveryLongitude;
+    firstPosition = [
+      deliveryLatitude,
+      deliveryLongitude
+    ];
   }
 
   mapContainer.classList.add(
@@ -196,18 +361,12 @@ function updateInteractiveMap(
   );
 
   initializeMap(
-    centerLatitude,
-    centerLongitude
-  );
-
-  setTimeout(
-    () => {
-      map.invalidateSize();
-    },
-    100
+    firstPosition[0],
+    firstPosition[1]
   );
 
   const visiblePoints = [];
+  const routePoints = [];
 
   if (pickupValid) {
     const pickupPosition = [
@@ -219,58 +378,29 @@ function updateInteractiveMap(
       pickupPosition
     );
 
-    if (!pickupMarker) {
-      pickupMarker = L.marker(
-        pickupPosition,
-        {
-          icon: createIcon(
-            "📍",
-            "Pickup"
-          )
-        }
-      ).addTo(map);
-    } else {
-      pickupMarker.setLatLng(
-        pickupPosition
-      );
-    }
-
-    pickupMarker.bindPopup(`
-      <strong>Pickup Location</strong><br>
-      ${tracking.pickupLocation || "Not available"}
-    `);
-  }
-
-  if (deliveryValid) {
-    const deliveryPosition = [
-      deliveryLatitude,
-      deliveryLongitude
-    ];
-
-    visiblePoints.push(
-      deliveryPosition
+    routePoints.push(
+      pickupPosition
     );
 
-    if (!deliveryMarker) {
-      deliveryMarker = L.marker(
-        deliveryPosition,
-        {
-          icon: createIcon(
-            "🏁",
-            "Delivery"
-          )
-        }
-      ).addTo(map);
-    } else {
-      deliveryMarker.setLatLng(
-        deliveryPosition
+    pickupMarker =
+      updateOrCreateMarker(
+        pickupMarker,
+        pickupPosition,
+        createIcon(
+          "📍",
+          "Pickup"
+        ),
+        `
+          <strong>Pickup Location</strong>
+          <br>
+          ${tracking.pickupLocation || "Not available"}
+        `
       );
-    }
-
-    deliveryMarker.bindPopup(`
-      <strong>Delivery Location</strong><br>
-      ${tracking.deliveryLocation || "Not available"}
-    `);
+  } else {
+    pickupMarker =
+      removeMarker(
+        pickupMarker
+      );
   }
 
   if (riderValid) {
@@ -283,26 +413,64 @@ function updateInteractiveMap(
       riderPosition
     );
 
-    if (!riderMarker) {
-      riderMarker = L.marker(
-        riderPosition,
-        {
-          icon: createIcon(
-            "🛵",
-            "Rider"
-          )
-        }
-      ).addTo(map);
-    } else {
-      riderMarker.setLatLng(
-        riderPosition
-      );
-    }
+    routePoints.push(
+      riderPosition
+    );
 
-    riderMarker.bindPopup(`
-      <strong>Rider Live Location</strong><br>
-      ${tracking.assignedRider || "Assigned rider"}
-    `);
+    riderMarker =
+      updateOrCreateMarker(
+        riderMarker,
+        riderPosition,
+        createIcon(
+          "🛵",
+          "Rider"
+        ),
+        `
+          <strong>Rider Live Location</strong>
+          <br>
+          ${tracking.assignedRider || "Assigned rider"}
+        `
+      );
+  } else {
+    riderMarker =
+      removeMarker(
+        riderMarker
+      );
+  }
+
+  if (deliveryValid) {
+    const deliveryPosition = [
+      deliveryLatitude,
+      deliveryLongitude
+    ];
+
+    visiblePoints.push(
+      deliveryPosition
+    );
+
+    routePoints.push(
+      deliveryPosition
+    );
+
+    deliveryMarker =
+      updateOrCreateMarker(
+        deliveryMarker,
+        deliveryPosition,
+        createIcon(
+          "🏁",
+          "Delivery"
+        ),
+        `
+          <strong>Delivery Location</strong>
+          <br>
+          ${tracking.deliveryLocation || "Not available"}
+        `
+      );
+  } else {
+    deliveryMarker =
+      removeMarker(
+        deliveryMarker
+      );
   }
 
   if (routeLine) {
@@ -313,65 +481,30 @@ function updateInteractiveMap(
     routeLine = null;
   }
 
-  const routePoints = [];
-
-  if (pickupValid) {
-    routePoints.push([
-      pickupLatitude,
-      pickupLongitude
-    ]);
-  }
-
-  if (riderValid) {
-    routePoints.push([
-      riderLatitude,
-      riderLongitude
-    ]);
-  }
-
-  if (deliveryValid) {
-    routePoints.push([
-      deliveryLatitude,
-      deliveryLongitude
-    ]);
-  }
-
-  if (routePoints.length >= 2) {
+  if (
+    routePoints.length >= 2
+  ) {
     routeLine = L.polyline(
       routePoints,
       {
         weight: 5,
-        opacity: 0.75,
-        dashArray: "10, 8"
+        opacity: 0.8,
+        dashArray: "10, 8",
+        lineCap: "round",
+        lineJoin: "round"
       }
     ).addTo(map);
   }
 
-  if (visiblePoints.length === 1) {
-    map.setView(
-      visiblePoints[0],
-      15
-    );
-  } else if (
-    visiblePoints.length > 1
-  ) {
-    const bounds =
-      L.latLngBounds(
-        visiblePoints
-      );
-
-    map.fitBounds(
-      bounds,
-      {
-        padding: [50, 50],
-        maxZoom: 16
-      }
-    );
-  }
+  resizeAndPositionMap(
+    visiblePoints,
+    forceFit
+  );
 }
 
 function renderTracking(
-  tracking
+  tracking,
+  forceFit = false
 ) {
   bookingNumber.textContent =
     tracking.bookingId || "-";
@@ -399,7 +532,8 @@ function renderTracking(
   );
 
   updateInteractiveMap(
-    tracking
+    tracking,
+    forceFit
   );
 }
 
@@ -420,15 +554,30 @@ async function loadTracking(
     const response = await fetch(
       `${API_BASE_URL}/${encodeURIComponent(
         bookingId
-      )}/tracking`
+      )}/tracking`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        },
+        cache: "no-store"
+      }
     );
 
-    const data =
-      await response.json();
+    let data;
+
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error(
+        "Server returned an invalid response"
+      );
+    }
 
     if (
       !response.ok ||
-      !data.success
+      !data.success ||
+      !data.tracking
     ) {
       throw new Error(
         data.message ||
@@ -437,7 +586,8 @@ async function loadTracking(
     }
 
     renderTracking(
-      data.tracking
+      data.tracking,
+      !isAutoRefresh
     );
 
     showMessage(
@@ -446,7 +596,6 @@ async function loadTracking(
         : "Booking found successfully",
       "success"
     );
-
   } catch (error) {
     console.error(
       "Tracking error:",
@@ -468,7 +617,6 @@ async function loadTracking(
       "Unable to load tracking",
       "error"
     );
-
   } finally {
     if (!isAutoRefresh) {
       trackButton.disabled = false;
@@ -476,24 +624,34 @@ async function loadTracking(
   }
 }
 
-function startAutoRefresh(
-  bookingId
-) {
+function stopAutoRefresh() {
   if (refreshInterval) {
     clearInterval(
       refreshInterval
     );
+
+    refreshInterval = null;
   }
+}
+
+function startAutoRefresh(
+  bookingId
+) {
+  stopAutoRefresh();
 
   refreshInterval =
     setInterval(
       () => {
+        if (document.hidden) {
+          return;
+        }
+
         loadTracking(
           bookingId,
           true
         );
       },
-      15000
+      AUTO_REFRESH_TIME
     );
 }
 
@@ -507,14 +665,23 @@ function trackBooking() {
       "error"
     );
 
+    bookingIdInput.focus();
+
     return;
+  }
+
+  if (
+    bookingId !== activeBookingId
+  ) {
+    mapAlreadyFitted = false;
   }
 
   activeBookingId =
     bookingId;
 
   loadTracking(
-    activeBookingId
+    activeBookingId,
+    false
   );
 
   startAutoRefresh(
@@ -538,13 +705,34 @@ bookingIdInput.addEventListener(
   }
 );
 
-window.addEventListener(
-  "beforeunload",
+document.addEventListener(
+  "visibilitychange",
   () => {
-    if (refreshInterval) {
-      clearInterval(
-        refreshInterval
+    if (
+      !document.hidden &&
+      activeBookingId
+    ) {
+      loadTracking(
+        activeBookingId,
+        true
       );
     }
   }
+);
+
+window.addEventListener(
+  "resize",
+  () => {
+    if (map) {
+      map.invalidateSize({
+        pan: false,
+        animate: false
+      });
+    }
+  }
+);
+
+window.addEventListener(
+  "beforeunload",
+  stopAutoRefresh
 );
