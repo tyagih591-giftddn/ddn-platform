@@ -1,6 +1,11 @@
 const express = require("express");
 
 const pool = require("../config/database");
+
+const {
+  geocodeAddress
+} = require("../services/geocodingService");
+
 const authenticateToken = require("../middleware/auth");
 const allowRoles = require("../middleware/roles");
 
@@ -137,17 +142,29 @@ router.post(
     req.body.pinCode
   );
 
-const pickupLatitude =
-  req.body.pickupLatitude;
+  let pickupLatitude =
+  req.body.pickupLatitude !== null &&
+  req.body.pickupLatitude !== undefined
+    ? Number(req.body.pickupLatitude)
+    : null;
 
-const pickupLongitude =
-  req.body.pickupLongitude;
+let pickupLongitude =
+  req.body.pickupLongitude !== null &&
+  req.body.pickupLongitude !== undefined
+    ? Number(req.body.pickupLongitude)
+    : null;
 
-const deliveryLatitude =
-  req.body.deliveryLatitude;
+let deliveryLatitude =
+  req.body.deliveryLatitude !== null &&
+  req.body.deliveryLatitude !== undefined
+    ? Number(req.body.deliveryLatitude)
+    : null;
 
-const deliveryLongitude =
-  req.body.deliveryLongitude;
+let deliveryLongitude =
+  req.body.deliveryLongitude !== null &&
+  req.body.deliveryLongitude !== undefined
+    ? Number(req.body.deliveryLongitude)
+    : null;
 
       if (
         !pickupLocation ||
@@ -161,6 +178,82 @@ const deliveryLongitude =
             "All booking fields are required"
         });
       }
+
+// =====================================
+// AUTOMATIC ADDRESS GEOCODING
+// =====================================
+
+const hasValidPickupCoordinates =
+  Number.isFinite(pickupLatitude) &&
+  Number.isFinite(pickupLongitude) &&
+  pickupLatitude >= -90 &&
+  pickupLatitude <= 90 &&
+  pickupLongitude >= -180 &&
+  pickupLongitude <= 180;
+
+const hasValidDeliveryCoordinates =
+  Number.isFinite(deliveryLatitude) &&
+  Number.isFinite(deliveryLongitude) &&
+  deliveryLatitude >= -90 &&
+  deliveryLatitude <= 90 &&
+  deliveryLongitude >= -180 &&
+  deliveryLongitude <= 180;
+
+if (!hasValidPickupCoordinates) {
+  try {
+    const pickupMapLocation =
+      await geocodeAddress(
+        `${pickupLocation}${
+          pinCode ? `, ${pinCode}` : ""
+        }`
+      );
+
+    pickupLatitude =
+      pickupMapLocation.latitude;
+
+    pickupLongitude =
+      pickupMapLocation.longitude;
+  } catch (error) {
+    console.error(
+      "Pickup address geocoding error:",
+      error.message
+    );
+
+    return res.status(400).json({
+      success: false,
+      message:
+        "Pickup address could not be located on the map. Please enter a complete address with area, city and PIN code, or use the GPS button."
+    });
+  }
+}
+
+if (!hasValidDeliveryCoordinates) {
+  try {
+    const deliveryMapLocation =
+      await geocodeAddress(
+        `${deliveryLocation}${
+          pinCode ? `, ${pinCode}` : ""
+        }`
+      );
+
+    deliveryLatitude =
+      deliveryMapLocation.latitude;
+
+    deliveryLongitude =
+      deliveryMapLocation.longitude;
+  } catch (error) {
+    console.error(
+      "Delivery address geocoding error:",
+      error.message
+    );
+
+    return res.status(400).json({
+      success: false,
+      message:
+        "Delivery address could not be located on the map. Please enter a complete address with area, city and PIN code, or use the GPS button."
+    });
+  }
+}
 
       const bookingId =
         `DDN-${Date.now()}`;
@@ -205,10 +298,10 @@ RETURNING *
   customerName,
   mobileNumber,
   pinCode || null,
-  pickupLatitude || null,
-  pickupLongitude || null,
-  deliveryLatitude || null,
-  deliveryLongitude || null,
+  pickupLatitude,
+pickupLongitude,
+deliveryLatitude,
+deliveryLongitude,
   "Pending"
 ]
         );
