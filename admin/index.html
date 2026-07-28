@@ -2,18 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>DDN Admin Panel</title>
-  <link rel="stylesheet" href="style.css">
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=2"
+  >
 </head>
 
 <body>
 
   <!-- Admin Login -->
-  <div id="loginSection" class="container">
+  <div
+    id="loginSection"
+    class="container"
+  >
 
     <h1>DDN Admin Login</h1>
-    <p>District Delivery Network</p>
+
+    <p>
+      District Delivery Network
+    </p>
 
     <form id="loginForm">
 
@@ -31,7 +51,9 @@
         required
       >
 
-      <button type="submit">Login</button>
+      <button type="submit">
+        Login
+      </button>
 
       <p id="loginMessage"></p>
 
@@ -41,12 +63,32 @@
 
 
   <!-- Admin Dashboard -->
-  <div id="dashboardSection" class="container" style="display: none;">
+  <div
+    id="dashboardSection"
+    class="container"
+    style="display: none;"
+  >
 
-    <h1>DDN Admin Panel</h1>
-    <p>District Delivery Network</p>
+    <div class="admin-header">
 
-    <button id="logoutButton">Logout</button>
+      <div>
+        <h1>DDN Admin Panel</h1>
+
+        <p>
+          District Delivery Network
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="logoutButton"
+        class="logout-button"
+      >
+        Logout
+      </button>
+
+    </div>
+
 
     <div class="dashboard">
 
@@ -65,22 +107,101 @@
         <h2 id="completedBookings">0</h2>
       </div>
 
+      <div class="card">
+        <h3>Active Deliveries</h3>
+        <h2 id="activeBookings">0</h2>
+      </div>
+
     </div>
 
-    <h2>Delivery Bookings</h2>
 
-    <button onclick="loadBookings()">
-      Refresh Bookings
-    </button>
+    <!-- Admin Live Map -->
+    <section class="live-map-section">
 
-    <div id="bookingsContainer">
-      <p>Loading bookings...</p>
-    </div>
+      <div class="section-heading">
+
+        <div>
+          <h2>Admin Live Delivery Map</h2>
+
+          <p>
+            View active riders and deliveries in real time
+          </p>
+        </div>
+
+        <button
+          type="button"
+          id="refreshMapButton"
+        >
+          Refresh Map
+        </button>
+
+      </div>
+
+      <div
+        id="adminMapMessage"
+        class="map-message"
+      >
+        Loading active deliveries...
+      </div>
+
+      <div id="adminLiveMap"></div>
+
+      <div class="map-legend">
+
+        <span>
+          <strong>🛵</strong>
+          Rider
+        </span>
+
+        <span>
+          <strong>📍</strong>
+          Pickup
+        </span>
+
+        <span>
+          <strong>🏁</strong>
+          Delivery
+        </span>
+
+      </div>
+
+    </section>
+
+
+    <!-- Delivery Bookings -->
+    <section class="bookings-section">
+
+      <div class="section-heading">
+
+        <div>
+          <h2>Delivery Bookings</h2>
+
+          <p>
+            Assign riders and update booking statuses
+          </p>
+        </div>
+
+        <button
+          type="button"
+          id="refreshBookingsButton"
+        >
+          Refresh Bookings
+        </button>
+
+      </div>
+
+      <div id="bookingsContainer">
+        <p>Loading bookings...</p>
+      </div>
+
+    </section>
 
   </div>
 
 
-  <script src="app.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script src="app.js?v=2"></script>
 
 </body>
 </html>

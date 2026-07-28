@@ -4,6 +4,461 @@ const API_URL =
 const LOGIN_API =
   "https://ddn-platform.onrender.com/api/auth/login";
 
+  // ===============================
+// ADMIN LIVE MAP
+// ===============================
+
+let adminMap = null;
+
+let adminMarkers = [];
+
+let adminRoutes = [];
+
+function clearAdminMap() {
+
+  adminMarkers.forEach(marker => {
+    adminMap.removeLayer(marker);
+  });
+
+  adminRoutes.forEach(route => {
+    adminMap.removeLayer(route);
+  });
+
+  adminMarkers = [];
+  adminRoutes = [];
+
+}
+
+function createAdminMarker(
+  emoji,
+  label
+) {
+
+  return L.divIcon({
+
+    className:
+      "admin-map-marker",
+
+    html: `
+      <div class="admin-marker-wrapper">
+
+        <div class="admin-marker-icon">
+          ${emoji}
+        </div>
+
+        <div class="admin-marker-label">
+          ${label}
+        </div>
+
+      </div>
+    `,
+
+    iconSize: [90, 50],
+    iconAnchor: [45, 45]
+
+  });
+
+}
+
+function initializeAdminMap() {
+
+  if (adminMap) {
+    return;
+  }
+
+  adminMap = L.map(
+    "adminLiveMap"
+  ).setView(
+    [28.6139, 77.2090],
+    11
+  );
+
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution:
+        "&copy; OpenStreetMap contributors"
+    }
+  ).addTo(adminMap);
+
+}
+
+function isValidMapCoordinate(
+  latitude,
+  longitude
+) {
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+}
+
+
+async function loadAdminLiveMap(
+  bookings
+) {
+  const messageElement =
+    document.getElementById(
+      "adminMapMessage"
+    );
+
+  if (
+    typeof L === "undefined"
+  ) {
+    messageElement.textContent =
+      "Map library could not load.";
+
+    return;
+  }
+
+  initializeAdminMap();
+  clearAdminMap();
+
+  const activeBookings =
+    bookings.filter(
+      booking =>
+        booking.status !==
+          "Delivered" &&
+        booking.status !==
+          "Cancelled"
+    );
+
+  if (
+    activeBookings.length === 0
+  ) {
+    messageElement.textContent =
+      "No active deliveries found.";
+
+    adminMap.setView(
+      [28.6139, 77.2090],
+      11
+    );
+
+    setTimeout(() => {
+      adminMap.invalidateSize();
+    }, 200);
+
+    return;
+  }
+
+  messageElement.textContent =
+    "Loading live rider locations...";
+
+  const trackingRequests =
+    activeBookings.map(
+      async booking => {
+        try {
+          const response =
+            await fetch(
+              `${API_URL}/${encodeURIComponent(
+                booking.bookingId
+              )}/tracking`,
+              {
+                method: "GET",
+                cache: "no-store"
+              }
+            );
+
+          const data =
+            await response.json();
+
+          if (
+            !response.ok ||
+            !data.success ||
+            !data.tracking
+          ) {
+            return null;
+          }
+
+          return data.tracking;
+        } catch (error) {
+          console.error(
+            "Admin tracking error:",
+            error
+          );
+
+          return null;
+        }
+      }
+    );
+
+  const trackingResults =
+    await Promise.all(
+      trackingRequests
+    );
+
+  const validTrackingResults =
+    trackingResults.filter(
+      tracking => tracking
+    );
+
+  const visiblePoints = [];
+
+  validTrackingResults.forEach(
+    tracking => {
+      const pickupLatitude =
+        Number(
+          tracking.pickupLatitude
+        );
+
+      const pickupLongitude =
+        Number(
+          tracking.pickupLongitude
+        );
+
+      const deliveryLatitude =
+        Number(
+          tracking.deliveryLatitude
+        );
+
+      const deliveryLongitude =
+        Number(
+          tracking.deliveryLongitude
+        );
+
+      const riderLatitude =
+        Number(
+          tracking.riderLatitude
+        );
+
+      const riderLongitude =
+        Number(
+          tracking.riderLongitude
+        );
+
+      const pickupValid =
+        isValidMapCoordinate(
+          pickupLatitude,
+          pickupLongitude
+        );
+
+      const deliveryValid =
+        isValidMapCoordinate(
+          deliveryLatitude,
+          deliveryLongitude
+        );
+
+      const riderValid =
+        isValidMapCoordinate(
+          riderLatitude,
+          riderLongitude
+        );
+
+      const routePoints = [];
+
+      if (pickupValid) {
+        const pickupPosition = [
+          pickupLatitude,
+          pickupLongitude
+        ];
+
+        visiblePoints.push(
+          pickupPosition
+        );
+
+        routePoints.push(
+          pickupPosition
+        );
+
+        const pickupMarker =
+          L.marker(
+            pickupPosition,
+            {
+              icon:
+                createAdminMarker(
+                  "📍",
+                  "Pickup"
+                )
+            }
+          ).addTo(adminMap);
+
+        pickupMarker.bindPopup(`
+          <strong>
+            Pickup
+          </strong>
+          <br>
+          Booking:
+          ${escapeHtml(
+            tracking.bookingId
+          )}
+          <br>
+          ${escapeHtml(
+            tracking.pickupLocation ||
+            "Not available"
+          )}
+        `);
+
+        adminMarkers.push(
+          pickupMarker
+        );
+      }
+
+      if (riderValid) {
+        const riderPosition = [
+          riderLatitude,
+          riderLongitude
+        ];
+
+        visiblePoints.push(
+          riderPosition
+        );
+
+        routePoints.push(
+          riderPosition
+        );
+
+        const riderMarker =
+          L.marker(
+            riderPosition,
+            {
+              icon:
+                createAdminMarker(
+                  "🛵",
+                  tracking.assignedRider ||
+                  "Rider"
+                ),
+              zIndexOffset: 1000
+            }
+          ).addTo(adminMap);
+
+        riderMarker.bindPopup(`
+          <strong>
+            Rider Live Location
+          </strong>
+          <br>
+          Rider:
+          ${escapeHtml(
+            tracking.assignedRider ||
+            "Not assigned"
+          )}
+          <br>
+          Booking:
+          ${escapeHtml(
+            tracking.bookingId
+          )}
+          <br>
+          Status:
+          ${escapeHtml(
+            tracking.status
+          )}
+        `);
+
+        adminMarkers.push(
+          riderMarker
+        );
+      }
+
+      if (deliveryValid) {
+        const deliveryPosition = [
+          deliveryLatitude,
+          deliveryLongitude
+        ];
+
+        visiblePoints.push(
+          deliveryPosition
+        );
+
+        routePoints.push(
+          deliveryPosition
+        );
+
+        const deliveryMarker =
+          L.marker(
+            deliveryPosition,
+            {
+              icon:
+                createAdminMarker(
+                  "🏁",
+                  "Delivery"
+                )
+            }
+          ).addTo(adminMap);
+
+        deliveryMarker.bindPopup(`
+          <strong>
+            Delivery
+          </strong>
+          <br>
+          Booking:
+          ${escapeHtml(
+            tracking.bookingId
+          )}
+          <br>
+          ${escapeHtml(
+            tracking.deliveryLocation ||
+            "Not available"
+          )}
+        `);
+
+        adminMarkers.push(
+          deliveryMarker
+        );
+      }
+
+      if (
+        routePoints.length >= 2
+      ) {
+        const route =
+          L.polyline(
+            routePoints,
+            {
+              weight: 4,
+              opacity: 0.75,
+              dashArray: "10, 8"
+            }
+          ).addTo(adminMap);
+
+        adminRoutes.push(
+          route
+        );
+      }
+    }
+  );
+
+  if (
+    visiblePoints.length === 0
+  ) {
+    messageElement.textContent =
+      "Active bookings found, but GPS locations are not available.";
+
+    adminMap.setView(
+      [28.6139, 77.2090],
+      11
+    );
+  } else if (
+    visiblePoints.length === 1
+  ) {
+    adminMap.setView(
+      visiblePoints[0],
+      15
+    );
+
+    messageElement.textContent =
+      `${validTrackingResults.length} active delivery loaded.`;
+  } else {
+    adminMap.fitBounds(
+      L.latLngBounds(
+        visiblePoints
+      ),
+      {
+        padding: [50, 50],
+        maxZoom: 16
+      }
+    );
+
+    messageElement.textContent =
+      `${validTrackingResults.length} active deliveries shown on map.`;
+  }
+
+  setTimeout(() => {
+    adminMap.invalidateSize();
+  }, 250);
+}
 
 // ===============================
 // GET ADMIN TOKEN
@@ -407,6 +862,15 @@ async function loadBookings() {
           "Delivered"
       ).length;
 
+      const active =
+  bookings.filter(
+    booking =>
+      booking.status !==
+        "Delivered" &&
+      booking.status !==
+        "Cancelled"
+  ).length;
+
     document
       .getElementById(
         "pendingBookings"
@@ -420,6 +884,17 @@ async function loadBookings() {
       )
       .textContent =
       completed;
+
+      document
+  .getElementById(
+    "activeBookings"
+  )
+  .textContent =
+  active;
+
+loadAdminLiveMap(
+  bookings
+);
 
     if (
       bookings.length === 0
