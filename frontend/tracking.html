@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
   <meta charset="UTF-8">
 
   <meta
@@ -14,15 +13,12 @@
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIINfQ3ynHUcMZ+fQeU8g9MZQ1fZL7S2v0uM="
-    crossorigin=""
   >
 
   <link
     rel="stylesheet"
-    href="tracking.css"
+    href="tracking.css?v=2"
   >
-
 </head>
 
 <body>
@@ -30,13 +26,11 @@
   <div class="container">
 
     <div class="header">
-
       <h1>🚚 DDN Live Tracking</h1>
 
       <p>
         Track your delivery in real time
       </p>
-
     </div>
 
     <div class="search-card">
@@ -60,8 +54,7 @@
     <div
       id="message"
       class="message"
-    >
-    </div>
+    ></div>
 
     <div
       id="trackingCard"
@@ -71,75 +64,33 @@
       <h2>Booking Details</h2>
 
       <div class="row">
-
-        <span>
-          Booking ID
-        </span>
-
-        <strong id="bookingNumber">
-          -
-        </strong>
-
+        <span>Booking ID</span>
+        <strong id="bookingNumber">-</strong>
       </div>
 
       <div class="row">
-
-        <span>
-          Status
-        </span>
-
-        <strong id="status">
-          -
-        </strong>
-
+        <span>Status</span>
+        <strong id="status">-</strong>
       </div>
 
       <div class="row">
-
-        <span>
-          Assigned Rider
-        </span>
-
-        <strong id="rider">
-          -
-        </strong>
-
+        <span>Assigned Rider</span>
+        <strong id="rider">-</strong>
       </div>
 
       <div class="row">
-
-        <span>
-          Pickup
-        </span>
-
-        <strong id="pickup">
-          -
-        </strong>
-
+        <span>Pickup</span>
+        <strong id="pickup">-</strong>
       </div>
 
       <div class="row">
-
-        <span>
-          Delivery
-        </span>
-
-        <strong id="delivery">
-          -
-        </strong>
-
+        <span>Delivery</span>
+        <strong id="delivery">-</strong>
       </div>
 
       <div class="row">
-
-        <span>
-          Last Updated
-        </span>
-
-        <strong id="updated">
-          -
-        </strong>
-
+        <span>Last Updated</span>
+        <strong id="updated">-</strong>
       </div>
 
     </div>
@@ -148,21 +99,14 @@
       id="mapContainer"
       class="map-container"
     >
-
       <div id="trackingMap"></div>
-
     </div>
 
   </div>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  >
-  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <script src="tracking.js"></script>
+  <script src="tracking.js?v=2"></script>
 
 </body>
 </html>
