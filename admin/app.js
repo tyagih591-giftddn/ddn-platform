@@ -932,6 +932,55 @@ loadAdminLiveMap(
                 )
               : "Not Assigned";
 
+              const deliveryDistanceKm =
+  booking.deliveryDistanceKm !== null &&
+  booking.deliveryDistanceKm !== undefined
+    ? Number(
+        booking.deliveryDistanceKm
+      )
+    : null;
+
+const routeDurationMinutes =
+  booking.routeDurationMinutes !== null &&
+  booking.routeDurationMinutes !== undefined
+    ? Number(
+        booking.routeDurationMinutes
+      )
+    : null;
+
+const customerFare =
+  booking.customerFare !== null &&
+  booking.customerFare !== undefined
+    ? Number(
+        booking.customerFare
+      )
+    : null;
+
+const riderEarning =
+  booking.riderEarning !== null &&
+  booking.riderEarning !== undefined
+    ? Number(
+        booking.riderEarning
+      )
+    : null;
+
+const platformEarning =
+  booking.platformEarning !== null &&
+  booking.platformEarning !== undefined
+    ? Number(
+        booking.platformEarning
+      )
+    : null;
+
+const bookingTime =
+  booking.createdAt
+    ? new Date(
+        booking.createdAt
+      ).toLocaleString(
+        "en-IN"
+      )
+    : "Not available";
+
           return `
 
             <div class="booking">
@@ -979,6 +1028,86 @@ loadAdminLiveMap(
                   booking.deliveryLocation
                 )}
               </p>
+
+              <p>
+  <strong>
+    Road Distance:
+  </strong>
+
+  ${
+    deliveryDistanceKm !== null
+      ? `${escapeHtml(
+          deliveryDistanceKm
+        )} km`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Estimated Travel Time:
+  </strong>
+
+  ${
+    routeDurationMinutes !== null
+      ? `${escapeHtml(
+          routeDurationMinutes
+        )} minutes`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Customer Fare:
+  </strong>
+
+  ${
+    customerFare !== null
+      ? `₹${escapeHtml(
+          customerFare
+        )}`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Rider Earning:
+  </strong>
+
+  ${
+    riderEarning !== null
+      ? `₹${escapeHtml(
+          riderEarning
+        )}`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Platform Earning:
+  </strong>
+
+  ${
+    platformEarning !== null
+      ? `₹${escapeHtml(
+          platformEarning
+        )}`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Booking Time:
+  </strong>
+
+  ${escapeHtml(
+    bookingTime
+  )}
+</p>
 
               <p>
                 <strong>
