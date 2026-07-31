@@ -104,16 +104,40 @@ function isValidMapCoordinate(
   latitude,
   longitude
 ) {
+  if (
+    latitude === null ||
+    latitude === undefined ||
+    latitude === "" ||
+    longitude === null ||
+    longitude === undefined ||
+    longitude === ""
+  ) {
+    return false;
+  }
+
+  const numericLatitude =
+    Number(latitude);
+
+  const numericLongitude =
+    Number(longitude);
+
   return (
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
-    latitude >= -90 &&
-    latitude <= 90 &&
-    longitude >= -180 &&
-    longitude <= 180
+    Number.isFinite(
+      numericLatitude
+    ) &&
+    Number.isFinite(
+      numericLongitude
+    ) &&
+    numericLatitude >= -90 &&
+    numericLatitude <= 90 &&
+    numericLongitude >= -180 &&
+    numericLongitude <= 180 &&
+    !(
+      numericLatitude === 0 &&
+      numericLongitude === 0
+    )
   );
 }
-
 
 async function loadAdminLiveMap(
   bookings
@@ -217,35 +241,24 @@ async function loadAdminLiveMap(
 
   validTrackingResults.forEach(
     tracking => {
+      
       const pickupLatitude =
-        Number(
-          tracking.pickupLatitude
-        );
+  tracking.pickupLatitude;
 
-      const pickupLongitude =
-        Number(
-          tracking.pickupLongitude
-        );
+const pickupLongitude =
+  tracking.pickupLongitude;
 
-      const deliveryLatitude =
-        Number(
-          tracking.deliveryLatitude
-        );
+const deliveryLatitude =
+  tracking.deliveryLatitude;
 
-      const deliveryLongitude =
-        Number(
-          tracking.deliveryLongitude
-        );
+const deliveryLongitude =
+  tracking.deliveryLongitude;
 
-      const riderLatitude =
-        Number(
-          tracking.riderLatitude
-        );
+const riderLatitude =
+  tracking.riderLatitude;
 
-      const riderLongitude =
-        Number(
-          tracking.riderLongitude
-        );
+const riderLongitude =
+  tracking.riderLongitude;
 
       const pickupValid =
         isValidMapCoordinate(
@@ -265,14 +278,16 @@ async function loadAdminLiveMap(
           riderLongitude
         );
 
+        const riderAssigned =
+  !!tracking.assignedRider;
+
       const routePoints = [];
 
       if (pickupValid) {
         const pickupPosition = [
-          pickupLatitude,
-          pickupLongitude
-        ];
-
+  Number(pickupLatitude),
+  Number(pickupLongitude)
+];
         visiblePoints.push(
           pickupPosition
         );
@@ -314,11 +329,11 @@ async function loadAdminLiveMap(
         );
       }
 
-      if (riderValid) {
+      if (riderAssigned && riderValid) {
         const riderPosition = [
-          riderLatitude,
-          riderLongitude
-        ];
+  Number(riderLatitude),
+  Number(riderLongitude)
+];
 
         visiblePoints.push(
           riderPosition
@@ -371,9 +386,9 @@ async function loadAdminLiveMap(
 
       if (deliveryValid) {
         const deliveryPosition = [
-          deliveryLatitude,
-          deliveryLongitude
-        ];
+  Number(deliveryLatitude),
+  Number(deliveryLongitude)
+];
 
         visiblePoints.push(
           deliveryPosition
