@@ -4,6 +4,11 @@ const API_URL =
 const LOGIN_API =
   "https://ddn-platform.onrender.com/api/auth/login";
 
+  const SOCKET_URL =
+  "https://ddn-platform.onrender.com";
+
+let adminSocket = null;
+
 // ===============================
 // ADMIN LIVE MAP
 // ===============================
@@ -71,6 +76,95 @@ async function enableAdminAlerts() {
 
 }
 
+function connectAdminSocket() {
+  if (
+    adminSocket &&
+    adminSocket.connected
+  ) {
+    return;
+  }
+
+  if (typeof io === "undefined") {
+    console.error(
+      "Socket.IO client is not loaded"
+    );
+
+    return;
+  }
+
+  adminSocket =
+    io(SOCKET_URL, {
+      transports: [
+        "websocket",
+        "polling"
+      ]
+    });
+
+  adminSocket.on(
+    "connect",
+    () => {
+      console.log(
+        "Admin socket connected:",
+        adminSocket.id
+      );
+    }
+  );
+
+adminSocket.on(
+  "new-order",
+  async booking => {
+
+    console.log(
+      "Realtime order:",
+      booking
+    );
+
+    await loadBookings();
+
+    if (adminAlertEnabled) {
+      startAdminAlarm();
+    }
+
+    if (
+      "Notification" in window &&
+      Notification.permission ===
+        "granted"
+    ) {
+      new Notification(
+        "🚚 New DDN Order",
+        {
+          body:
+            booking.bookingId +
+            " - " +
+            booking.customerName
+        }
+      );
+    }
+
+  }
+);
+  
+  adminSocket.on(
+    "disconnect",
+    reason => {
+      console.warn(
+        "Admin socket disconnected:",
+        reason
+      );
+    }
+  );
+
+  adminSocket.on(
+    "connect_error",
+    error => {
+      console.error(
+        "Admin socket connection error:",
+        error.message
+      );
+    }
+  );
+}
+
 function startAdminAlarm() {
 
   if (
@@ -95,14 +189,7 @@ function startAdminAlarm() {
 
     });
 
-  adminAlertStopTimer =
-    setTimeout(() => {
-
-      stopAdminAlarm();
-
-    }, 30000);
-
-}
+  }
 
 function stopAdminAlarm() {
 
@@ -862,6 +949,8 @@ function showDashboard() {
     "block";
 
   loadBookings();
+
+  connectAdminSocket();
 
 startAutoRefresh();
 
@@ -1775,6 +1864,8 @@ async function assignRider(
     alert(
       `Rider "${rider}" assigned successfully!`
     );
+
+    stopAdminAlarm();
 
     await loadBookings();
 
