@@ -26,32 +26,67 @@ function enableAdminAlerts() {
 }
 
 function startAdminAlarm() {
-  if (!adminAlertEnabled || !adminAlertAudioContext) return;
+  if (
+    !adminAlertEnabled ||
+    !adminAlertAudioContext
+  ) {
+    return;
+  }
 
   stopAdminAlarm();
 
-  const playBeep = () => {
-    const osc = adminAlertAudioContext.createOscillator();
-    const gain = adminAlertAudioContext.createGain();
+  const playAlarmTone = () => {
+    const oscillator =
+      adminAlertAudioContext.createOscillator();
 
-    osc.type = "square";
-    osc.frequency.value = 900;
-    gain.gain.value = 0.2;
+    const gain =
+      adminAlertAudioContext.createGain();
 
-    osc.connect(gain);
-    gain.connect(adminAlertAudioContext.destination);
+    oscillator.type = "sawtooth";
+    oscillator.frequency.setValueAtTime(
+      750,
+      adminAlertAudioContext.currentTime
+    );
 
-    osc.start();
-    osc.stop(adminAlertAudioContext.currentTime + 0.3);
+    oscillator.frequency.linearRampToValueAtTime(
+      1100,
+      adminAlertAudioContext.currentTime + 0.45
+    );
+
+    gain.gain.setValueAtTime(
+      0.22,
+      adminAlertAudioContext.currentTime
+    );
+
+    gain.gain.linearRampToValueAtTime(
+      0.12,
+      adminAlertAudioContext.currentTime + 0.45
+    );
+
+    oscillator.connect(gain);
+    gain.connect(
+      adminAlertAudioContext.destination
+    );
+
+    oscillator.start();
+
+    oscillator.stop(
+      adminAlertAudioContext.currentTime + 0.5
+    );
   };
 
-  playBeep();
+  playAlarmTone();
 
-  adminAlertInterval = setInterval(playBeep, 700);
+  adminAlertInterval =
+    setInterval(
+      playAlarmTone,
+      520
+    );
 
-  adminAlertStopTimer = setTimeout(() => {
-    stopAdminAlarm();
-  }, 30000);
+  adminAlertStopTimer =
+    setTimeout(() => {
+      stopAdminAlarm();
+    }, 30000);
 }
 
 function stopAdminAlarm() {
