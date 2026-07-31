@@ -591,15 +591,30 @@ router.post(
           ]
         );
 
+        const createdBooking =
+  formatBooking(
+    result.rows[0]
+  );
+
+const io =
+  req.app.get("io");
+
+if (io) {
+  io.emit(
+    "new-order",
+    createdBooking
+  );
+}
+
+
+
       return res.status(201).json({
         success: true,
         message:
           "Booking created successfully",
 
         booking:
-          formatBooking(
-            result.rows[0]
-          )
+       createdBooking
       });
     } catch (error) {
       console.error(
