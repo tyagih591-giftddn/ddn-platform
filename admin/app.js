@@ -1913,3 +1913,23 @@ setInterval(async () => {
     console.error("Auto refresh failed:", error);
   }
 }, 10000);
+
+// ===============================
+// ENABLE ALERTS ON FIRST CLICK
+// ===============================
+
+async function enableAlertsOnFirstInteraction() {
+  if (adminAlertEnabled) {
+    return;
+  }
+
+  await enableAdminAlerts();
+}
+
+document.addEventListener(
+  "click",
+  enableAlertsOnFirstInteraction,
+  {
+    once: true
+  }
+);
