@@ -34,27 +34,197 @@ function normalizeUsername(value) {
   return cleanText(value).toLowerCase();
 }
 
+// ===============================
+// DISTANCE AND FARE CALCULATION
+// ===============================
+
+function calculateDistanceKm(
+  pickupLatitude,
+  pickupLongitude,
+  deliveryLatitude,
+  deliveryLongitude
+) {
+  const coordinates = [
+    pickupLatitude,
+    pickupLongitude,
+    deliveryLatitude,
+    deliveryLongitude
+  ].map(Number);
+
+  if (
+    coordinates.some(
+      coordinate => !Number.isFinite(coordinate)
+    )
+  ) {
+    throw new Error(
+      "Valid pickup and delivery coordinates are required"
+    );
+  }
+
+  const [
+    pickupLat,
+    pickupLng,
+    deliveryLat,
+    deliveryLng
+  ] = coordinates;
+
+  const earthRadiusKm = 6371;
+
+  const toRadians = degree =>
+    degree * (Math.PI / 180);
+
+  const latitudeDifference =
+    toRadians(deliveryLat - pickupLat);
+
+  const longitudeDifference =
+    toRadians(deliveryLng - pickupLng);
+
+  const a =
+    Math.sin(latitudeDifference / 2) ** 2 +
+    Math.cos(toRadians(pickupLat)) *
+      Math.cos(toRadians(deliveryLat)) *
+      Math.sin(longitudeDifference / 2) ** 2;
+
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+  const distanceKm =
+    earthRadiusKm * c;
+
+  return Number(
+    distanceKm.toFixed(2)
+  );
+}
+
+function calculateDeliveryFare(distanceKm) {
+  const numericDistance =
+    Number(distanceKm);
+
+  if (
+    !Number.isFinite(numericDistance) ||
+    numericDistance < 0
+  ) {
+    throw new Error(
+      "Valid delivery distance is required"
+    );
+  }
+
+  const roundedDistance =
+    Number(
+      numericDistance.toFixed(2)
+    );
+
+  const extraDistanceSlabs =
+    Math.max(
+      0,
+      Math.ceil(
+        roundedDistance - 2
+      )
+    );
+
+  const customerFare =
+    30 +
+    extraDistanceSlabs * 10;
+
+  const riderEarning =
+    27 +
+    extraDistanceSlabs * 7;
+
+  const platformEarning =
+    customerFare - riderEarning;
+
+  return {
+    distanceKm: roundedDistance,
+    customerFare,
+    riderEarning,
+    platformEarning
+  };
+}
+
 function formatBooking(booking) {
   return {
-    bookingId: booking.booking_id,
-    pickupLocation: booking.pickup_location,
-    deliveryLocation: booking.delivery_location,
-    customerName: booking.customer_name,
-    mobileNumber: booking.mobile_number,
+    bookingId:
+      booking.booking_id,
 
-    pinCode: booking.pin_code,
+    pickupLocation:
+      booking.pickup_location,
+
+    deliveryLocation:
+      booking.delivery_location,
+
+    customerName:
+      booking.customer_name,
+
+    mobileNumber:
+      booking.mobile_number,
+
+    pinCode:
+      booking.pin_code,
+
     customerPickupLatitude:
       booking.customer_pickup_latitude,
+
     customerPickupLongitude:
       booking.customer_pickup_longitude,
+
     customerDeliveryLatitude:
       booking.customer_delivery_latitude,
+
     customerDeliveryLongitude:
       booking.customer_delivery_longitude,
 
-    status: booking.status,
-    assignedRider: booking.assigned_rider,
-    createdAt: booking.created_at
+    deliveryDistanceKm:
+      booking.delivery_distance_km !== null &&
+      booking.delivery_distance_km !== undefined
+        ? Number(
+            booking.delivery_distance_km
+          )
+        : null,
+
+    routeDurationMinutes:
+      booking.route_duration_minutes !== null &&
+      booking.route_duration_minutes !== undefined
+        ? Number(
+            booking.route_duration_minutes
+          )
+        : null,
+
+    customerFare:
+      booking.customer_fare !== null &&
+      booking.customer_fare !== undefined
+        ? Number(
+            booking.customer_fare
+          )
+        : null,
+
+    riderEarning:
+      booking.rider_earning !== null &&
+      booking.rider_earning !== undefined
+        ? Number(
+            booking.rider_earning
+          )
+        : null,
+
+    platformEarning:
+      booking.platform_earning !== null &&
+      booking.platform_earning !== undefined
+        ? Number(
+            booking.platform_earning
+          )
+        : null,
+
+    status:
+      booking.status,
+
+    assignedRider:
+      booking.assigned_rider,
+
+    createdAt:
+      booking.created_at
   };
 }
 
@@ -109,7 +279,7 @@ const VALID_BOOKING_STATUSES = [
   "Cancelled"
 ];
 
-// ===============================
+ // ===============================
 // CREATE BOOKING — PUBLIC
 // ===============================
 
@@ -137,34 +307,58 @@ router.post(
           req.body.mobileNumber
         );
 
-        const pinCode =
-  cleanText(
-    req.body.pinCode
-  );
+      const pinCode =
+        cleanText(
+          req.body.pinCode
+        );
 
-  let pickupLatitude =
-  req.body.pickupLatitude !== null &&
-  req.body.pickupLatitude !== undefined
-    ? Number(req.body.pickupLatitude)
-    : null;
+      let pickupLatitude =
+        req.body.pickupLatitude !== null &&
+        req.body.pickupLatitude !== undefined
+          ? Number(
+              req.body.pickupLatitude
+            )
+          : null;
 
-let pickupLongitude =
-  req.body.pickupLongitude !== null &&
-  req.body.pickupLongitude !== undefined
-    ? Number(req.body.pickupLongitude)
-    : null;
+      let pickupLongitude =
+        req.body.pickupLongitude !== null &&
+        req.body.pickupLongitude !== undefined
+          ? Number(
+              req.body.pickupLongitude
+            )
+          : null;
 
-let deliveryLatitude =
-  req.body.deliveryLatitude !== null &&
-  req.body.deliveryLatitude !== undefined
-    ? Number(req.body.deliveryLatitude)
-    : null;
+      let deliveryLatitude =
+        req.body.deliveryLatitude !== null &&
+        req.body.deliveryLatitude !== undefined
+          ? Number(
+              req.body.deliveryLatitude
+            )
+          : null;
 
-let deliveryLongitude =
-  req.body.deliveryLongitude !== null &&
-  req.body.deliveryLongitude !== undefined
-    ? Number(req.body.deliveryLongitude)
-    : null;
+      let deliveryLongitude =
+        req.body.deliveryLongitude !== null &&
+        req.body.deliveryLongitude !== undefined
+          ? Number(
+              req.body.deliveryLongitude
+            )
+          : null;
+
+      const deliveryDistanceKm =
+        req.body.deliveryDistanceKm !== null &&
+        req.body.deliveryDistanceKm !== undefined
+          ? Number(
+              req.body.deliveryDistanceKm
+            )
+          : null;
+
+      const routeDurationMinutes =
+        req.body.routeDurationMinutes !== null &&
+        req.body.routeDurationMinutes !== undefined
+          ? Number(
+              req.body.routeDurationMinutes
+            )
+          : null;
 
       if (
         !pickupLocation ||
@@ -179,137 +373,229 @@ let deliveryLongitude =
         });
       }
 
-// =====================================
-// AUTOMATIC ADDRESS GEOCODING
-// =====================================
+      if (
+        !/^[0-9]{10}$/.test(
+          mobileNumber
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A valid 10-digit mobile number is required"
+        });
+      }
 
-const hasValidPickupCoordinates =
-  Number.isFinite(pickupLatitude) &&
-  Number.isFinite(pickupLongitude) &&
-  pickupLatitude >= -90 &&
-  pickupLatitude <= 90 &&
-  pickupLongitude >= -180 &&
-  pickupLongitude <= 180;
+      if (
+        pinCode &&
+        !/^[0-9]{6}$/.test(
+          pinCode
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A valid 6-digit PIN code is required"
+        });
+      }
 
-const hasValidDeliveryCoordinates =
-  Number.isFinite(deliveryLatitude) &&
-  Number.isFinite(deliveryLongitude) &&
-  deliveryLatitude >= -90 &&
-  deliveryLatitude <= 90 &&
-  deliveryLongitude >= -180 &&
-  deliveryLongitude <= 180;
+      if (
+        !Number.isFinite(
+          deliveryDistanceKm
+        ) ||
+        deliveryDistanceKm <= 0 ||
+        deliveryDistanceKm > 200
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Valid Google road distance is required"
+        });
+      }
 
-if (!hasValidPickupCoordinates) {
-  try {
-    const pickupMapLocation =
-      await geocodeAddress(
-        `${pickupLocation}${
-          pinCode ? `, ${pinCode}` : ""
-        }`
-      );
+      if (
+        !Number.isFinite(
+          routeDurationMinutes
+        ) ||
+        routeDurationMinutes < 1 ||
+        routeDurationMinutes > 1440
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Valid Google route duration is required"
+        });
+      }
 
-    pickupLatitude =
-      pickupMapLocation.latitude;
+      const hasValidPickupCoordinates =
+        Number.isFinite(
+          pickupLatitude
+        ) &&
+        Number.isFinite(
+          pickupLongitude
+        ) &&
+        pickupLatitude >= -90 &&
+        pickupLatitude <= 90 &&
+        pickupLongitude >= -180 &&
+        pickupLongitude <= 180;
 
-    pickupLongitude =
-      pickupMapLocation.longitude;
-  } catch (error) {
-    console.error(
-      "Pickup address geocoding error:",
-      error.message
-    );
+      const hasValidDeliveryCoordinates =
+        Number.isFinite(
+          deliveryLatitude
+        ) &&
+        Number.isFinite(
+          deliveryLongitude
+        ) &&
+        deliveryLatitude >= -90 &&
+        deliveryLatitude <= 90 &&
+        deliveryLongitude >= -180 &&
+        deliveryLongitude <= 180;
 
-    return res.status(400).json({
-      success: false,
-      message:
-        "Pickup address could not be located on the map. Please enter a complete address with area, city and PIN code, or use the GPS button."
-    });
-  }
-}
+      if (!hasValidPickupCoordinates) {
+        try {
+          const pickupMapLocation =
+            await geocodeAddress(
+              `${pickupLocation}${
+                pinCode
+                  ? `, ${pinCode}`
+                  : ""
+              }`
+            );
 
-if (!hasValidDeliveryCoordinates) {
-  try {
-    const deliveryMapLocation =
-      await geocodeAddress(
-        `${deliveryLocation}${
-          pinCode ? `, ${pinCode}` : ""
-        }`
-      );
+          pickupLatitude =
+            pickupMapLocation.latitude;
 
-    deliveryLatitude =
-      deliveryMapLocation.latitude;
+          pickupLongitude =
+            pickupMapLocation.longitude;
+        } catch (error) {
+          console.error(
+            "Pickup address geocoding error:",
+            error.message
+          );
 
-    deliveryLongitude =
-      deliveryMapLocation.longitude;
-  } catch (error) {
-    console.error(
-      "Delivery address geocoding error:",
-      error.message
-    );
+          return res.status(400).json({
+            success: false,
+            message:
+              "Pickup address could not be located on the map. Please enter a complete address or use the GPS button."
+          });
+        }
+      }
 
-    return res.status(400).json({
-      success: false,
-      message:
-        "Delivery address could not be located on the map. Please enter a complete address with area, city and PIN code, or use the GPS button."
-    });
-  }
-}
+      if (!hasValidDeliveryCoordinates) {
+        try {
+          const deliveryMapLocation =
+            await geocodeAddress(
+              `${deliveryLocation}${
+                pinCode
+                  ? `, ${pinCode}`
+                  : ""
+              }`
+            );
+
+          deliveryLatitude =
+            deliveryMapLocation.latitude;
+
+          deliveryLongitude =
+            deliveryMapLocation.longitude;
+        } catch (error) {
+          console.error(
+            "Delivery address geocoding error:",
+            error.message
+          );
+
+          return res.status(400).json({
+            success: false,
+            message:
+              "Delivery address could not be located on the map. Please enter a complete address or use the GPS button."
+          });
+        }
+      }
 
       const bookingId =
         `DDN-${Date.now()}`;
+
+      /*
+       * Frontend se customerFare accept nahi karenge.
+       * Backend Google road distance ke basis par
+       * fare aur earnings khud calculate karega.
+       */
+      const fareDetails =
+        calculateDeliveryFare(
+          deliveryDistanceKm
+        );
+
+      const safeRouteDurationMinutes =
+        Math.ceil(
+          routeDurationMinutes
+        );
 
       const result =
         await pool.query(
           `
           INSERT INTO bookings
-(
-  booking_id,
-  pickup_location,
-  delivery_location,
-  customer_name,
-  mobile_number,
-  pin_code,
-  customer_pickup_latitude,
-  customer_pickup_longitude,
-  customer_delivery_latitude,
-  customer_delivery_longitude,
-  status
-)
+          (
+            booking_id,
+            pickup_location,
+            delivery_location,
+            customer_name,
+            mobile_number,
+            pin_code,
+            customer_pickup_latitude,
+            customer_pickup_longitude,
+            customer_delivery_latitude,
+            customer_delivery_longitude,
+            delivery_distance_km,
+            route_duration_minutes,
+            customer_fare,
+            rider_earning,
+            platform_earning,
+            status
+          )
           VALUES
-(
-  $1,
-  $2,
-  $3,
-  $4,
-  $5,
-  $6,
-  $7,
-  $8,
-  $9,
-  $10,
-  $11
-)
-RETURNING *
-`,
-[
-  bookingId,
-  pickupLocation,
-  deliveryLocation,
-  customerName,
-  mobileNumber,
-  pinCode || null,
-  pickupLatitude,
-pickupLongitude,
-deliveryLatitude,
-deliveryLongitude,
-  "Pending"
-]
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7,
+            $8,
+            $9,
+            $10,
+            $11,
+            $12,
+            $13,
+            $14,
+            $15,
+            $16
+          )
+          RETURNING *
+          `,
+          [
+            bookingId,
+            pickupLocation,
+            deliveryLocation,
+            customerName,
+            mobileNumber,
+            pinCode || null,
+            pickupLatitude,
+            pickupLongitude,
+            deliveryLatitude,
+            deliveryLongitude,
+            fareDetails.distanceKm,
+            safeRouteDurationMinutes,
+            fareDetails.customerFare,
+            fareDetails.riderEarning,
+            fareDetails.platformEarning,
+            "Pending"
+          ]
         );
 
       return res.status(201).json({
         success: true,
         message:
           "Booking created successfully",
+
         booking:
           formatBooking(
             result.rows[0]
