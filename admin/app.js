@@ -1069,8 +1069,6 @@ async function loadBookings() {
     const bookings =
       data.bookings || [];
 
-const bookings =
-  data.bookings || [];
 
 // ===============================
 // NEW ORDER NOTIFICATION
