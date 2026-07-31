@@ -4,10 +4,9 @@ const API_URL =
 const LOGIN_API =
   "https://ddn-platform.onrender.com/api/auth/login";
 
-  // ===============================
+// ===============================
 // ADMIN LIVE MAP
 // ===============================
-
 
 let adminAlertAudio = null;
 let adminAlertStopTimer = null;
@@ -15,8 +14,10 @@ let adminAlertEnabled = false;
 let knownAdminBookingIds = new Set();
 let adminBookingsInitialized = false;
 
-function enableAdminAlerts() {
+async function enableAdminAlerts() {
+
   if (!adminAlertAudio) {
+
     adminAlertAudio =
       new Audio(
         "sounds/new-order.mp3"
@@ -24,29 +25,54 @@ function enableAdminAlerts() {
 
     adminAlertAudio.loop = true;
     adminAlertAudio.volume = 1;
+
   }
 
-  adminAlertAudio
-    .play()
-    .then(() => {
-      adminAlertAudio.pause();
-      adminAlertAudio.currentTime = 0;
+  try {
 
-      adminAlertEnabled = true;
+    await adminAlertAudio.play();
 
-      console.log(
-        "Admin alerts enabled"
+    adminAlertAudio.pause();
+    adminAlertAudio.currentTime = 0;
+
+    adminAlertEnabled = true;
+
+    localStorage.setItem(
+      "ddnAdminAlertsEnabled",
+      "true"
+    );
+
+    const enableAlertsButton =
+      document.getElementById(
+        "enableAlertsButton"
       );
-    })
-    .catch(error => {
-      console.error(
-        "Unable to enable admin alert sound:",
-        error
-      );
-    });
+
+    if (enableAlertsButton) {
+
+      enableAlertsButton.textContent =
+        "✅ Alerts Enabled";
+
+      enableAlertsButton.disabled = true;
+
+    }
+
+    console.log(
+      "Admin alerts enabled"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Unable to enable admin alert sound:",
+      error
+    );
+
+  }
+
 }
 
 function startAdminAlarm() {
+
   if (
     !adminAlertEnabled ||
     !adminAlertAudio
@@ -61,31 +87,42 @@ function startAdminAlarm() {
   adminAlertAudio
     .play()
     .catch(error => {
+
       console.error(
         "Unable to play admin alarm:",
         error
       );
+
     });
 
   adminAlertStopTimer =
     setTimeout(() => {
+
       stopAdminAlarm();
+
     }, 30000);
+
 }
 
 function stopAdminAlarm() {
+
   if (adminAlertAudio) {
+
     adminAlertAudio.pause();
     adminAlertAudio.currentTime = 0;
+
   }
 
   if (adminAlertStopTimer) {
+
     clearTimeout(
       adminAlertStopTimer
     );
 
     adminAlertStopTimer = null;
+
   }
+
 }
 
 let adminMap = null;
@@ -775,6 +812,8 @@ loginForm.addEventListener(
 
       loginMessage.textContent =
         "";
+
+        await enableAdminAlerts();
 
       showDashboard();
 
