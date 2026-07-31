@@ -1,5 +1,5 @@
 const API_URL =
-  "http://localhost:3000/api/bookings";
+  "https://ddn-platform.onrender.com/api/bookings";
 
 // ======================================
 // LOCATION COORDINATES
