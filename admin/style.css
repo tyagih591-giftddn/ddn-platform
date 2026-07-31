@@ -388,3 +388,40 @@ select:focus {
     margin-right: 0;
   }
 }
+/* ===============================
+   DASHBOARD FILTER CARDS
+================================ */
+
+.dashboard-filter-card {
+  width: 100%;
+  border: 2px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.dashboard-filter-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-filter-card:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.3);
+  outline-offset: 3px;
+}
+
+.dashboard-filter-card.active-filter-card {
+  border-color: #2563eb;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+}
+
+.booking-filter-message {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+}

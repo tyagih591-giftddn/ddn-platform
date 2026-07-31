@@ -89,28 +89,45 @@
 
     </div>
 
+<div class="dashboard">
 
-    <div class="dashboard">
+  <button
+    type="button"
+    class="card dashboard-filter-card active-filter-card"
+    data-booking-filter="all"
+  >
+    <h3>Total Bookings</h3>
+    <h2 id="totalBookings">0</h2>
+  </button>
 
-      <div class="card">
-        <h3>Total Bookings</h3>
-        <h2 id="totalBookings">0</h2>
-      </div>
+  <button
+    type="button"
+    class="card dashboard-filter-card"
+    data-booking-filter="pending"
+  >
+    <h3>Pending</h3>
+    <h2 id="pendingBookings">0</h2>
+  </button>
 
-      <div class="card">
-        <h3>Pending</h3>
-        <h2 id="pendingBookings">0</h2>
-      </div>
+  <button
+    type="button"
+    class="card dashboard-filter-card"
+    data-booking-filter="completed"
+  >
+    <h3>Completed</h3>
+    <h2 id="completedBookings">0</h2>
+  </button>
 
-      <div class="card">
-        <h3>Completed</h3>
-        <h2 id="completedBookings">0</h2>
-      </div>
+  <button
+    type="button"
+    class="card dashboard-filter-card"
+    data-booking-filter="active"
+  >
+    <h3>Active Deliveries</h3>
+    <h2 id="activeBookings">0</h2>
+  </button>
 
-      <div class="card">
-        <h3>Active Deliveries</h3>
-        <h2 id="activeBookings">0</h2>
-      </div>
+</div>
 
     </div>
 
@@ -179,6 +196,12 @@
           <p>
             Assign riders and update booking statuses
           </p>
+          <p
+  id="bookingFilterMessage"
+  class="booking-filter-message"
+>
+  Showing all bookings
+</p>
         </div>
 
         <button

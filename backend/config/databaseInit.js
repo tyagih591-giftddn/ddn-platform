@@ -99,6 +99,35 @@ async function initializeDatabase() {
       mobile_number VARCHAR(20)
         NOT NULL,
 
+      pin_code VARCHAR(6),
+
+      customer_pickup_latitude
+        DOUBLE PRECISION,
+
+      customer_pickup_longitude
+        DOUBLE PRECISION,
+
+      customer_delivery_latitude
+        DOUBLE PRECISION,
+
+      customer_delivery_longitude
+        DOUBLE PRECISION,
+
+      delivery_distance_km
+        NUMERIC(10, 2),
+
+      route_duration_minutes
+        INTEGER,
+
+      customer_fare
+        NUMERIC(10, 2),
+
+      rider_earning
+        NUMERIC(10, 2),
+
+      platform_earning
+        NUMERIC(10, 2),
+
       status VARCHAR(50)
         DEFAULT 'Pending',
 
@@ -124,25 +153,59 @@ async function initializeDatabase() {
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS
-    customer_pickup_latitude DOUBLE PRECISION
+    customer_pickup_latitude
+    DOUBLE PRECISION
   `);
 
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS
-    customer_pickup_longitude DOUBLE PRECISION
+    customer_pickup_longitude
+    DOUBLE PRECISION
   `);
 
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS
-    customer_delivery_latitude DOUBLE PRECISION
+    customer_delivery_latitude
+    DOUBLE PRECISION
   `);
 
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS
-    customer_delivery_longitude DOUBLE PRECISION
+    customer_delivery_longitude
+    DOUBLE PRECISION
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    delivery_distance_km NUMERIC(10, 2)
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    route_duration_minutes INTEGER
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    customer_fare NUMERIC(10, 2)
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    rider_earning NUMERIC(10, 2)
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    platform_earning NUMERIC(10, 2)
   `);
 
   await pool.query(`
@@ -224,7 +287,7 @@ async function initializeDatabase() {
       NOT NULL DEFAULT 'approved'
   `);
 
-    await pool.query(`
+  await pool.query(`
     ALTER TABLE riders
     ADD COLUMN IF NOT EXISTS
     current_latitude DOUBLE PRECISION
@@ -348,7 +411,7 @@ async function initializeDatabase() {
     ON rider_verification_logs (rider_id)
   `);
 
-    await pool.query(`
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS
     idx_riders_last_location_updated_at
     ON riders (last_location_updated_at DESC)

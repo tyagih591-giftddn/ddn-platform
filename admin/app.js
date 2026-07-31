@@ -22,6 +22,14 @@ let autoRefreshInterval = null;
 
 const AUTO_REFRESH_TIME = 15000; // 15 seconds
 
+// ===============================
+// BOOKING FILTERS
+// ===============================
+
+let allAdminBookings = [];
+
+let currentBookingFilter = "all";
+
 function clearAdminMap() {
 
   adminMarkers.forEach(marker => {
@@ -785,6 +793,124 @@ function escapeHtml(value) {
 
 }
 
+// ===============================
+// FILTER BOOKINGS
+// ===============================
+
+function getFilteredBookings() {
+
+  if (
+    currentBookingFilter === "pending"
+  ) {
+    return allAdminBookings.filter(
+      booking =>
+        booking.status === "Pending"
+    );
+  }
+
+  if (
+    currentBookingFilter === "completed"
+  ) {
+    return allAdminBookings.filter(
+      booking =>
+        booking.status === "Delivered"
+    );
+  }
+
+  if (
+    currentBookingFilter === "active"
+  ) {
+    return allAdminBookings.filter(
+      booking =>
+        booking.status !== "Delivered" &&
+        booking.status !== "Cancelled"
+    );
+  }
+
+  return allAdminBookings;
+}
+
+function updateBookingFilterMessage() {
+
+  const messageElement =
+    document.getElementById(
+      "bookingFilterMessage"
+    );
+
+  if (!messageElement) {
+    return;
+  }
+
+  const messages = {
+    all: "Showing all bookings",
+    pending: "Showing pending bookings",
+    completed: "Showing completed bookings",
+    active: "Showing active deliveries"
+  };
+
+  messageElement.textContent =
+    messages[currentBookingFilter] ||
+    messages.all;
+}
+
+function updateActiveFilterCard() {
+
+  const cards =
+    document.querySelectorAll(
+      ".dashboard-filter-card"
+    );
+
+  cards.forEach(card => {
+
+    const filter =
+      card.dataset.bookingFilter;
+
+    card.classList.toggle(
+      "active-filter-card",
+      filter === currentBookingFilter
+    );
+
+  });
+}
+
+// ===============================
+// DASHBOARD FILTER CARD CLICKS
+// ===============================
+
+const dashboardFilterCards =
+  document.querySelectorAll(
+    ".dashboard-filter-card"
+  );
+
+dashboardFilterCards.forEach(card => {
+
+  card.addEventListener(
+    "click",
+    async function () {
+
+      currentBookingFilter =
+        this.dataset.bookingFilter ||
+        "all";
+
+      updateActiveFilterCard();
+
+      updateBookingFilterMessage();
+
+      await loadBookings();
+
+      document
+        .querySelector(
+          ".bookings-section"
+        )
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+    }
+  );
+
+});
 
 // ===============================
 // LOAD BOOKINGS
@@ -851,6 +977,15 @@ async function loadBookings() {
     const bookings =
       data.bookings || [];
 
+allAdminBookings = bookings;
+
+const filteredBookings =
+  getFilteredBookings();
+
+updateBookingFilterMessage();
+
+updateActiveFilterCard();
+
     document
       .getElementById(
         "totalBookings"
@@ -903,11 +1038,11 @@ async function loadBookings() {
   active;
 
 loadAdminLiveMap(
-  bookings
+  filteredBookings
 );
 
     if (
-      bookings.length === 0
+      filteredBookings.length === 0
     ) {
 
       container.innerHTML =
@@ -917,7 +1052,7 @@ loadAdminLiveMap(
     }
 
     container.innerHTML =
-      bookings.map(
+      filteredBookings.map(
         booking => {
 
           const bookingId =
@@ -931,6 +1066,55 @@ loadAdminLiveMap(
                   booking.assignedRider
                 )
               : "Not Assigned";
+
+              const deliveryDistanceKm =
+  booking.deliveryDistanceKm !== null &&
+  booking.deliveryDistanceKm !== undefined
+    ? Number(
+        booking.deliveryDistanceKm
+      )
+    : null;
+
+const routeDurationMinutes =
+  booking.routeDurationMinutes !== null &&
+  booking.routeDurationMinutes !== undefined
+    ? Number(
+        booking.routeDurationMinutes
+      )
+    : null;
+
+const customerFare =
+  booking.customerFare !== null &&
+  booking.customerFare !== undefined
+    ? Number(
+        booking.customerFare
+      )
+    : null;
+
+const riderEarning =
+  booking.riderEarning !== null &&
+  booking.riderEarning !== undefined
+    ? Number(
+        booking.riderEarning
+      )
+    : null;
+
+const platformEarning =
+  booking.platformEarning !== null &&
+  booking.platformEarning !== undefined
+    ? Number(
+        booking.platformEarning
+      )
+    : null;
+
+const bookingTime =
+  booking.createdAt
+    ? new Date(
+        booking.createdAt
+      ).toLocaleString(
+        "en-IN"
+      )
+    : "Not available";
 
           return `
 
@@ -979,6 +1163,86 @@ loadAdminLiveMap(
                   booking.deliveryLocation
                 )}
               </p>
+
+              <p>
+  <strong>
+    Road Distance:
+  </strong>
+
+  ${
+    deliveryDistanceKm !== null
+      ? `${escapeHtml(
+          deliveryDistanceKm
+        )} km`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Estimated Travel Time:
+  </strong>
+
+  ${
+    routeDurationMinutes !== null
+      ? `${escapeHtml(
+          routeDurationMinutes
+        )} minutes`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Customer Fare:
+  </strong>
+
+  ${
+    customerFare !== null
+      ? `₹${escapeHtml(
+          customerFare
+        )}`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Rider Earning:
+  </strong>
+
+  ${
+    riderEarning !== null
+      ? `₹${escapeHtml(
+          riderEarning
+        )}`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Platform Earning:
+  </strong>
+
+  ${
+    platformEarning !== null
+      ? `₹${escapeHtml(
+          platformEarning
+        )}`
+      : "Not available"
+  }
+</p>
+
+<p>
+  <strong>
+    Booking Time:
+  </strong>
+
+  ${escapeHtml(
+    bookingTime
+  )}
+</p>
 
               <p>
                 <strong>
