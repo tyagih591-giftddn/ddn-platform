@@ -8,80 +8,64 @@ const LOGIN_API =
 // ADMIN LIVE MAP
 // ===============================
 
-let adminAlertAudioContext = null;
-let adminAlertInterval = null;
+
+let adminAlertAudio = null;
 let adminAlertStopTimer = null;
 let adminAlertEnabled = false;
 let knownAdminBookingIds = new Set();
 let adminBookingsInitialized = false;
 
 function enableAdminAlerts() {
-  if (adminAlertEnabled) return;
+  if (!adminAlertAudio) {
+    adminAlertAudio =
+      new Audio(
+        "sounds/new-order.mp3"
+      );
 
-  adminAlertAudioContext =
-    new (window.AudioContext || window.webkitAudioContext)();
+    adminAlertAudio.loop = true;
+    adminAlertAudio.volume = 1;
+  }
 
-  adminAlertEnabled = true;
-  console.log("Admin alerts enabled");
+  adminAlertAudio
+    .play()
+    .then(() => {
+      adminAlertAudio.pause();
+      adminAlertAudio.currentTime = 0;
+
+      adminAlertEnabled = true;
+
+      console.log(
+        "Admin alerts enabled"
+      );
+    })
+    .catch(error => {
+      console.error(
+        "Unable to enable admin alert sound:",
+        error
+      );
+    });
 }
 
 function startAdminAlarm() {
   if (
     !adminAlertEnabled ||
-    !adminAlertAudioContext
+    !adminAlertAudio
   ) {
     return;
   }
 
   stopAdminAlarm();
 
-  const playAlarmTone = () => {
-    const oscillator =
-      adminAlertAudioContext.createOscillator();
+  adminAlertAudio.currentTime = 0;
 
-    const gain =
-      adminAlertAudioContext.createGain();
-
-    oscillator.type = "sawtooth";
-    oscillator.frequency.setValueAtTime(
-      750,
-      adminAlertAudioContext.currentTime
-    );
-
-    oscillator.frequency.linearRampToValueAtTime(
-      1100,
-      adminAlertAudioContext.currentTime + 0.45
-    );
-
-    gain.gain.setValueAtTime(
-      0.22,
-      adminAlertAudioContext.currentTime
-    );
-
-    gain.gain.linearRampToValueAtTime(
-      0.12,
-      adminAlertAudioContext.currentTime + 0.45
-    );
-
-    oscillator.connect(gain);
-    gain.connect(
-      adminAlertAudioContext.destination
-    );
-
-    oscillator.start();
-
-    oscillator.stop(
-      adminAlertAudioContext.currentTime + 0.5
-    );
-  };
-
-  playAlarmTone();
-
-  adminAlertInterval =
-    setInterval(
-      playAlarmTone,
-      520
-    );
+  adminAlertAudio
+    .play()
+    .catch(error => {
+      console.error(
+        "Unable to play admin alarm:",
+        error
+      );
+    });
 
   adminAlertStopTimer =
     setTimeout(() => {
@@ -90,13 +74,16 @@ function startAdminAlarm() {
 }
 
 function stopAdminAlarm() {
-  if (adminAlertInterval) {
-    clearInterval(adminAlertInterval);
-    adminAlertInterval = null;
+  if (adminAlertAudio) {
+    adminAlertAudio.pause();
+    adminAlertAudio.currentTime = 0;
   }
 
   if (adminAlertStopTimer) {
-    clearTimeout(adminAlertStopTimer);
+    clearTimeout(
+      adminAlertStopTimer
+    );
+
     adminAlertStopTimer = null;
   }
 }
