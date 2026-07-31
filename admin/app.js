@@ -8,6 +8,64 @@ const LOGIN_API =
 // ADMIN LIVE MAP
 // ===============================
 
+let adminAlertAudioContext = null;
+let adminAlertInterval = null;
+let adminAlertStopTimer = null;
+let adminAlertEnabled = false;
+let knownAdminBookingIds = new Set();
+let adminBookingsInitialized = false;
+
+function enableAdminAlerts() {
+  if (adminAlertEnabled) return;
+
+  adminAlertAudioContext =
+    new (window.AudioContext || window.webkitAudioContext)();
+
+  adminAlertEnabled = true;
+  console.log("Admin alerts enabled");
+}
+
+function startAdminAlarm() {
+  if (!adminAlertEnabled || !adminAlertAudioContext) return;
+
+  stopAdminAlarm();
+
+  const playBeep = () => {
+    const osc = adminAlertAudioContext.createOscillator();
+    const gain = adminAlertAudioContext.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = 900;
+    gain.gain.value = 0.2;
+
+    osc.connect(gain);
+    gain.connect(adminAlertAudioContext.destination);
+
+    osc.start();
+    osc.stop(adminAlertAudioContext.currentTime + 0.3);
+  };
+
+  playBeep();
+
+  adminAlertInterval = setInterval(playBeep, 700);
+
+  adminAlertStopTimer = setTimeout(() => {
+    stopAdminAlarm();
+  }, 30000);
+}
+
+function stopAdminAlarm() {
+  if (adminAlertInterval) {
+    clearInterval(adminAlertInterval);
+    adminAlertInterval = null;
+  }
+
+  if (adminAlertStopTimer) {
+    clearTimeout(adminAlertStopTimer);
+    adminAlertStopTimer = null;
+  }
+}
+
 let adminMap = null;
 
 let adminMarkers = [];
@@ -927,6 +985,25 @@ dashboardFilterCards.forEach(card => {
 
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  const enableAlertsButton = document.getElementById("enableAlertsButton");
+
+  if (enableAlertsButton) {
+    enableAlertsButton.addEventListener("click", async () => {
+      enableAdminAlerts();
+
+      if ("Notification" in window) {
+        if (Notification.permission !== "granted") {
+          await Notification.requestPermission();
+        }
+      }
+
+      enableAlertsButton.textContent = "✅ Alerts Enabled";
+      enableAlertsButton.disabled = true;
+    });
+  }
+});
+
 // ===============================
 // LOAD BOOKINGS
 // ===============================
@@ -992,6 +1069,84 @@ async function loadBookings() {
     const bookings =
       data.bookings || [];
 
+const bookings =
+  data.bookings || [];
+
+// ===============================
+// NEW ORDER NOTIFICATION
+// ===============================
+
+const currentBookingIds =
+  new Set(
+    bookings.map(
+      booking =>
+        String(
+          booking.bookingId
+        )
+    )
+  );
+
+if (!adminBookingsInitialized) {
+
+  knownAdminBookingIds =
+    currentBookingIds;
+
+  adminBookingsInitialized =
+    true;
+
+} else {
+
+  const newBookings =
+    bookings.filter(
+      booking =>
+        !knownAdminBookingIds.has(
+          String(
+            booking.bookingId
+          )
+        )
+    );
+
+  if (newBookings.length > 0) {
+
+    const newestBooking =
+      newBookings[0];
+
+    startAdminAlarm();
+
+    if (
+      "Notification" in window &&
+      Notification.permission ===
+        "granted"
+    ) {
+
+      new Notification(
+        "🚚 New DDN Order Received",
+        {
+          body:
+            `Booking: ${newestBooking.bookingId}\n` +
+            `Customer: ${newestBooking.customerName || "Customer"}`,
+          tag:
+            String(
+              newestBooking.bookingId
+            )
+        }
+      );
+
+    }
+
+    alert(
+      `🚚 NEW ORDER RECEIVED\n\n` +
+      `Booking ID: ${newestBooking.bookingId}\n` +
+      `Customer: ${newestBooking.customerName || "Customer"}`
+    );
+
+  }
+
+  knownAdminBookingIds =
+    currentBookingIds;
+
+}
+      
 allAdminBookings = bookings;
 
 const filteredBookings =
@@ -1684,3 +1839,18 @@ async function updateStatus(
   }
 
 }
+// ===============================
+// AUTO REFRESH BOOKINGS
+// ===============================
+
+setInterval(async () => {
+  const token = getAdminToken();
+
+  if (!token) return;
+
+  try {
+    await loadBookings();
+  } catch (error) {
+    console.error("Auto refresh failed:", error);
+  }
+}, 10000);
