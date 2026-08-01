@@ -218,10 +218,15 @@ function formatBooking(booking) {
         : null,
 
     status:
-      booking.status,
+  booking.status,
 
-    assignedRider:
-      booking.assigned_rider,
+adminAccepted:
+  Boolean(
+    booking.admin_accepted
+  ),
+
+assignedRider:
+  booking.assigned_rider,
 
     createdAt:
       booking.created_at
@@ -692,6 +697,88 @@ router.get(
 );
 
 // ===============================
+// ACCEPT ORDER — ADMIN ONLY
+// ===============================
+
+router.patch(
+  "/:bookingId/admin-accept",
+  authenticateToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const bookingId =
+        cleanText(
+          req.params.bookingId
+        );
+
+      if (!bookingId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Booking ID is required"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE bookings
+          SET admin_accepted = TRUE
+          WHERE booking_id = $1
+          AND status = 'Pending'
+          RETURNING *
+          `,
+          [bookingId]
+        );
+
+      if (
+        result.rows.length === 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Only a pending order can be accepted"
+        });
+      }
+
+      const acceptedBooking =
+        formatBooking(
+          result.rows[0]
+        );
+
+      const io =
+        req.app.get("io");
+
+      if (io) {
+        io.emit(
+          "order-admin-accepted",
+          acceptedBooking
+        );
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "Order accepted successfully",
+        booking:
+          acceptedBooking
+      });
+    } catch (error) {
+      console.error(
+        "Admin accept order error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to accept order"
+      });
+    }
+  }
+);
+
+// ===============================
 // ASSIGN RIDER — ADMIN ONLY
 // ===============================
 
@@ -803,6 +890,7 @@ router.patch(
             status = 'Assigned'
           WHERE booking_id = $2
           AND status = 'Pending'
+          AND admin_accepted = TRUE
           AND assigned_rider IS NULL
           RETURNING *
           `,
@@ -841,8 +929,10 @@ router.patch(
 
         return res.status(409).json({
           success: false,
+          
           message:
-            "Only an unassigned pending booking can be assigned"
+  "Order must be accepted by admin before rider assignment"
+        
         });
       }
 

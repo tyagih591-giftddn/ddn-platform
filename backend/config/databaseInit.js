@@ -208,6 +208,13 @@ async function initializeDatabase() {
     platform_earning NUMERIC(10, 2)
   `);
 
+await pool.query(`
+  ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS
+  admin_accepted BOOLEAN
+  NOT NULL DEFAULT FALSE
+`);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS riders (
       id SERIAL PRIMARY KEY,

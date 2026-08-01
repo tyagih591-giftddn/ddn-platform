@@ -16,8 +16,7 @@ let adminSocket = null;
 let adminAlertAudio = null;
 let adminAlertStopTimer = null;
 let adminAlertEnabled = false;
-let knownAdminBookingIds = new Set();
-let adminBookingsInitialized = false;
+
 
 async function enableAdminAlerts() {
 
@@ -47,20 +46,7 @@ async function enableAdminAlerts() {
       "true"
     );
 
-    const enableAlertsButton =
-      document.getElementById(
-        "enableAlertsButton"
-      );
-
-    if (enableAlertsButton) {
-
-      enableAlertsButton.textContent =
-        "✅ Alerts Enabled";
-
-      enableAlertsButton.disabled = true;
-
-    }
-
+    
     console.log(
       "Admin alerts enabled"
     );
@@ -120,6 +106,17 @@ adminSocket.on(
     );
 
     await loadBookings();
+
+const acceptButton =
+  document.getElementById(
+    "acceptOrderButton"
+  );
+
+if (acceptButton) {
+
+  acceptButton.disabled = false;
+
+}
 
     if (adminAlertEnabled) {
       startAdminAlarm();
@@ -952,14 +949,13 @@ function showDashboard() {
 
   connectAdminSocket();
 
-startAutoRefresh();
-
 }
 
 
 // ===============================
 // LOGOUT
 // ===============================
+
 
 document
   .getElementById(
@@ -1135,24 +1131,6 @@ dashboardFilterCards.forEach(card => {
 
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  const enableAlertsButton = document.getElementById("enableAlertsButton");
-
-  if (enableAlertsButton) {
-    enableAlertsButton.addEventListener("click", async () => {
-      enableAdminAlerts();
-
-      if ("Notification" in window) {
-        if (Notification.permission !== "granted") {
-          await Notification.requestPermission();
-        }
-      }
-
-      enableAlertsButton.textContent = "✅ Alerts Enabled";
-      enableAlertsButton.disabled = true;
-    });
-  }
-});
 
 // ===============================
 // LOAD BOOKINGS
@@ -1220,80 +1198,7 @@ async function loadBookings() {
       data.bookings || [];
 
 
-// ===============================
-// NEW ORDER NOTIFICATION
-// ===============================
 
-const currentBookingIds =
-  new Set(
-    bookings.map(
-      booking =>
-        String(
-          booking.bookingId
-        )
-    )
-  );
-
-if (!adminBookingsInitialized) {
-
-  knownAdminBookingIds =
-    currentBookingIds;
-
-  adminBookingsInitialized =
-    true;
-
-} else {
-
-  const newBookings =
-    bookings.filter(
-      booking =>
-        !knownAdminBookingIds.has(
-          String(
-            booking.bookingId
-          )
-        )
-    );
-
-  if (newBookings.length > 0) {
-
-    const newestBooking =
-      newBookings[0];
-
-    startAdminAlarm();
-
-    if (
-      "Notification" in window &&
-      Notification.permission ===
-        "granted"
-    ) {
-
-      new Notification(
-        "🚚 New DDN Order Received",
-        {
-          body:
-            `Booking: ${newestBooking.bookingId}\n` +
-            `Customer: ${newestBooking.customerName || "Customer"}`,
-          tag:
-            String(
-              newestBooking.bookingId
-            )
-        }
-      );
-
-    }
-
-    alert(
-      `🚚 NEW ORDER RECEIVED\n\n` +
-      `Booking ID: ${newestBooking.bookingId}\n` +
-      `Customer: ${newestBooking.customerName || "Customer"}`
-    );
-
-  }
-
-  knownAdminBookingIds =
-    currentBookingIds;
-
-}
       
 allAdminBookings = bookings;
 
@@ -1605,18 +1510,68 @@ const bookingTime =
                       )
                     : ""
                 }"
+${
+  booking.adminAccepted
+    ? ""
+    : "disabled"
+}
+
               >
 
-              <button
-                type="button"
-                onclick="
-                  assignRider(
-                    '${bookingId}'
-                  )
-                "
-              >
-                Assign Rider
-              </button>
+              ${
+  booking.status === "Pending" &&
+  !booking.adminAccepted
+    ? `
+      <button
+        type="button"
+        class="accept-order-button"
+        onclick="
+          acceptOrder(
+            '${bookingId}'
+          )
+        "
+      >
+        🟢 Accept Order
+      </button>
+
+      <br><br>
+    `
+    : `
+      <p>
+        <strong>
+          Admin Acceptance:
+        </strong>
+
+        <span class="status">
+          ${
+            booking.adminAccepted
+              ? "Accepted"
+              : "Not Required"
+          }
+        </span>
+      </p>
+    `
+}
+
+             <button
+  type="button"
+  ${
+    booking.adminAccepted
+      ? ""
+      : "disabled"
+  }
+  onclick="
+    assignRider(
+      '${bookingId}'
+    )
+  "
+>
+  ${
+    booking.adminAccepted
+      ? "Assign Rider"
+      : "Accept Order First"
+  }
+</button>
 
               <br><br>
 
@@ -1750,22 +1705,87 @@ const bookingTime =
 
 function startAutoRefresh() {
 
-  if (autoRefreshInterval) {
-    clearInterval(autoRefreshInterval);
+  console.log(
+    "Auto refresh disabled - using Socket.IO"
+  );
+
+}
+
+// ===============================
+// ACCEPT ORDER
+// ===============================
+
+async function acceptOrder(
+  bookingId
+) {
+
+  const token =
+    getAdminToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
   }
 
-  autoRefreshInterval = setInterval(() => {
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}/${encodeURIComponent(
+          bookingId
+        )}/admin-accept`,
+        {
+          method: "PATCH",
+
+          headers: {
+            "Authorization":
+              `Bearer ${token}`,
+            "Content-Type":
+              "application/json"
+          }
+        }
+      );
+
+    const data =
+      await response.json();
 
     if (
-      document.hidden ||
-      !getAdminToken()
+      handleAuthError(
+        response,
+        data
+      )
     ) {
       return;
     }
 
-    loadBookings();
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        "Unable to accept order"
+      );
+    }
 
-  }, AUTO_REFRESH_TIME);
+    stopAdminAlarm();
+
+    await loadBookings();
+
+  } catch (error) {
+
+    console.error(
+      "Accept order error:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Unable to accept order."
+    );
+
+  }
 
 }
 
@@ -1989,21 +2009,7 @@ async function updateStatus(
   }
 
 }
-// ===============================
-// AUTO REFRESH BOOKINGS
-// ===============================
 
-setInterval(async () => {
-  const token = getAdminToken();
-
-  if (!token) return;
-
-  try {
-    await loadBookings();
-  } catch (error) {
-    console.error("Auto refresh failed:", error);
-  }
-}, 10000);
 
 // ===============================
 // ENABLE ALERTS ON FIRST CLICK
