@@ -2052,13 +2052,19 @@ return res.json({
 router.get(
   "/:bookingId/tracking",
   async (req, res) => {
-
     try {
-
       const bookingId =
         cleanText(
           req.params.bookingId
         );
+
+      if (!bookingId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Booking ID is required"
+        });
+      }
 
       const result =
         await pool.query(
@@ -2068,12 +2074,23 @@ router.get(
             b.status,
             b.pickup_location,
             b.delivery_location,
+
             b.customer_pickup_latitude,
             b.customer_pickup_longitude,
+
             b.customer_delivery_latitude,
             b.customer_delivery_longitude,
-            b.assigned_rider,
 
+            b.delivery_distance_km,
+            b.route_duration_minutes,
+            b.customer_fare,
+
+            b.assigned_rider,
+            b.created_at,
+            b.picked_up_at,
+            b.delivered_at,
+
+            r.full_name AS rider_full_name,
             r.current_latitude,
             r.current_longitude,
             r.last_location_updated_at
@@ -2081,7 +2098,8 @@ router.get(
           FROM bookings b
 
           LEFT JOIN riders r
-          ON r.username = b.assigned_rider
+            ON r.username =
+              b.assigned_rider
 
           WHERE b.booking_id = $1
 
@@ -2093,23 +2111,55 @@ router.get(
       if (
         result.rows.length === 0
       ) {
-
         return res.status(404).json({
           success: false,
-          message: "Booking not found"
+          message:
+            "Booking not found"
         });
-
       }
 
       const booking =
         result.rows[0];
 
-      return res.json({
+      const riderLatitude =
+        booking.current_latitude !== null &&
+        booking.current_latitude !== undefined
+          ? Number(
+              booking.current_latitude
+            )
+          : null;
 
+      const riderLongitude =
+        booking.current_longitude !== null &&
+        booking.current_longitude !== undefined
+          ? Number(
+              booking.current_longitude
+            )
+          : null;
+
+      const lastUpdated =
+        booking.last_location_updated_at;
+
+      const locationAgeSeconds =
+        lastUpdated
+          ? Math.floor(
+              (
+                Date.now() -
+                new Date(
+                  lastUpdated
+                ).getTime()
+              ) / 1000
+            )
+          : null;
+
+      const riderLocationStale =
+        locationAgeSeconds === null ||
+        locationAgeSeconds > 60;
+
+      return res.json({
         success: true,
 
         tracking: {
-
           bookingId:
             booking.booking_id,
 
@@ -2123,53 +2173,95 @@ router.get(
             booking.delivery_location,
 
           pickupLatitude:
-            booking.customer_pickup_latitude,
+            booking
+              .customer_pickup_latitude,
 
           pickupLongitude:
-            booking.customer_pickup_longitude,
+            booking
+              .customer_pickup_longitude,
 
           deliveryLatitude:
-            booking.customer_delivery_latitude,
+            booking
+              .customer_delivery_latitude,
 
           deliveryLongitude:
-            booking.customer_delivery_longitude,
+            booking
+              .customer_delivery_longitude,
 
-          riderLatitude:
-            booking.current_latitude,
+          deliveryDistanceKm:
+            booking.delivery_distance_km !== null
+              ? Number(
+                  booking.delivery_distance_km
+                )
+              : null,
 
-          riderLongitude:
-            booking.current_longitude,
+          routeDurationMinutes:
+            booking.route_duration_minutes !== null
+              ? Number(
+                  booking.route_duration_minutes
+                )
+              : null,
 
-          assignedRider:
-            booking.assigned_rider,
+          customerFare:
+            booking.customer_fare !== null
+              ? Number(
+                  booking.customer_fare
+                )
+              : null,
 
-          lastUpdated:
-            booking.last_location_updated_at
+          riderAssigned:
+            Boolean(
+              booking.assigned_rider
+            ),
 
+          riderName:
+            booking.rider_full_name ||
+            null,
+
+          riderLatitude,
+
+          riderLongitude,
+
+          riderLocationAvailable:
+            Number.isFinite(
+              riderLatitude
+            ) &&
+            Number.isFinite(
+              riderLongitude
+            ),
+
+          riderLocationStale,
+
+          locationAgeSeconds,
+
+          lastUpdated,
+
+          createdAt:
+            booking.created_at,
+
+          pickedUpAt:
+            booking.picked_up_at,
+
+          deliveredAt:
+            booking.delivered_at
         }
-
       });
 
     } catch (error) {
-
       console.error(
         "Tracking API error:",
         error
       );
 
       return res.status(500).json({
-
         success: false,
-
         message:
           "Failed to load tracking"
-
       });
-
     }
-
   }
 );
+
 
 // ===============================
 // CUSTOMER TRACKING — PUBLIC

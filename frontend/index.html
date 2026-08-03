@@ -164,23 +164,35 @@
     <section class="card tracking-section">
 
       <h2>Track My Delivery</h2>
+<form id="trackingForm">
 
-      <form id="trackingForm">
+  <input
+    type="text"
+    id="trackingBookingId"
+    placeholder="Enter Booking ID"
+    required
+  >
 
-        <input
-          type="text"
-          id="trackingBookingId"
-          placeholder="Enter Booking ID"
-          required
-        >
+  <button type="submit">
+    Track Booking
+  </button>
 
-        <button type="submit">
-          Track Booking
-        </button>
+</form>
 
-      </form>
+<div
+  id="trackingMap"
+  class="tracking-map"
+  style="
+    display:none;
+    width:100%;
+    height:350px;
+    margin-top:20px;
+    border-radius:12px;
+    overflow:hidden;
+  "
+></div>
 
-      <div id="trackingResult"></div>
+<div id="trackingResult"></div>
 
     </section>
 
@@ -259,7 +271,8 @@
     });
   </script>
 
-<script src="app.js"></script>
+<script src="https://ddn-platform.onrender.com/socket.io/socket.io.js"></script>
+<script src="app.js?v=2"></script>
 
 </body>
 </html>

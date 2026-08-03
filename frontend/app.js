@@ -1,6 +1,19 @@
 const API_URL =
   "https://ddn-platform.onrender.com/api/bookings";
 
+  const SOCKET_URL =
+  "https://ddn-platform.onrender.com";
+
+let customerSocket = null;
+let activeTrackingBookingId = null;
+
+let customerTrackingMap = null;
+let customerPickupMarker = null;
+let customerDeliveryMarker = null;
+let customerRiderMarker = null;
+
+let latestCustomerTracking = null;
+
 // ======================================
 // LOCATION COORDINATES
 // ======================================
@@ -1664,6 +1677,428 @@ const trackingResult =
     "trackingResult"
   );
 
+  // ===============================
+// CUSTOMER LIVE TRACKING MAP
+// ===============================
+
+async function updateCustomerTrackingMap(
+  tracking
+) {
+
+  const mapContainer =
+    document.getElementById(
+      "trackingMap"
+    );
+
+  if (!mapContainer) {
+    return;
+  }
+
+  const pickupLatitude =
+    Number(
+      tracking.pickupLatitude
+    );
+
+  const pickupLongitude =
+    Number(
+      tracking.pickupLongitude
+    );
+
+  const deliveryLatitude =
+    Number(
+      tracking.deliveryLatitude
+    );
+
+  const deliveryLongitude =
+    Number(
+      tracking.deliveryLongitude
+    );
+
+  const riderLatitude =
+    Number(
+      tracking.riderLatitude
+    );
+
+  const riderLongitude =
+    Number(
+      tracking.riderLongitude
+    );
+
+  const hasPickupLocation =
+    Number.isFinite(
+      pickupLatitude
+    ) &&
+    Number.isFinite(
+      pickupLongitude
+    );
+
+  const hasDeliveryLocation =
+    Number.isFinite(
+      deliveryLatitude
+    ) &&
+    Number.isFinite(
+      deliveryLongitude
+    );
+
+  const hasRiderLocation =
+    tracking.riderLocationAvailable &&
+    Number.isFinite(
+      riderLatitude
+    ) &&
+    Number.isFinite(
+      riderLongitude
+    );
+
+  if (
+    !hasPickupLocation &&
+    !hasDeliveryLocation &&
+    !hasRiderLocation
+  ) {
+
+    mapContainer.style.display =
+      "none";
+
+    return;
+  }
+
+  try {
+
+    const {
+      Map
+    } =
+      await google.maps.importLibrary(
+        "maps"
+      );
+
+    const {
+      AdvancedMarkerElement
+    } =
+      await google.maps.importLibrary(
+        "marker"
+      );
+
+    const initialPosition =
+      hasRiderLocation
+        ? {
+            lat:
+              riderLatitude,
+
+            lng:
+              riderLongitude
+          }
+        : hasPickupLocation
+          ? {
+              lat:
+                pickupLatitude,
+
+              lng:
+                pickupLongitude
+            }
+          : {
+              lat:
+                deliveryLatitude,
+
+              lng:
+                deliveryLongitude
+            };
+
+    mapContainer.style.display =
+      "block";
+
+    if (!customerTrackingMap) {
+
+      customerTrackingMap =
+        new Map(
+          mapContainer,
+          {
+            center:
+              initialPosition,
+
+            zoom:
+              14,
+
+            mapId:
+              "DEMO_MAP_ID",
+
+            disableDefaultUI:
+              false,
+
+            streetViewControl:
+              false,
+
+            mapTypeControl:
+              false,
+
+            fullscreenControl:
+              true
+          }
+        );
+
+    }
+
+    if (
+      hasPickupLocation &&
+      !customerPickupMarker
+    ) {
+
+      customerPickupMarker =
+        new AdvancedMarkerElement({
+          map:
+            customerTrackingMap,
+
+          position: {
+            lat:
+              pickupLatitude,
+
+            lng:
+              pickupLongitude
+          },
+
+          title:
+            "Pickup Location"
+        });
+
+    }
+
+    if (
+      hasDeliveryLocation &&
+      !customerDeliveryMarker
+    ) {
+
+      customerDeliveryMarker =
+        new AdvancedMarkerElement({
+          map:
+            customerTrackingMap,
+
+          position: {
+            lat:
+              deliveryLatitude,
+
+            lng:
+              deliveryLongitude
+          },
+
+          title:
+            "Delivery Location"
+        });
+
+    }
+
+    if (hasRiderLocation) {
+
+      if (!customerRiderMarker) {
+
+        customerRiderMarker =
+          new AdvancedMarkerElement({
+            map:
+              customerTrackingMap,
+
+            position: {
+              lat:
+                riderLatitude,
+
+              lng:
+                riderLongitude
+            },
+
+            title:
+              tracking.riderName ||
+              "DDN Rider"
+          });
+
+      } else {
+
+        customerRiderMarker.position = {
+          lat:
+            riderLatitude,
+
+          lng:
+            riderLongitude
+        };
+
+      }
+
+    } else if (
+      customerRiderMarker
+    ) {
+
+      customerRiderMarker.map =
+        null;
+
+      customerRiderMarker =
+        null;
+
+    }
+
+    const bounds =
+      new google.maps.LatLngBounds();
+
+    if (hasPickupLocation) {
+
+      bounds.extend({
+        lat:
+          pickupLatitude,
+
+        lng:
+          pickupLongitude
+      });
+
+    }
+
+    if (hasDeliveryLocation) {
+
+      bounds.extend({
+        lat:
+          deliveryLatitude,
+
+        lng:
+          deliveryLongitude
+      });
+
+    }
+
+    if (hasRiderLocation) {
+
+      bounds.extend({
+        lat:
+          riderLatitude,
+
+        lng:
+          riderLongitude
+      });
+
+    }
+
+    customerTrackingMap.fitBounds(
+      bounds
+    );
+
+    google.maps.event.addListenerOnce(
+      customerTrackingMap,
+      "idle",
+      () => {
+
+        if (
+          customerTrackingMap.getZoom() >
+          16
+        ) {
+
+          customerTrackingMap.setZoom(
+            16
+          );
+
+        }
+
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Customer tracking map error:",
+      error
+    );
+
+    mapContainer.style.display =
+      "none";
+
+  }
+
+}
+
+  // ===============================
+// CUSTOMER REALTIME SOCKET
+// ===============================
+
+function connectCustomerSocket() {
+
+  if (
+    customerSocket &&
+    customerSocket.connected
+  ) {
+    return;
+  }
+
+  if (typeof io === "undefined") {
+
+    console.error(
+      "Socket.IO client is not loaded"
+    );
+
+    return;
+
+  }
+
+  customerSocket =
+    io(SOCKET_URL, {
+
+      transports: [
+        "websocket",
+        "polling"
+      ]
+
+    });
+
+  customerSocket.on(
+    "connect",
+    () => {
+
+      console.log(
+        "Customer socket connected:",
+        customerSocket.id
+      );
+
+    }
+  );
+
+  customerSocket.on(
+    "booking-status-updated",
+    booking => {
+
+      if (
+        !activeTrackingBookingId
+      ) {
+        return;
+      }
+
+      if (
+        booking.bookingId !==
+        activeTrackingBookingId
+      ) {
+        return;
+      }
+
+      console.log(
+        "Realtime booking update:",
+        booking
+      );
+
+      trackingForm.dispatchEvent(
+        new Event("submit")
+      );
+
+    }
+  );
+
+  customerSocket.on(
+    "rider-location-updated",
+    () => {
+
+      if (
+        !activeTrackingBookingId
+      ) {
+        return;
+      }
+
+      trackingForm.dispatchEvent(
+        new Event("submit")
+      );
+
+    }
+  );
+
+}
+
 trackingForm.addEventListener(
   "submit",
   async function (event) {
@@ -1673,6 +2108,12 @@ trackingForm.addEventListener(
       trackingBookingIdInput
         .value
         .trim();
+
+        activeTrackingBookingId =
+  bookingId;
+
+connectCustomerSocket();
+
 
     if (!bookingId) {
       trackingResult.innerHTML =
@@ -1705,8 +2146,8 @@ trackingForm.addEventListener(
       const response =
         await fetch(
           `${API_URL}/${encodeURIComponent(
-            bookingId
-          )}`
+  bookingId
+)}/tracking`
         );
 
       let data = null;
@@ -1737,181 +2178,219 @@ trackingForm.addEventListener(
         return;
       }
 
-      const booking =
-        data.booking || {};
+      const tracking =
+  data.tracking || {};
 
-      const distance =
-        booking.deliveryDistanceKm;
+latestCustomerTracking =
+  tracking;
 
-      const customerFare =
-        booking.customerFare;
+await updateCustomerTrackingMap(
+  tracking
+);
 
-      const riderEarning =
-        booking.riderEarning;
+const distance =
+  tracking.deliveryDistanceKm;
 
-      const platformEarning =
-        booking.platformEarning;
+const customerFare =
+  tracking.customerFare;
 
-      const createdAt =
-        booking.createdAt
-          ? new Date(
-              booking.createdAt
-            ).toLocaleString(
-              "en-IN"
-            )
-          : "";
+const createdAt =
+  tracking.createdAt
+    ? new Date(
+        tracking.createdAt
+      ).toLocaleString(
+        "en-IN"
+      )
+    : "";
 
-      trackingResult.innerHTML = `
-        <div class="tracking-card">
+    trackingResult.innerHTML = `
+  <div class="tracking-card">
 
-          <h3>
-            Booking Details
-          </h3>
+    <h3>
+      Live Delivery Tracking
+    </h3>
 
+    <p>
+      <strong>
+        Booking ID:
+      </strong>
+
+      ${escapeHtml(
+        tracking.bookingId
+      )}
+    </p>
+
+    <p>
+      <strong>
+        Pickup:
+      </strong>
+
+      ${escapeHtml(
+        tracking.pickupLocation
+      )}
+    </p>
+
+    <p>
+      <strong>
+        Delivery:
+      </strong>
+
+      ${escapeHtml(
+        tracking.deliveryLocation
+      )}
+    </p>
+
+    ${
+      distance !== null &&
+      distance !== undefined
+        ? `
           <p>
             <strong>
-              Booking ID:
+              Delivery Distance:
             </strong>
+
             ${escapeHtml(
-              booking.bookingId
+              distance
+            )} km
+          </p>
+        `
+        : ""
+    }
+
+    ${
+      tracking.routeDurationMinutes !== null &&
+      tracking.routeDurationMinutes !== undefined
+        ? `
+          <p>
+            <strong>
+              Estimated Travel Time:
+            </strong>
+
+            ${escapeHtml(
+              tracking.routeDurationMinutes
+            )} minutes
+          </p>
+        `
+        : ""
+    }
+
+    ${
+      customerFare !== null &&
+      customerFare !== undefined
+        ? `
+          <p>
+            <strong>
+              Delivery Charge:
+            </strong>
+
+            ₹${escapeHtml(
+              customerFare
             )}
           </p>
+        `
+        : ""
+    }
 
+    <p>
+      <strong>
+        Current Status:
+      </strong>
+
+      <span class="status">
+        ${escapeHtml(
+          tracking.status
+        )}
+      </span>
+    </p>
+
+    ${
+      tracking.riderAssigned
+        ? `
           <p>
             <strong>
-              Customer:
+              Rider:
             </strong>
+
             ${escapeHtml(
-              booking.customerName
+              tracking.riderName ||
+              "Assigned Rider"
             )}
           </p>
+        `
+        : `
+          <p>
+            <strong>
+              Rider:
+            </strong>
+
+            Waiting for rider assignment
+          </p>
+        `
+    }
+
+    ${
+      tracking.riderLocationAvailable
+        ? `
+          <p>
+            <strong>
+              Live Rider Location:
+            </strong>
+
+            ${
+              tracking.riderLocationStale
+                ? "Location update is temporarily delayed."
+                : "Rider location is active."
+            }
+          </p>
 
           <p>
             <strong>
-              Pickup:
+              Last Location Update:
             </strong>
+
+            ${
+              tracking.lastUpdated
+                ? escapeHtml(
+                    new Date(
+                      tracking.lastUpdated
+                    ).toLocaleString(
+                      "en-IN"
+                    )
+                  )
+                : "Not available"
+            }
+          </p>
+        `
+        : `
+          <p>
+            <strong>
+              Live Rider Location:
+            </strong>
+
+            Location will appear after the rider is assigned and online.
+          </p>
+        `
+    }
+
+    ${
+      createdAt
+        ? `
+          <p>
+            <strong>
+              Booking Time:
+            </strong>
+
             ${escapeHtml(
-              booking.pickupLocation
+              createdAt
             )}
           </p>
+        `
+        : ""
+    }
 
-          <p>
-            <strong>
-              Delivery:
-            </strong>
-            ${escapeHtml(
-              booking.deliveryLocation
-            )}
-          </p>
+  </div>
+`;  
 
-          ${
-            booking.pinCode
-              ? `
-                <p>
-                  <strong>
-                    PIN Code:
-                  </strong>
-                  ${escapeHtml(
-                    booking.pinCode
-                  )}
-                </p>
-              `
-              : ""
-          }
-
-          ${
-            distance !== null &&
-            distance !== undefined
-              ? `
-                <p>
-                  <strong>
-                    Delivery Distance:
-                  </strong>
-                  ${escapeHtml(
-                    distance
-                  )} km
-                </p>
-              `
-              : ""
-          }
-
-          ${
-            customerFare !== null &&
-            customerFare !== undefined
-              ? `
-                <p>
-                  <strong>
-                    Delivery Charge:
-                  </strong>
-                  ₹${escapeHtml(
-                    customerFare
-                  )}
-                </p>
-              `
-              : ""
-          }
-
-          ${
-            riderEarning !== null &&
-            riderEarning !== undefined
-              ? `
-                <p>
-                  <strong>
-                    Rider Earning:
-                  </strong>
-                  ₹${escapeHtml(
-                    riderEarning
-                  )}
-                </p>
-              `
-              : ""
-          }
-
-          ${
-            platformEarning !== null &&
-            platformEarning !== undefined
-              ? `
-                <p>
-                  <strong>
-                    Platform Earning:
-                  </strong>
-                  ₹${escapeHtml(
-                    platformEarning
-                  )}
-                </p>
-              `
-              : ""
-          }
-
-          <p>
-            <strong>
-              Current Status:
-            </strong>
-
-            <span class="status">
-              ${escapeHtml(
-                booking.status
-              )}
-            </span>
-          </p>
-
-          ${
-            createdAt
-              ? `
-                <p>
-                  <strong>
-                    Booking Time:
-                  </strong>
-                  ${escapeHtml(
-                    createdAt
-                  )}
-                </p>
-              `
-              : ""
-          }
-
-        </div>
-      `;
     } catch (error) {
       console.error(
         "Tracking request failed:",

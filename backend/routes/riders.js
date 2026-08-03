@@ -595,57 +595,159 @@ router.post(
   allowRoles("rider"),
   async (req, res) => {
     try {
-      const latitude = Number(req.body.latitude);
-      const longitude = Number(req.body.longitude);
+      const latitude =
+        Number(
+          req.body.latitude
+        );
+
+      const longitude =
+        Number(
+          req.body.longitude
+        );
 
       if (
-        Number.isNaN(latitude) ||
-        Number.isNaN(longitude)
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180 ||
+        (
+          latitude === 0 &&
+          longitude === 0
+        )
       ) {
         return res.status(400).json({
           success: false,
-          message: "Valid latitude and longitude are required"
+          message:
+            "Valid latitude and longitude are required"
         });
       }
 
-      const result = await pool.query(
-        `
-        UPDATE riders
-        SET
-          current_latitude = $1,
-          current_longitude = $2,
-          last_location_updated_at = CURRENT_TIMESTAMP,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = $3
-        RETURNING
-          id,
-          username,
-          current_latitude,
-          current_longitude,
-          last_location_updated_at
-        `,
-        [
-          latitude,
-          longitude,
-          req.user.riderId
-        ]
-      );
+      const result =
+        await pool.query(
+          `
+          UPDATE riders
+          SET
+            current_latitude = $1,
+            current_longitude = $2,
+            last_location_updated_at =
+              CURRENT_TIMESTAMP,
+            updated_at =
+              CURRENT_TIMESTAMP
+          WHERE id = $3
+          AND is_active = TRUE
+          AND application_status =
+            'approved'
+          AND verification_status =
+            'verified'
+          AND availability_status =
+            'online'
+          RETURNING
+            id,
+            username,
+            full_name,
+            availability_status,
+            current_latitude,
+            current_longitude,
+            last_location_updated_at
+          `,
+          [
+            latitude,
+            longitude,
+            req.user.riderId
+          ]
+        );
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({
+      if (
+        result.rows.length === 0
+      ) {
+        return res.status(409).json({
           success: false,
-          message: "Rider not found"
+          message:
+            "Rider must be active, approved, verified and online before sharing location"
         });
+      }
+
+      const riderLocation =
+        result.rows[0];
+
+      const io =
+        req.app.get("io");
+
+      if (io) {
+        io.emit(
+          "rider-location-updated",
+          {
+            riderId:
+              riderLocation.id,
+
+            username:
+              riderLocation.username,
+
+            fullName:
+              riderLocation.full_name,
+
+            availabilityStatus:
+              riderLocation
+                .availability_status,
+
+            latitude:
+              Number(
+                riderLocation
+                  .current_latitude
+              ),
+
+            longitude:
+              Number(
+                riderLocation
+                  .current_longitude
+              ),
+
+            updatedAt:
+              riderLocation
+                .last_location_updated_at
+          }
+        );
       }
 
       return res.json({
         success: true,
-        message: "Location updated successfully",
-        location: result.rows[0]
+        message:
+          "Location updated successfully",
+        location: {
+          riderId:
+            riderLocation.id,
+
+          username:
+            riderLocation.username,
+
+          fullName:
+            riderLocation.full_name,
+
+          availabilityStatus:
+            riderLocation
+              .availability_status,
+
+          latitude:
+            Number(
+              riderLocation
+                .current_latitude
+            ),
+
+          longitude:
+            Number(
+              riderLocation
+                .current_longitude
+            ),
+
+          updatedAt:
+            riderLocation
+              .last_location_updated_at
+        }
       });
 
     } catch (error) {
-
       console.error(
         "Update rider location error:",
         error
@@ -653,11 +755,9 @@ router.post(
 
       return res.status(500).json({
         success: false,
-        message: "Failed to update location"
+        message:
+          "Failed to update location"
       });
-
     }
   }
 );
-
-module.exports = router;

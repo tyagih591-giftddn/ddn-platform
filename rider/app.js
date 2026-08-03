@@ -549,6 +549,15 @@ document
     "click",
     function () {
 
+  stopLiveLocationTracking();
+
+  if (
+    riderSocket &&
+    riderSocket.connected
+  ) {
+    riderSocket.disconnect();
+  }
+
   clearRiderLogin();
 
   showLoginScreen();
@@ -1175,6 +1184,141 @@ function startLiveLocationTracking() {
       sendRiderLocation,
       15000
     );
+
+}
+
+// ===============================
+// START LIVE RIDER LOCATION
+// ===============================
+
+let riderLocationRequestRunning =
+  false;
+
+async function sendRiderLocation() {
+
+  if (riderLocationRequestRunning) {
+    console.warn(
+      "Previous rider location update is still running"
+    );
+
+    return;
+  }
+
+  const token =
+    getRiderToken();
+
+  if (!token) {
+    return;
+  }
+
+  riderLocationRequestRunning =
+    true;
+
+  try {
+
+    const location =
+      await getCurrentLocation();
+
+    const response =
+      await fetch(
+        RIDER_LOCATION_API,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "Authorization":
+              `Bearer ${token}`
+          },
+
+          body: JSON.stringify({
+            latitude:
+              location.latitude,
+
+            longitude:
+              location.longitude
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      stopLiveLocationTracking();
+
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        "Unable to update rider location"
+      );
+    }
+
+    console.log(
+      "Rider location updated:",
+      data.location
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Location Update Error:",
+      error.message ||
+      error
+    );
+
+  } finally {
+
+    riderLocationRequestRunning =
+      false;
+
+  }
+
+}
+
+function startLiveLocationTracking() {
+
+  stopLiveLocationTracking();
+
+  sendRiderLocation();
+
+  riderLocationInterval =
+    setInterval(
+      sendRiderLocation,
+      15000
+    );
+
+  console.log(
+    "Live rider location tracking started"
+  );
+
+}
+
+function stopLiveLocationTracking() {
+
+  if (riderLocationInterval) {
+
+    clearInterval(
+      riderLocationInterval
+    );
+
+    riderLocationInterval =
+      null;
+
+  }
+
+  riderLocationRequestRunning =
+    false;
 
 }
 

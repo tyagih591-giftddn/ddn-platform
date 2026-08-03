@@ -155,6 +155,20 @@ adminSocket.on(
   }
 );
 
+adminSocket.on(
+  "rider-location-updated",
+  async riderLocation => {
+
+    console.log(
+      "Realtime rider location:",
+      riderLocation
+    );
+
+    await loadBookings();
+
+  }
+);
+
   adminSocket.on(
     "disconnect",
     reason => {
