@@ -20,7 +20,9 @@ let adminAlertEnabled = false;
 
 async function enableAdminAlerts() {
 
-  console.log("enableAdminAlerts() called");
+  console.log(
+    "enableAdminAlerts() called"
+  );
 
   if (!adminAlertAudio) {
 
@@ -31,38 +33,34 @@ async function enableAdminAlerts() {
 
     adminAlertAudio.loop = true;
     adminAlertAudio.volume = 1;
+    adminAlertAudio.preload = "auto";
 
   }
 
-  try {
+  adminAlertEnabled = true;
 
-    await adminAlertAudio.play();
+  localStorage.setItem(
+    "ddnAdminAlertsEnabled",
+    "true"
+  );
 
-    adminAlertAudio.pause();
-    adminAlertAudio.currentTime = 0;
+  console.log(
+    "Admin alerts enabled"
+  );
 
-    adminAlertEnabled = true;
-
-    localStorage.setItem(
-      "ddnAdminAlertsEnabled",
-      "true"
-    );
-
-    
-    console.log(
-      "Admin alerts enabled"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Unable to enable admin alert sound:",
-      error
-    );
-
+  if (
+    "Notification" in window &&
+    Notification.permission === "default"
+  ) {
+    try {
+      await Notification.requestPermission();
+    } catch (error) {
+      console.warn(error);
+    }
   }
 
 }
+
 
 function connectAdminSocket() {
   if (
@@ -166,19 +164,43 @@ if (acceptButton) {
 
 function startAdminAlarm() {
 
+  console.log(
+    "startAdminAlarm() called"
+  );
+
   if (
     !adminAlertEnabled ||
     !adminAlertAudio
   ) {
+    console.warn(
+      "Admin alarm not ready",
+      {
+        adminAlertEnabled,
+        hasAudio:
+          Boolean(
+            adminAlertAudio
+          )
+      }
+    );
+
     return;
   }
 
   stopAdminAlarm();
 
+adminAlertAudio.load();
+
   adminAlertAudio.currentTime = 0;
 
   adminAlertAudio
     .play()
+    .then(() => {
+
+      console.log(
+        "Playing admin alarm"
+      );
+
+    })
     .catch(error => {
 
       console.error(
@@ -188,7 +210,8 @@ function startAdminAlarm() {
 
     });
 
-  }
+}
+
 
 function stopAdminAlarm() {
 
