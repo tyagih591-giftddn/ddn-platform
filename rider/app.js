@@ -176,8 +176,6 @@ riderSocket.on(
       booking
     );
 
-    await loadDeliveries();
-
     startRiderAlarm();
 
     if (
@@ -192,6 +190,7 @@ riderSocket.on(
             `${booking.bookingId} - ` +
             `${booking.pickupLocation} → ` +
             `${booking.deliveryLocation}`,
+
           tag:
             String(
               booking.bookingId
@@ -200,9 +199,23 @@ riderSocket.on(
       );
     }
 
+    try {
+
+      await loadDeliveries();
+
+    } catch (error) {
+
+      console.error(
+        "Unable to refresh rider deliveries after assignment:",
+        error
+      );
+
+    }
+
   }
 );
-  
+
+
 riderSocket.on(
   "booking-status-updated",
   async booking => {
