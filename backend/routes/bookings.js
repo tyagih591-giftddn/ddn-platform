@@ -1137,12 +1137,12 @@ router.post(
         );
 
       const latitude =
-        cleanText(
+        Number(
           req.body.latitude
         );
 
       const longitude =
-        cleanText(
+        Number(
           req.body.longitude
         );
 
@@ -1163,49 +1163,95 @@ router.post(
       }
 
       if (
-        !latitude ||
-        !longitude
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
       ) {
         return res.status(400).json({
           success: false,
           message:
-            "Pickup GPS location is required"
+            "Valid pickup GPS location is required"
         });
       }
 
-      const numericLatitude =
-        Number(latitude);
-
-      const numericLongitude =
-        Number(longitude);
+      // Validate booking before Cloudinary upload
+      const bookingCheck =
+        await pool.query(
+          `
+          SELECT
+            booking_id,
+            status,
+            assigned_rider,
+            pickup_photo_url
+          FROM bookings
+          WHERE booking_id = $1
+          LIMIT 1
+          `,
+          [bookingId]
+        );
 
       if (
-        Number.isNaN(
-          numericLatitude
-        ) ||
-        Number.isNaN(
-          numericLongitude
-        ) ||
-        numericLatitude < -90 ||
-        numericLatitude > 90 ||
-        numericLongitude < -180 ||
-        numericLongitude > 180
+        bookingCheck.rows.length === 0
       ) {
-        return res.status(400).json({
+        return res.status(404).json({
           success: false,
           message:
-            "Invalid pickup GPS coordinates"
+            "Booking not found"
         });
       }
 
-  const uploadResult =
-  await uploadBufferToCloudinary({
-    buffer: req.file.buffer,
-    folder: "DDN/pickup-proofs",
-    publicId: `${bookingId}-${Date.now()}`
-  });
+      const existingBooking =
+        bookingCheck.rows[0];
 
-const photoUrl = uploadResult.secure_url;
+      if (
+        existingBooking.assigned_rider !==
+        req.user.username
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "This booking is not assigned to you"
+        });
+      }
+
+      if (
+        existingBooking.status !==
+        "Accepted"
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Pickup proof can only be submitted after accepting the delivery"
+        });
+      }
+
+      if (
+        existingBooking.pickup_photo_url
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Pickup proof has already been uploaded"
+        });
+      }
+
+      const uploadResult =
+        await uploadBufferToCloudinary({
+          buffer:
+            req.file.buffer,
+
+          folder:
+            "DDN/pickup-proofs",
+
+          publicId:
+            `${bookingId}-${Date.now()}`
+        });
+
+      const photoUrl =
+        uploadResult.secure_url;
 
       const result =
         await pool.query(
@@ -1226,15 +1272,16 @@ const photoUrl = uploadResult.secure_url;
           WHERE booking_id = $7
           AND assigned_rider = $8
           AND status = 'Accepted'
+          AND pickup_photo_url IS NULL
           RETURNING *
           `,
           [
             photoUrl,
-           uploadResult.public_id,
+            uploadResult.public_id,
             req.file.size,
             req.file.mimetype,
-            numericLatitude,
-            numericLongitude,
+            latitude,
+            longitude,
             bookingId,
             req.user.username
           ]
@@ -1243,70 +1290,53 @@ const photoUrl = uploadResult.secure_url;
       if (
         result.rows.length === 0
       ) {
-        const bookingResult =
-          await pool.query(
-            `
-            SELECT
-              booking_id,
-              status,
-              assigned_rider
-            FROM bookings
-            WHERE booking_id = $1
-            LIMIT 1
-            `,
-            [bookingId]
-          );
-
-        if (
-          bookingResult.rows.length === 0
-        ) {
-          return res.status(404).json({
-            success: false,
-            message:
-              "Booking not found"
-          });
-        }
-
-        const booking =
-          bookingResult.rows[0];
-
-        if (
-          booking.assigned_rider !==
-          req.user.username
-        ) {
-          return res.status(403).json({
-            success: false,
-            message:
-              "This booking is not assigned to you"
-          });
-        }
-
         return res.status(409).json({
           success: false,
           message:
-            "Pickup proof can only be submitted after accepting the booking"
+            "Booking was already changed. Please reload and try again."
         });
+      }
+
+      const updatedBooking =
+        formatBooking(
+          result.rows[0]
+        );
+
+      const io =
+        req.app.get("io");
+
+      if (io) {
+        io.emit(
+          "booking-status-updated",
+          updatedBooking
+        );
       }
 
       return res.json({
         success: true,
+
         message:
-          "Pickup proof uploaded and booking marked as Picked Up",
+          "Pickup proof uploaded and package marked as Picked Up",
+
         booking:
-          formatBooking(
-            result.rows[0]
-          ),
+          updatedBooking,
+
         proof: {
           photoUrl,
-          latitude:
-            numericLatitude,
-          longitude:
-            numericLongitude,
+
+          publicId:
+            uploadResult.public_id,
+
+          latitude,
+
+          longitude,
+
           uploadedAt:
             result.rows[0]
               .pickup_photo_uploaded_at
         }
       });
+
     } catch (error) {
       console.error(
         "Pickup proof error:",
@@ -1321,6 +1351,7 @@ const photoUrl = uploadResult.secure_url;
     }
   }
 );
+
 
 // ===============================
 // REJECT DELIVERY — RIDER ONLY
@@ -1444,22 +1475,29 @@ router.post(
   authenticateToken,
   allowRoles("rider"),
   uploadProofPhoto,
-handleProofUploadError,
+  handleProofUploadError,
   async (req, res) => {
     try {
       const bookingId =
-        cleanText(req.params.bookingId);
+        cleanText(
+          req.params.bookingId
+        );
 
       const latitude =
-        cleanText(req.body.latitude);
+        Number(
+          req.body.latitude
+        );
 
       const longitude =
-        cleanText(req.body.longitude);
+        Number(
+          req.body.longitude
+        );
 
       if (!bookingId) {
         return res.status(400).json({
           success: false,
-          message: "Booking ID is required"
+          message:
+            "Booking ID is required"
         });
       }
 
@@ -1471,40 +1509,96 @@ handleProofUploadError,
         });
       }
 
-      if (!latitude || !longitude) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Delivery GPS location is required"
-        });
-      }
-
-      const lat = Number(latitude);
-      const lng = Number(longitude);
-
       if (
-        Number.isNaN(lat) ||
-        Number.isNaN(lng) ||
-        lat < -90 ||
-        lat > 90 ||
-        lng < -180 ||
-        lng > 180
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
       ) {
         return res.status(400).json({
           success: false,
           message:
-            "Invalid delivery GPS coordinates"
+            "Valid delivery GPS location is required"
         });
       }
 
-     const uploadResult =
-  await uploadBufferToCloudinary({
-    buffer: req.file.buffer,
-    folder: "DDN/delivery-proofs",
-    publicId: `${bookingId}-${Date.now()}`
-  });
+      // Validate before Cloudinary upload
+      const bookingCheck =
+        await pool.query(
+          `
+          SELECT
+            booking_id,
+            status,
+            assigned_rider,
+            delivery_photo_url
+          FROM bookings
+          WHERE booking_id = $1
+          LIMIT 1
+          `,
+          [bookingId]
+        );
 
-const photoUrl = uploadResult.secure_url;
+      if (
+        bookingCheck.rows.length === 0
+      ) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Booking not found"
+        });
+      }
+
+      const existingBooking =
+        bookingCheck.rows[0];
+
+      if (
+        existingBooking.assigned_rider !==
+        req.user.username
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "This booking is not assigned to you"
+        });
+      }
+
+      if (
+        existingBooking.status !==
+        "Reached Drop Location"
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Delivery proof can only be submitted after reaching the drop location"
+        });
+      }
+
+      if (
+        existingBooking.delivery_photo_url
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Delivery proof has already been uploaded"
+        });
+      }
+
+      const uploadResult =
+        await uploadBufferToCloudinary({
+          buffer:
+            req.file.buffer,
+
+          folder:
+            "DDN/delivery-proofs",
+
+          publicId:
+            `${bookingId}-${Date.now()}`
+        });
+
+      const photoUrl =
+        uploadResult.secure_url;
 
       const result =
         await pool.query(
@@ -1517,11 +1611,14 @@ const photoUrl = uploadResult.secure_url;
             delivery_photo_mime_type = $4,
             delivery_latitude = $5,
             delivery_longitude = $6,
-            delivered_at = CURRENT_TIMESTAMP,
+            delivered_at =
+              CURRENT_TIMESTAMP,
             status = 'Delivered'
           WHERE booking_id = $7
           AND assigned_rider = $8
-          AND status = 'Reached Drop Location'
+          AND status =
+            'Reached Drop Location'
+          AND delivery_photo_url IS NULL
           RETURNING *
           `,
           [
@@ -1529,33 +1626,60 @@ const photoUrl = uploadResult.secure_url;
             uploadResult.public_id,
             req.file.size,
             req.file.mimetype,
-            lat,
-            lng,
+            latitude,
+            longitude,
             bookingId,
             req.user.username
           ]
         );
 
-      if (result.rows.length === 0) {
+      if (
+        result.rows.length === 0
+      ) {
         return res.status(409).json({
           success: false,
           message:
-            "Delivery proof can only be uploaded after reaching the drop location."
+            "Booking was already changed. Please reload and try again."
         });
+      }
+
+      const updatedBooking =
+        formatBooking(
+          result.rows[0]
+        );
+
+      const io =
+        req.app.get("io");
+
+      if (io) {
+        io.emit(
+          "booking-status-updated",
+          updatedBooking
+        );
       }
 
       return res.json({
         success: true,
+
         message:
           "Delivery completed successfully",
+
         booking:
-          formatBooking(result.rows[0]),
+          updatedBooking,
+
         proof: {
           photoUrl,
-          latitude: lat,
-          longitude: lng,
+
+          publicId:
+            uploadResult.public_id,
+
+          latitude,
+
+          longitude,
+
           deliveredAt:
-            result.rows[0].delivered_at
+            result.rows[0]
+              .delivered_at
         }
       });
 
@@ -1883,15 +2007,29 @@ router.patch(
         });
       }
 
-      return res.json({
-        success: true,
-        message:
-          "Booking status updated successfully",
-        booking:
-          formatBooking(
-            updateResult.rows[0]
-          )
-      });
+      const updatedBooking =
+  formatBooking(
+    updateResult.rows[0]
+  );
+
+const io =
+  req.app.get("io");
+
+if (io) {
+  io.emit(
+    "booking-status-updated",
+    updatedBooking
+  );
+}
+
+return res.json({
+  success: true,
+  message:
+    "Booking status updated successfully",
+  booking:
+    updatedBooking
+});
+
     } catch (error) {
       console.error(
         "Update status error:",

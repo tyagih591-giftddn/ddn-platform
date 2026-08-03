@@ -203,6 +203,33 @@ riderSocket.on(
   }
 );
   
+riderSocket.on(
+  "booking-status-updated",
+  async booking => {
+
+    const riderUsername =
+      localStorage.getItem(
+        "ddnRiderUsername"
+      );
+
+    if (
+      !riderUsername ||
+      booking.assignedRider !==
+        riderUsername
+    ) {
+      return;
+    }
+
+    console.log(
+      "Realtime rider status update:",
+      booking
+    );
+
+    await loadDeliveries();
+
+  }
+);
+
   riderSocket.on(
     "disconnect",
     reason => {
@@ -877,9 +904,10 @@ async function loadDeliveries() {
                         type="button"
                         onclick="
                           uploadProof(
-                            '${rawBookingId}',
-                            'pickup'
-                          )
+  '${rawBookingId}',
+  'pickup',
+  this
+)
                         "
                       >
                         Upload Pickup Photo
@@ -960,9 +988,10 @@ async function loadDeliveries() {
                         type="button"
                         onclick="
                           uploadProof(
-                            '${rawBookingId}',
-                            'delivery'
-                          )
+  '${rawBookingId}',
+  'delivery',
+  this
+)
                         "
                       >
                         Upload Delivery Photo
@@ -1155,24 +1184,37 @@ function startLiveLocationTracking() {
 
 async function uploadProof(
   bookingId,
-  proofType
+  proofType,
+  actionButton = null
 ) {
 
   const token =
     getRiderToken();
 
   if (!token) {
-
     showLoginScreen(
       "Please login again."
     );
 
     return;
-
   }
 
   const isPickup =
     proofType === "pickup";
+
+  const isDelivery =
+    proofType === "delivery";
+
+  if (
+    !isPickup &&
+    !isDelivery
+  ) {
+    alert(
+      "Invalid proof type."
+    );
+
+    return;
+  }
 
   const inputId =
     isPickup
@@ -1199,7 +1241,6 @@ async function uploadProof(
     !photoInput.files ||
     photoInput.files.length === 0
   ) {
-
     alert(
       isPickup
         ? "Please select a pickup proof photo."
@@ -1207,7 +1248,6 @@ async function uploadProof(
     );
 
     return;
-
   }
 
   const selectedFile =
@@ -1215,7 +1255,6 @@ async function uploadProof(
 
   const allowedTypes = [
     "image/jpeg",
-    "image/jpg",
     "image/png",
     "image/webp"
   ];
@@ -1225,13 +1264,11 @@ async function uploadProof(
       selectedFile.type
     )
   ) {
-
     alert(
       "Only JPG, JPEG, PNG and WEBP images are allowed."
     );
 
     return;
-
   }
 
   const maximumFileSize =
@@ -1241,13 +1278,11 @@ async function uploadProof(
     selectedFile.size >
     maximumFileSize
   ) {
-
     alert(
       "Proof photo must be 5 MB or smaller."
     );
 
     return;
-
   }
 
   const confirmed =
@@ -1258,31 +1293,35 @@ async function uploadProof(
     );
 
   if (!confirmed) {
-
     return;
-
   }
 
+  if (actionButton) {
+    actionButton.disabled = true;
+
+    actionButton.textContent =
+      isPickup
+        ? "Uploading Pickup Proof..."
+        : "Uploading Delivery Proof...";
+  }
+
+  photoInput.disabled = true;
+
   try {
-
     if (messageElement) {
-
       messageElement.textContent =
         "Getting current GPS location...";
 
       messageElement.style.color =
         "#333";
-
     }
 
     const location =
       await getCurrentLocation();
 
     if (messageElement) {
-
       messageElement.textContent =
         "Uploading proof photo...";
-
     }
 
     const formData =
@@ -1314,7 +1353,9 @@ async function uploadProof(
 
     const response =
       await fetch(
-        `${API_URL}/${bookingId}/${routeName}`,
+        `${API_URL}/${encodeURIComponent(
+          bookingId
+        )}/${routeName}`,
         {
           method: "POST",
 
@@ -1323,7 +1364,8 @@ async function uploadProof(
               `Bearer ${token}`
           },
 
-          body: formData
+          body:
+            formData
         }
       );
 
@@ -1336,30 +1378,26 @@ async function uploadProof(
         data
       )
     ) {
-
       return;
-
     }
 
     if (!response.ok) {
-
       throw new Error(
         data.message ||
         "Proof photo upload failed."
       );
-
     }
 
     if (messageElement) {
-
       messageElement.textContent =
         data.message ||
         "Proof photo uploaded successfully.";
 
       messageElement.style.color =
         "green";
-
     }
+
+    photoInput.value = "";
 
     alert(
       data.message ||
@@ -1369,21 +1407,18 @@ async function uploadProof(
     await loadDeliveries();
 
   } catch (error) {
-
     console.error(
       "Proof upload error:",
       error
     );
 
     if (messageElement) {
-
       messageElement.textContent =
         error.message ||
         "Unable to upload proof photo.";
 
       messageElement.style.color =
         "red";
-
     }
 
     alert(
@@ -1391,8 +1426,17 @@ async function uploadProof(
       "Unable to upload proof photo."
     );
 
-  }
+    photoInput.disabled = false;
 
+    if (actionButton) {
+      actionButton.disabled = false;
+
+      actionButton.textContent =
+        isPickup
+          ? "Upload Pickup Photo"
+          : "Upload Delivery Photo";
+    }
+  }
 }
 
 // ===============================

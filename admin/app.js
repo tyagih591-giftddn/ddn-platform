@@ -141,6 +141,20 @@ if (acceptButton) {
   }
 );
   
+adminSocket.on(
+  "booking-status-updated",
+  async booking => {
+
+    console.log(
+      "Realtime booking status update:",
+      booking
+    );
+
+    await loadBookings();
+
+  }
+);
+
   adminSocket.on(
     "disconnect",
     reason => {
