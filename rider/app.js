@@ -1701,59 +1701,77 @@ if (newStatus === "Accepted") {
 // GOOGLE MAPS NAVIGATION
 // ===============================
 
-function openPickupNavigation(
+function openNavigation(
   latitude,
   longitude,
   address
 ) {
 
-  if (
-    latitude &&
-    longitude &&
-    latitude !== "null" &&
-    longitude !== "null"
-  ) {
-
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
-      "_blank"
+  const numericLatitude =
+    Number(
+      latitude
     );
 
-    return;
+  const numericLongitude =
+    Number(
+      longitude
+    );
 
+  const hasValidCoordinates =
+    Number.isFinite(
+      numericLatitude
+    ) &&
+    Number.isFinite(
+      numericLongitude
+    ) &&
+    numericLatitude >= -90 &&
+    numericLatitude <= 90 &&
+    numericLongitude >= -180 &&
+    numericLongitude <= 180 &&
+    !(
+      numericLatitude === 0 &&
+      numericLongitude === 0
+    );
+
+  let navigationUrl = "";
+
+  if (hasValidCoordinates) {
+
+    navigationUrl =
+      "https://www.google.com/maps/dir/" +
+      "?api=1" +
+      "&travelmode=driving" +
+      `&destination=${encodeURIComponent(
+        `${numericLatitude},${numericLongitude}`
+      )}`;
+
+  } else {
+
+    const safeAddress =
+      String(
+        address || ""
+      ).trim();
+
+    if (!safeAddress) {
+
+      alert(
+        "Navigation location is not available."
+      );
+
+      return;
+
+    }
+
+    navigationUrl =
+      "https://www.google.com/maps/search/" +
+      "?api=1" +
+      `&query=${encodeURIComponent(
+        safeAddress
+      )}`;
   }
 
   window.open(
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
-    "_blank"
-  );
-
-}
-
-function openDeliveryNavigation(
-  latitude,
-  longitude,
-  address
-) {
-
-  if (
-    latitude &&
-    longitude &&
-    latitude !== "null" &&
-    longitude !== "null"
-  ) {
-
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`,
-      "_blank"
-    );
-
-    return;
-
-  }
-
-  window.open(
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+    navigationUrl,
     "_blank"
   );
 
