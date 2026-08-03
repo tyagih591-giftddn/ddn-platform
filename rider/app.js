@@ -18,7 +18,13 @@ let riderAlertAudio = null;
 let riderAlertEnabled = false;
 
 async function enableRiderAlerts() {
+
+  console.log(
+    "enableRiderAlerts() called"
+  );
+
   if (!riderAlertAudio) {
+
     riderAlertAudio =
       new Audio(
         "sounds/new-order.mp3"
@@ -26,45 +32,83 @@ async function enableRiderAlerts() {
 
     riderAlertAudio.loop = true;
     riderAlertAudio.volume = 1;
+    riderAlertAudio.preload = "auto";
+
   }
 
-  try {
-    await riderAlertAudio.play();
+  riderAlertEnabled = true;
 
-    riderAlertAudio.pause();
-    riderAlertAudio.currentTime = 0;
+  localStorage.setItem(
+    "ddnRiderAlertsEnabled",
+    "true"
+  );
 
-    riderAlertEnabled = true;
+  console.log(
+    "Rider alerts enabled"
+  );
 
-    console.log(
-      "Rider alerts enabled"
-    );
-  } catch (error) {
-    console.error(
-      "Unable to enable rider alert sound:",
-      error
-    );
+  if (
+    "Notification" in window &&
+    Notification.permission ===
+      "default"
+  ) {
+    try {
+      await Notification
+        .requestPermission();
+    } catch (error) {
+      console.warn(error);
+    }
   }
+
 }
 
 function startRiderAlarm() {
+
+  console.log(
+    "startRiderAlarm() called"
+  );
+
   if (
     !riderAlertEnabled ||
     !riderAlertAudio
   ) {
+    console.warn(
+      "Rider alarm not ready",
+      {
+        riderAlertEnabled,
+        hasAudio:
+          Boolean(
+            riderAlertAudio
+          )
+      }
+    );
+
     return;
   }
 
+  stopRiderAlarm();
+
+  riderAlertAudio.load();
   riderAlertAudio.currentTime = 0;
 
   riderAlertAudio
     .play()
+    .then(() => {
+
+      console.log(
+        "Playing rider alarm"
+      );
+
+    })
     .catch(error => {
+
       console.error(
         "Unable to play rider alarm:",
         error
       );
+
     });
+
 }
 
 function stopRiderAlarm() {
@@ -1513,3 +1557,37 @@ function openDeliveryNavigation(
   );
 
 }
+
+// ===============================
+// ENABLE ALERTS ON FIRST INTERACTION
+// ===============================
+
+async function enableAlertsOnFirstInteraction() {
+
+  console.log(
+    "Rider first interaction detected"
+  );
+
+  if (riderAlertEnabled) {
+    return;
+  }
+
+  await enableRiderAlerts();
+
+}
+
+document.addEventListener(
+  "pointerdown",
+  enableAlertsOnFirstInteraction,
+  {
+    once: true
+  }
+);
+
+document.addEventListener(
+  "keydown",
+  enableAlertsOnFirstInteraction,
+  {
+    once: true
+  }
+);
