@@ -506,6 +506,7 @@ router.post(
             "Delivery address geocoding error:",
             error.message
           );
+          
 
           return res.status(400).json({
             success: false,
@@ -605,12 +606,20 @@ const io =
   req.app.get("io");
 
 if (io) {
+  console.log(
+    "Emitting new-order:",
+    createdBooking.bookingId
+  );
+
   io.emit(
     "new-order",
     createdBooking
   );
+} else {
+  console.error(
+    "Socket.IO instance not found while creating booking"
+  );
 }
-
 
 
       return res.status(201).json({
