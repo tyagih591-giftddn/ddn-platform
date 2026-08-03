@@ -20,6 +20,8 @@ let adminAlertEnabled = false;
 
 async function enableAdminAlerts() {
 
+  console.log("enableAdminAlerts() called");
+
   if (!adminAlertAudio) {
 
     adminAlertAudio =
@@ -2013,21 +2015,39 @@ async function updateStatus(
 
 }
 
-
 // ===============================
-// ENABLE ALERTS ON FIRST CLICK
+// ENABLE ALERTS ON FIRST INTERACTION
 // ===============================
 
 async function enableAlertsOnFirstInteraction() {
+
+console.log("First interaction detected");
+
   if (adminAlertEnabled) {
     return;
   }
 
   await enableAdminAlerts();
+
+  if (
+    "Notification" in window &&
+    Notification.permission ===
+      "default"
+  ) {
+    await Notification.requestPermission();
+  }
 }
 
 document.addEventListener(
-  "click",
+  "pointerdown",
+  enableAlertsOnFirstInteraction,
+  {
+    once: true
+  }
+);
+
+document.addEventListener(
+  "keydown",
   enableAlertsOnFirstInteraction,
   {
     once: true
