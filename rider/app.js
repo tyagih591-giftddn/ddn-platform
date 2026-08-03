@@ -222,8 +222,6 @@ function showLoginScreen(
   message = ""
 ) {
 
-  clearRiderLogin();
-
   document
     .getElementById(
       "dashboardSection"
@@ -273,6 +271,8 @@ function handleAuthError(
     response.status === 401 ||
     response.status === 403
   ) {
+
+    clearRiderLogin();
 
     showLoginScreen(
       data.message ||
@@ -478,9 +478,11 @@ document
     "click",
     function () {
 
-      showLoginScreen();
+  clearRiderLogin();
 
-    }
+  showLoginScreen();
+
+}
   );
 
 

@@ -732,7 +732,6 @@ function showLoginScreen(
   message = ""
 ) {
 
-  clearAdminLogin();
 
   document
     .getElementById("dashboardSection")
@@ -777,6 +776,8 @@ function handleAuthError(
     response.status === 401 ||
     response.status === 403
   ) {
+
+    clearAdminLogin();
 
     showLoginScreen(
       data.message ||
@@ -964,6 +965,8 @@ document
   .addEventListener(
     "click",
     function () {
+
+       clearAdminLogin();
 
       showLoginScreen();
 
