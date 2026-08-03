@@ -7,7 +7,178 @@ const LOGIN_API =
 const RIDER_LOCATION_API =
   "https://ddn-platform.onrender.com/api/rider/location";
 
+  const SOCKET_URL =
+  "https://ddn-platform.onrender.com";
+
+let riderSocket = null;
+
 let riderLocationInterval = null;
+
+let riderAlertAudio = null;
+let riderAlertEnabled = false;
+
+async function enableRiderAlerts() {
+  if (!riderAlertAudio) {
+    riderAlertAudio =
+      new Audio(
+        "sounds/new-order.mp3"
+      );
+
+    riderAlertAudio.loop = true;
+    riderAlertAudio.volume = 1;
+  }
+
+  try {
+    await riderAlertAudio.play();
+
+    riderAlertAudio.pause();
+    riderAlertAudio.currentTime = 0;
+
+    riderAlertEnabled = true;
+
+    console.log(
+      "Rider alerts enabled"
+    );
+  } catch (error) {
+    console.error(
+      "Unable to enable rider alert sound:",
+      error
+    );
+  }
+}
+
+function startRiderAlarm() {
+  if (
+    !riderAlertEnabled ||
+    !riderAlertAudio
+  ) {
+    return;
+  }
+
+  riderAlertAudio.currentTime = 0;
+
+  riderAlertAudio
+    .play()
+    .catch(error => {
+      console.error(
+        "Unable to play rider alarm:",
+        error
+      );
+    });
+}
+
+function stopRiderAlarm() {
+  if (!riderAlertAudio) {
+    return;
+  }
+
+  riderAlertAudio.pause();
+  riderAlertAudio.currentTime = 0;
+}
+
+function connectRiderSocket() {
+  if (
+    riderSocket &&
+    riderSocket.connected
+  ) {
+    return;
+  }
+
+  if (typeof io === "undefined") {
+    console.error(
+      "Socket.IO client is not loaded"
+    );
+
+    return;
+  }
+
+  riderSocket =
+    io(SOCKET_URL, {
+      transports: [
+        "websocket",
+        "polling"
+      ]
+    });
+
+  riderSocket.on(
+    "connect",
+    () => {
+      console.log(
+        "Rider socket connected:",
+        riderSocket.id
+      );
+    }
+  );
+
+riderSocket.on(
+  "rider-assigned",
+  async booking => {
+
+    const riderUsername =
+      localStorage.getItem(
+        "ddnRiderUsername"
+      );
+
+    if (
+      !riderUsername ||
+      booking.assignedRider !==
+        riderUsername
+    ) {
+      return;
+    }
+
+    console.log(
+      "Realtime rider assignment:",
+      booking
+    );
+
+    await loadDeliveries();
+
+    startRiderAlarm();
+
+    if (
+      "Notification" in window &&
+      Notification.permission ===
+        "granted"
+    ) {
+      new Notification(
+        "🚴 New DDN Delivery Assigned",
+        {
+          body:
+            `${booking.bookingId} - ` +
+            `${booking.pickupLocation} → ` +
+            `${booking.deliveryLocation}`,
+          tag:
+            String(
+              booking.bookingId
+            )
+        }
+      );
+    }
+
+  }
+);
+  
+  riderSocket.on(
+    "disconnect",
+    reason => {
+      console.warn(
+        "Rider socket disconnected:",
+        reason
+      );
+    }
+  );
+
+  riderSocket.on(
+    "connect_error",
+    error => {
+      console.error(
+        "Rider socket connection error:",
+        error.message
+      );
+    }
+  );
+}
 
 // ===============================
 // GET RIDER TOKEN
@@ -247,7 +418,7 @@ loginForm.addEventListener(
 // SHOW DASHBOARD
 // ===============================
 
-function showDashboard() {
+async function showDashboard() {
 
   const token =
     getRiderToken();
@@ -286,7 +457,11 @@ function showDashboard() {
 
   loadDeliveries();
 
-  startLiveLocationTracking();
+await enableRiderAlerts();
+
+connectRiderSocket();
+
+startLiveLocationTracking();
 
 }
 
@@ -1255,6 +1430,10 @@ async function updateStatus(
     alert(
       "Status updated successfully!"
     );
+
+if (newStatus === "Accepted") {
+  stopRiderAlarm();
+}
 
     await loadDeliveries();
 

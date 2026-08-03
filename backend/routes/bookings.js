@@ -936,14 +936,27 @@ router.patch(
         });
       }
 
+const assignedBooking =
+  formatBooking(
+    result.rows[0]
+  );
+
+const io =
+  req.app.get("io");
+
+if (io) {
+  io.emit(
+    "rider-assigned",
+    assignedBooking
+  );
+}
+
       return res.json({
         success: true,
         message:
           "Rider assigned successfully",
         booking:
-          formatBooking(
-            result.rows[0]
-          )
+  assignedBooking
       });
     } catch (error) {
       console.error(
