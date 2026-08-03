@@ -105,22 +105,7 @@ adminSocket.on(
       booking
     );
 
-    await loadBookings();
-
-const acceptButton =
-  document.getElementById(
-    "acceptOrderButton"
-  );
-
-if (acceptButton) {
-
-  acceptButton.disabled = false;
-
-}
-
-    if (adminAlertEnabled) {
-      startAdminAlarm();
-    }
+    startAdminAlarm();
 
     if (
       "Notification" in window &&
@@ -136,6 +121,19 @@ if (acceptButton) {
             booking.customerName
         }
       );
+    }
+
+    try {
+
+      await loadBookings();
+
+    } catch (error) {
+
+      console.error(
+        "Unable to refresh bookings after realtime order:",
+        error
+      );
+
     }
 
   }
