@@ -830,7 +830,7 @@ async function loadDeliveries() {
     class="status-button"
     type="button"
     onclick="
-      openPickupNavigation(
+      openNavigation(
         '${escapeHtml(
           booking.customerPickupLatitude
         )}',
@@ -850,7 +850,7 @@ async function loadDeliveries() {
     class="status-button"
     type="button"
     onclick="
-      openDeliveryNavigation(
+      openNavigation(
         '${escapeHtml(
           booking.customerDeliveryLatitude
         )}',
