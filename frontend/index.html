@@ -32,23 +32,155 @@
 
 <link
   rel="stylesheet"
-  href="style.css?v=2"
+  href="style.css?v=3"
 >
 
   
 </head>
 
 <body>
-  <main class="container">
 
-    <h1>DDN</h1>
+  <header class="customer-hero">
 
-    <p class="tagline">
-      District Delivery Network
-    </p>
+    <div class="customer-hero-glow customer-hero-glow-one"></div>
+    <div class="customer-hero-glow customer-hero-glow-two"></div>
+
+    <div class="customer-hero-inner">
+
+      <nav class="customer-navbar">
+
+        <a
+          href="#"
+          class="ddn-brand"
+          aria-label="DDN Home"
+        >
+          <span class="ddn-brand-mark">
+            D
+          </span>
+
+          <span class="ddn-brand-copy">
+            <strong>DDN</strong>
+            <small>
+              District Delivery Network
+            </small>
+          </span>
+        </a>
+
+        <a
+          href="#trackingSection"
+          class="customer-nav-action"
+        >
+          Track Delivery
+        </a>
+
+      </nav>
+
+      <div class="customer-hero-grid">
+
+        <div class="customer-hero-content">
+
+          <span class="customer-eyebrow">
+            Local delivery, reimagined
+          </span>
+
+          <h1>
+            Anything delivered.
+            <span>
+              Fast, safe and live.
+            </span>
+          </h1>
+
+          <p class="customer-hero-description">
+            Book trusted local deliveries across your district,
+            follow your rider live and stay updated at every step.
+          </p>
+
+          <div class="customer-trust-row">
+
+            <div class="customer-trust-item">
+              <strong>Live</strong>
+              <span>Rider tracking</span>
+            </div>
+
+            <div class="customer-trust-item">
+              <strong>Fast</strong>
+              <span>Local delivery</span>
+            </div>
+
+            <div class="customer-trust-item">
+              <strong>Secure</strong>
+              <span>Proof-based handover</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="customer-hero-visual">
+
+          <div class="delivery-visual-card">
+
+            <div class="delivery-visual-header">
+
+              <span class="delivery-live-dot"></span>
+
+              <span>
+                Delivery in progress
+              </span>
+
+            </div>
+
+            <div class="delivery-route-preview">
+
+              <div class="delivery-route-point pickup-point">
+                <span></span>
+
+                <div>
+                  <small>Pickup</small>
+                  <strong>Package collected</strong>
+                </div>
+              </div>
+
+              <div class="delivery-route-line"></div>
+
+              <div class="delivery-route-point delivery-point">
+                <span></span>
+
+                <div>
+                  <small>Destination</small>
+                  <strong>Rider on the way</strong>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="delivery-visual-footer">
+
+              <div>
+                <small>Estimated arrival</small>
+                <strong>12 min</strong>
+              </div>
+
+              <div class="delivery-rider-badge">
+                DDN Rider
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+  <main class="container customer-main">
 
     <!-- Book a Delivery -->
-    <section class="card">
+    <section class="card booking-card">
 
       <h2>Book a Delivery</h2>
 
@@ -186,7 +318,10 @@
     </section>
 
     <!-- Track My Delivery -->
-    <section class="card tracking-section">
+    <section
+  id="trackingSection"
+  class="card tracking-section"
+>
 
       <h2>Track My Delivery</h2>
 <form id="trackingForm">
