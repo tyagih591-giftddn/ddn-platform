@@ -201,12 +201,22 @@ button:disabled {
     var(--ddn-text-inverse);
 
   background:
-    linear-gradient(
-      135deg,
-      #071a3d 0%,
-      #0b3f95 48%,
-      #0b5fff 100%
-    );
+  radial-gradient(
+    circle at 85% 18%,
+    rgba(255, 181, 71, 0.28),
+    transparent 24%
+  ),
+  radial-gradient(
+    circle at 10% 90%,
+    rgba(255, 122, 0, 0.16),
+    transparent 28%
+  ),
+  linear-gradient(
+    135deg,
+    #171717 0%,
+    #242424 46%,
+    #ff7a00 100%
+  );
 }
 
 .customer-hero::after {
@@ -497,8 +507,7 @@ button:disabled {
   border-radius:
     var(--ddn-radius-pill);
 
-  color:
-    #dbeafe;
+  color: #ffe2c4;
 
   background:
     rgba(
@@ -513,7 +522,7 @@ button:disabled {
 
   font-weight:
     700;
-
+;
   letter-spacing:
     0.05em;
 
@@ -549,8 +558,7 @@ button:disabled {
   display:
     block;
 
-  color:
-    #9fe8ff;
+  color: #ffb347;
 }
 
 .customer-hero-description {
@@ -796,29 +804,27 @@ button:disabled {
 }
 
 .pickup-point > span {
-  background:
-    var(--ddn-primary);
+  background: #ff7a00;
 
   box-shadow:
     0 0 0 6px
     rgba(
-      11,
-      95,
       255,
-      0.12
+      122,
+      0,
+      0.14
     );
 }
 
 .delivery-point > span {
-  background:
-    var(--ddn-accent);
+  background: #1f1f1f;
 
   box-shadow:
     0 0 0 6px
     rgba(
-      124,
-      58,
-      237,
+      31,
+      31,
+      31,
       0.12
     );
 }
@@ -849,21 +855,17 @@ button:disabled {
 }
 
 .delivery-route-line {
-  width:
-    2px;
+  width: 2px;
 
-  height:
-    48px;
+  height: 48px;
 
-  margin:
-    5px 0
-    5px 6px;
+  margin: 5px 0 5px 6px;
 
   background:
     linear-gradient(
       to bottom,
-      var(--ddn-primary),
-      var(--ddn-accent)
+      #ff7a00,
+      #1f1f1f
     );
 }
 
