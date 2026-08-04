@@ -319,13 +319,25 @@ button:disabled {
 }
 
 .ddn-brand-mark {
-  width: 46px;
-  height: 46px;
+
+  width: 64px;
+
+  height: 64px;
 
   display: inline-flex;
 
   align-items: center;
   justify-content: center;
+
+  border-radius: 18px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.12
+    );
 
   border:
     1px solid
@@ -333,20 +345,7 @@ button:disabled {
       255,
       255,
       255,
-      0.24
-    );
-
-  border-radius:
-    15px;
-
-  color: #ffffff;
-
-  background:
-    rgba(
-      255,
-      255,
-      255,
-      0.14
+      0.18
     );
 
   box-shadow:
@@ -361,11 +360,21 @@ button:disabled {
   backdrop-filter:
     blur(14px);
 
-  font-size:
-    1.35rem;
+  overflow: hidden;
 
-  font-weight:
-    800;
+  padding: 6px;
+}
+
+.ddn-brand-logo {
+
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: contain;
+
+  display: block;
+
 }
 
 .ddn-brand-copy {
