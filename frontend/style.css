@@ -294,14 +294,55 @@ button:disabled {
 }
 
 .customer-navbar {
+
+  position: sticky;
+
+  top: 18px;
+
+  z-index: 1000;
+
   display: flex;
 
   align-items: center;
+
   justify-content: space-between;
 
-  gap: 20px;
+  gap: 30px;
 
   margin-bottom: 64px;
+
+  padding: 14px 22px;
+
+  border-radius: 24px;
+
+  border: 1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.12
+    );
+
+  background:
+    rgba(
+      22,
+      22,
+      22,
+      0.35
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+}
+.customer-nav-links {
+
+  flex: 1;
+
+  display: flex;
+
+  justify-content: center;
+
 }
 
 .ddn-brand {
@@ -407,6 +448,70 @@ button:disabled {
     0.72rem;
 }
 
+/* =====================================
+   PREMIUM NAVIGATION
+===================================== */
+
+.customer-nav-links{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:34px;
+
+}
+
+.customer-nav-links a{
+
+  position:relative;
+
+  color:rgba(255,255,255,.82);
+
+  text-decoration:none;
+
+  font-size:.95rem;
+
+  font-weight:600;
+
+  transition:.30s;
+
+}
+
+.customer-nav-links a:hover{
+
+  color:#ffb347;
+
+}
+
+.customer-nav-links a::after{
+
+  content:"";
+
+  position:absolute;
+
+  left:0;
+
+  bottom:-8px;
+
+  width:0;
+
+  height:2px;
+
+  border-radius:10px;
+
+  background:#ff8a00;
+
+  transition:.30s;
+
+}
+
+.customer-nav-links a:hover::after{
+
+  width:100%;
+
+}
+
 .customer-nav-action {
   min-height:
     44px;
@@ -470,6 +575,62 @@ button:disabled {
 
   transform:
     translateY(-2px);
+}
+
+.customer-nav-links a {
+
+  position: relative;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  height: 44px;
+
+  color: rgba(255,255,255,.82);
+
+  text-decoration: none;
+
+  font-size: .95rem;
+
+  font-weight: 600;
+
+  transition: all .30s ease;
+
+}
+
+.customer-nav-links a:hover {
+
+  color: #ffb347;
+
+}
+
+.customer-nav-links a::after {
+
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+
+  bottom: 2px;
+
+  width: 0;
+
+  height: 2px;
+
+  border-radius: 10px;
+
+  background: #ff8a00;
+
+  transition: width .30s ease;
+
+}
+
+.customer-nav-links a:hover::after {
+
+  width: 100%;
+
 }
 
 .customer-hero-grid {
