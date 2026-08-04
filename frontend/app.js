@@ -431,10 +431,156 @@ function calculateCustomerFare(
 }
 
 // ======================================
+// SHARED GOOGLE ROUTE METRICS
+// ======================================
+
+async function calculateRouteMetrics(
+  origin,
+  destination
+) {
+
+  if (!RouteClass) {
+    throw new Error(
+      "Google Routes library is not ready."
+    );
+  }
+
+  const originLatitude =
+    Number(origin?.lat);
+
+  const originLongitude =
+    Number(origin?.lng);
+
+  const destinationLatitude =
+    Number(destination?.lat);
+
+  const destinationLongitude =
+    Number(destination?.lng);
+
+  const validOrigin =
+    Number.isFinite(originLatitude) &&
+    Number.isFinite(originLongitude) &&
+    originLatitude >= -90 &&
+    originLatitude <= 90 &&
+    originLongitude >= -180 &&
+    originLongitude <= 180;
+
+  const validDestination =
+    Number.isFinite(destinationLatitude) &&
+    Number.isFinite(destinationLongitude) &&
+    destinationLatitude >= -90 &&
+    destinationLatitude <= 90 &&
+    destinationLongitude >= -180 &&
+    destinationLongitude <= 180;
+
+  if (
+    !validOrigin ||
+    !validDestination
+  ) {
+    throw new Error(
+      "Valid route coordinates are required."
+    );
+  }
+
+  const response =
+    await RouteClass.computeRoutes({
+      origin: {
+        lat:
+          originLatitude,
+
+        lng:
+          originLongitude
+      },
+
+      destination: {
+        lat:
+          destinationLatitude,
+
+        lng:
+          destinationLongitude
+      },
+
+      travelMode:
+        "DRIVING",
+
+      routingPreference:
+        "TRAFFIC_AWARE",
+
+      computeAlternativeRoutes:
+        false,
+
+      fields: [
+        "distanceMeters",
+        "durationMillis",
+        "path",
+        "viewport"
+      ]
+    });
+
+  const route =
+    response.routes?.[0];
+
+  if (!route) {
+    throw new Error(
+      "Google did not return a road route."
+    );
+  }
+
+  const distanceMeters =
+    Number(
+      route.distanceMeters
+    );
+
+  const durationMillis =
+    Number(
+      route.durationMillis
+    );
+
+  if (
+    !Number.isFinite(
+      distanceMeters
+    ) ||
+    distanceMeters <= 0
+  ) {
+    throw new Error(
+      "Valid road distance was not received."
+    );
+  }
+
+  const distanceKm =
+    Number(
+      (
+        distanceMeters / 1000
+      ).toFixed(2)
+    );
+
+  const durationMinutes =
+    Number.isFinite(
+      durationMillis
+    )
+      ? Math.max(
+          1,
+          Math.ceil(
+            durationMillis / 60000
+          )
+        )
+      : null;
+
+  return {
+    distanceMeters,
+    durationMillis,
+    distanceKm,
+    durationMinutes,
+    route
+  };
+}
+
+// ======================================
 // GOOGLE ROAD DISTANCE + ETA
 // ======================================
 
 async function updateFareEstimate() {
+
   if (
     pickupLatitude === null ||
     pickupLongitude === null ||
@@ -443,33 +589,37 @@ async function updateFareEstimate() {
   ) {
     latestRouteRequestId += 1;
 
-    currentRouteDistanceKm = null;
-    currentRouteDurationMinutes = null;
-    currentCustomerFare = null;
+    currentRouteDistanceKm =
+      null;
+
+    currentRouteDurationMinutes =
+      null;
+
+    currentCustomerFare =
+      null;
 
     clearRoutePolylines();
 
-    fareEstimate.hidden = true;
-    return;
-  }
+    fareEstimate.hidden =
+      true;
 
-  if (!RouteClass) {
-    console.warn(
-      "Google Routes library is not ready."
-    );
-
-    fareEstimate.hidden = true;
     return;
   }
 
   const requestId =
     ++latestRouteRequestId;
 
-  currentRouteDistanceKm = null;
-  currentRouteDurationMinutes = null;
-  currentCustomerFare = null;
+  currentRouteDistanceKm =
+    null;
 
-  fareEstimate.hidden = false;
+  currentRouteDurationMinutes =
+    null;
+
+  currentCustomerFare =
+    null;
+
+  fareEstimate.hidden =
+    false;
 
   estimatedDistance.textContent =
     "Calculating road distance...";
@@ -478,37 +628,23 @@ async function updateFareEstimate() {
     "Calculating...";
 
   try {
-    const routeRequest = {
-      origin: {
-        lat: pickupLatitude,
-        lng: pickupLongitude
-      },
 
-      destination: {
-        lat: deliveryLatitude,
-        lng: deliveryLongitude
-      },
+    const metrics =
+      await calculateRouteMetrics(
+        {
+          lat:
+            pickupLatitude,
 
-      travelMode: "DRIVING",
+          lng:
+            pickupLongitude
+        },
+        {
+          lat:
+            deliveryLatitude,
 
-      routingPreference:
-        "TRAFFIC_AWARE",
-
-      computeAlternativeRoutes: false,
-
-    
-
-      fields: [
-        "distanceMeters",
-        "durationMillis",
-        "path",
-        "viewport"
-      ]
-    };
-
-    const response =
-      await RouteClass.computeRoutes(
-        routeRequest
+          lng:
+            deliveryLongitude
+        }
       );
 
     if (
@@ -518,80 +654,37 @@ async function updateFareEstimate() {
       return;
     }
 
-    const route =
-      response.routes?.[0];
-
-    if (!route) {
-      throw new Error(
-        "Google did not return a road route."
-      );
-    }
-
-    const distanceMeters =
-      Number(route.distanceMeters);
-
-    const durationMillis =
-      Number(route.durationMillis);
-
-    if (
-      !Number.isFinite(
-        distanceMeters
-      ) ||
-      distanceMeters <= 0
-    ) {
-      throw new Error(
-        "Valid road distance was not received."
-      );
-    }
-
-    const distanceKm =
-      Number(
-        (
-          distanceMeters / 1000
-        ).toFixed(2)
-      );
-
-    const durationMinutes =
-      Number.isFinite(
-        durationMillis
-      )
-        ? Math.max(
-            1,
-            Math.ceil(
-              durationMillis /
-                60000
-            )
-          )
-        : null;
-
     const customerFare =
       calculateCustomerFare(
-        distanceKm
+        metrics.distanceKm
       );
 
     currentRouteDistanceKm =
-      distanceKm;
+      metrics.distanceKm;
 
     currentRouteDurationMinutes =
-      durationMinutes;
+      metrics.durationMinutes;
 
     currentCustomerFare =
       customerFare;
 
     estimatedDistance.textContent =
-      durationMinutes
-        ? `${distanceKm} km • Approx. ${durationMinutes} min`
-        : `${distanceKm} km`;
+      metrics.durationMinutes
+        ? `${metrics.distanceKm} km • Approx. ${metrics.durationMinutes} min`
+        : `${metrics.distanceKm} km`;
 
     estimatedFare.textContent =
       `₹${customerFare}`;
 
-    fareEstimate.hidden = false;
+    fareEstimate.hidden =
+      false;
 
     await displayRouteOnMap(
-      route
+      metrics.route
     );
+
   } catch (error) {
+
     if (
       requestId !==
       latestRouteRequestId
@@ -604,9 +697,14 @@ async function updateFareEstimate() {
       error
     );
 
-    currentRouteDistanceKm = null;
-    currentRouteDurationMinutes = null;
-    currentCustomerFare = null;
+    currentRouteDistanceKm =
+      null;
+
+    currentRouteDurationMinutes =
+      null;
+
+    currentCustomerFare =
+      null;
 
     clearRoutePolylines();
 
@@ -616,7 +714,8 @@ async function updateFareEstimate() {
     estimatedFare.textContent =
       "Please try again";
 
-    fareEstimate.hidden = false;
+    fareEstimate.hidden =
+      false;
   }
 }
 

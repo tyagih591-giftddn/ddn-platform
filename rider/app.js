@@ -17,6 +17,12 @@ let riderLocationInterval = null;
 let riderAlertAudio = null;
 let riderAlertEnabled = false;
 
+// ===============================
+// GOOGLE ROUTES
+// ===============================
+
+let RouteClass = null;
+
 async function enableRiderAlerts() {
 
   console.log(
@@ -752,8 +758,146 @@ async function loadDeliveries() {
 
     }
 
+    let riderCurrentLocation =
+  null;
+
+try {
+
+  riderCurrentLocation =
+    await getCurrentLocation();
+
+} catch (locationError) {
+
+  console.warn(
+    "Unable to calculate live ETA because rider GPS is unavailable:",
+    locationError
+  );
+
+}
+
+const deliveriesWithRouteMetrics =
+  await Promise.all(
+    deliveries.map(
+      async booking => {
+
+        if (
+          !riderCurrentLocation ||
+          !RouteClass
+        ) {
+          return {
+            ...booking,
+            remainingRoute:
+              null
+          };
+        }
+
+        const headingToPickup =
+          [
+            "Assigned",
+            "Accepted"
+          ].includes(
+            booking.status
+          );
+
+        const destinationLatitude =
+          headingToPickup
+            ? Number(
+                booking
+                  .customerPickupLatitude
+              )
+            : Number(
+                booking
+                  .customerDeliveryLatitude
+              );
+
+        const destinationLongitude =
+          headingToPickup
+            ? Number(
+                booking
+                  .customerPickupLongitude
+              )
+            : Number(
+                booking
+                  .customerDeliveryLongitude
+              );
+
+        if (
+          !Number.isFinite(
+            destinationLatitude
+          ) ||
+          !Number.isFinite(
+            destinationLongitude
+          )
+        ) {
+          return {
+            ...booking,
+            remainingRoute:
+              null
+          };
+        }
+
+        try {
+
+          const routeMetrics =
+            await calculateRiderRouteMetrics(
+              {
+                lat:
+                  riderCurrentLocation
+                    .latitude,
+
+                lng:
+                  riderCurrentLocation
+                    .longitude
+              },
+              {
+                lat:
+                  destinationLatitude,
+
+                lng:
+                  destinationLongitude
+              }
+            );
+
+          return {
+            ...booking,
+
+            remainingRoute: {
+              destinationType:
+                headingToPickup
+                  ? "Pickup"
+                  : "Delivery",
+
+              distanceKm:
+                routeMetrics
+                  .distanceKm,
+
+              durationMinutes:
+                routeMetrics
+                  .durationMinutes
+            }
+          };
+
+        } catch (routeError) {
+
+          console.error(
+            `Remaining route calculation failed for ${booking.bookingId}:`,
+            routeError
+          );
+
+          return {
+            ...booking,
+            remainingRoute:
+              null
+          };
+
+        }
+
+      }
+    )
+  );
+
     container.innerHTML =
-      deliveries.map(
+  deliveriesWithRouteMetrics.map(
         booking => {
 
           const rawBookingId =
@@ -823,6 +967,71 @@ async function loadDeliveries() {
                   booking.deliveryLocation
                 )}
               </p>
+
+${
+  booking.remainingRoute
+    ? `
+      <div class="remaining-route">
+
+        <p>
+          <strong>
+            Current Destination:
+          </strong>
+
+          ${escapeHtml(
+            booking
+              .remainingRoute
+              .destinationType
+          )}
+        </p>
+
+        <p>
+          <strong>
+            Remaining Distance:
+          </strong>
+
+          ${escapeHtml(
+            booking
+              .remainingRoute
+              .distanceKm
+          )} km
+        </p>
+
+        <p>
+          <strong>
+            Live ETA:
+          </strong>
+
+          ${
+            booking
+              .remainingRoute
+              .durationMinutes !==
+            null
+              ? `${escapeHtml(
+                  booking
+                    .remainingRoute
+                    .durationMinutes
+                )} minutes`
+              : "Calculating..."
+          }
+        </p>
+
+      </div>
+    `
+    : `
+      <div class="remaining-route">
+
+        <p>
+          <strong>
+            Live Route:
+          </strong>
+
+          GPS route information is temporarily unavailable.
+        </p>
+
+      </div>
+    `
+}
 
 <div class="navigation-buttons">
 
@@ -1778,6 +1987,203 @@ function openNavigation(
 }
 
 // ===============================
+// INITIALIZE GOOGLE ROUTES
+// ===============================
+
+async function initializeGoogleRoutes() {
+
+  try {
+
+    if (
+      !window.google?.maps?.importLibrary
+    ) {
+      throw new Error(
+        "Google Maps loader is not available."
+      );
+    }
+
+    const routesLibrary =
+      await google.maps.importLibrary(
+        "routes"
+      );
+
+    RouteClass =
+      routesLibrary.Route;
+
+    console.log(
+      "Google Routes library loaded for Rider Panel"
+    );
+
+  } catch (error) {
+
+    RouteClass = null;
+
+    console.error(
+      "Rider Google Routes initialization failed:",
+      error
+    );
+
+  }
+
+}
+
+// ===============================
+// CALCULATE RIDER ROUTE METRICS
+// ===============================
+
+async function calculateRiderRouteMetrics(
+  origin,
+  destination
+) {
+
+  if (!RouteClass) {
+    throw new Error(
+      "Google Routes library is not ready."
+    );
+  }
+
+  const originLatitude =
+    Number(
+      origin?.lat
+    );
+
+  const originLongitude =
+    Number(
+      origin?.lng
+    );
+
+  const destinationLatitude =
+    Number(
+      destination?.lat
+    );
+
+  const destinationLongitude =
+    Number(
+      destination?.lng
+    );
+
+  const validOrigin =
+    Number.isFinite(
+      originLatitude
+    ) &&
+    Number.isFinite(
+      originLongitude
+    ) &&
+    originLatitude >= -90 &&
+    originLatitude <= 90 &&
+    originLongitude >= -180 &&
+    originLongitude <= 180;
+
+  const validDestination =
+    Number.isFinite(
+      destinationLatitude
+    ) &&
+    Number.isFinite(
+      destinationLongitude
+    ) &&
+    destinationLatitude >= -90 &&
+    destinationLatitude <= 90 &&
+    destinationLongitude >= -180 &&
+    destinationLongitude <= 180;
+
+  if (
+    !validOrigin ||
+    !validDestination
+  ) {
+    throw new Error(
+      "Valid rider route coordinates are required."
+    );
+  }
+
+  const response =
+    await RouteClass.computeRoutes({
+      origin: {
+        lat:
+          originLatitude,
+
+        lng:
+          originLongitude
+      },
+
+      destination: {
+        lat:
+          destinationLatitude,
+
+        lng:
+          destinationLongitude
+      },
+
+      travelMode:
+        "DRIVING",
+
+      routingPreference:
+        "TRAFFIC_AWARE",
+
+      computeAlternativeRoutes:
+        false,
+
+      fields: [
+        "distanceMeters",
+        "durationMillis"
+      ]
+    });
+
+  const route =
+    response.routes?.[0];
+
+  if (!route) {
+    throw new Error(
+      "Google did not return a rider route."
+    );
+  }
+
+  const distanceMeters =
+    Number(
+      route.distanceMeters
+    );
+
+  const durationMillis =
+    Number(
+      route.durationMillis
+    );
+
+  if (
+    !Number.isFinite(
+      distanceMeters
+    ) ||
+    distanceMeters < 0
+  ) {
+    throw new Error(
+      "Valid remaining distance was not received."
+    );
+  }
+
+  return {
+    distanceKm:
+      Number(
+        (
+          distanceMeters /
+          1000
+        ).toFixed(2)
+      ),
+
+    durationMinutes:
+      Number.isFinite(
+        durationMillis
+      )
+        ? Math.max(
+            1,
+            Math.ceil(
+              durationMillis /
+              60000
+            )
+          )
+        : null
+  };
+
+}
+
+// ===============================
 // ENABLE ALERTS ON FIRST INTERACTION
 // ===============================
 
@@ -1802,6 +2208,12 @@ document.addEventListener(
     once: true
   }
 );
+
+// ===============================
+// INITIALIZE RIDER ROUTES
+// ===============================
+
+initializeGoogleRoutes();
 
 document.addEventListener(
   "keydown",
