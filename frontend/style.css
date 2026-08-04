@@ -1032,3 +1032,131 @@ button:disabled {
       22px;
   }
 }
+
+/* =====================================
+   HERO ACTION BUTTONS
+===================================== */
+
+.customer-hero-actions {
+
+  display: flex;
+
+  gap: 18px;
+
+  flex-wrap: wrap;
+
+  margin-top: 34px;
+
+}
+
+.hero-primary-action {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-width: 210px;
+
+  height: 60px;
+
+  border-radius: 18px;
+
+  text-decoration: none;
+
+  font-weight: 700;
+
+  font-size: 1rem;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff8a00,
+      #ff5f00
+    );
+
+  box-shadow:
+    0 18px 45px
+    rgba(
+      255,
+      122,
+      0,
+      0.35
+    );
+
+  transition: 0.3s;
+}
+
+.hero-primary-action:hover {
+
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 28px 55px
+    rgba(
+      255,
+      122,
+      0,
+      0.45
+    );
+}
+
+.hero-secondary-action {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-width: 210px;
+
+  height: 60px;
+
+  border-radius: 18px;
+
+  text-decoration: none;
+
+  font-weight: 700;
+
+  font-size: 1rem;
+
+  color: #ffffff;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.20
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+  backdrop-filter: blur(18px);
+
+  transition: 0.3s;
+}
+
+.hero-secondary-action:hover {
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.15
+    );
+
+  transform: translateY(-4px);
+}
