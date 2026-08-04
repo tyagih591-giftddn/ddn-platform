@@ -1,0 +1,256 @@
+/* =========================================
+   DDN GLOBAL DESIGN SYSTEM
+   District Delivery Network
+========================================= */
+
+@import url(
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+);
+
+:root {
+  /* Brand Colors */
+  --ddn-primary: #0b5fff;
+  --ddn-primary-dark: #1746d1;
+  --ddn-primary-light: #eaf2ff;
+
+  --ddn-secondary: #06b6d4;
+  --ddn-accent: #7c3aed;
+
+  /* Status Colors */
+  --ddn-success: #16a34a;
+  --ddn-success-soft: #dcfce7;
+
+  --ddn-warning: #f59e0b;
+  --ddn-warning-soft: #fef3c7;
+
+  --ddn-danger: #ef4444;
+  --ddn-danger-soft: #fee2e2;
+
+  --ddn-info: #0284c7;
+  --ddn-info-soft: #e0f2fe;
+
+  /* Backgrounds */
+  --ddn-page-bg: #f4f7fc;
+  --ddn-surface: #ffffff;
+  --ddn-surface-soft: #f8fafc;
+  --ddn-surface-dark: #0f172a;
+
+  /* Text */
+  --ddn-text: #111827;
+  --ddn-text-soft: #475569;
+  --ddn-text-muted: #64748b;
+  --ddn-text-inverse: #ffffff;
+
+  /* Borders */
+  --ddn-border: #e2e8f0;
+  --ddn-border-strong: #cbd5e1;
+
+  /* Gradients */
+  --ddn-gradient-primary:
+    linear-gradient(
+      135deg,
+      #0b5fff 0%,
+      #1746d1 55%,
+      #7c3aed 100%
+    );
+
+  --ddn-gradient-page:
+    radial-gradient(
+      circle at top right,
+      rgba(6, 182, 212, 0.16),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at top left,
+      rgba(11, 95, 255, 0.18),
+      transparent 38%
+    ),
+    linear-gradient(
+      180deg,
+      #f8fbff 0%,
+      #f4f7fc 100%
+    );
+
+  /* Radius */
+  --ddn-radius-sm: 10px;
+  --ddn-radius-md: 14px;
+  --ddn-radius-lg: 20px;
+  --ddn-radius-xl: 28px;
+  --ddn-radius-pill: 999px;
+
+  /* Shadows */
+  --ddn-shadow-sm:
+    0 4px 14px rgba(15, 23, 42, 0.06);
+
+  --ddn-shadow-md:
+    0 12px 32px rgba(15, 23, 42, 0.1);
+
+  --ddn-shadow-lg:
+    0 24px 60px rgba(15, 23, 42, 0.14);
+
+  --ddn-shadow-primary:
+    0 12px 28px rgba(11, 95, 255, 0.28);
+
+  /* Spacing */
+  --ddn-space-1: 4px;
+  --ddn-space-2: 8px;
+  --ddn-space-3: 12px;
+  --ddn-space-4: 16px;
+  --ddn-space-5: 20px;
+  --ddn-space-6: 24px;
+  --ddn-space-8: 32px;
+  --ddn-space-10: 40px;
+  --ddn-space-12: 48px;
+
+  /* Transitions */
+  --ddn-transition-fast: 160ms ease;
+
+  --ddn-transition:
+    240ms cubic-bezier(
+      0.4,
+      0,
+      0.2,
+      1
+    );
+
+  --ddn-transition-slow:
+    420ms cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    );
+
+  /* Layout */
+  --ddn-container: 1240px;
+}
+
+/* Base Reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: var(--ddn-text);
+  background: var(--ddn-gradient-page);
+  line-height: 1.6;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font-size: 1rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--ddn-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Typography */
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  font-size:
+    clamp(
+      2rem,
+      4vw,
+      3.25rem
+    );
+
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+}
+
+h2 {
+  font-size:
+    clamp(
+      1.5rem,
+      3vw,
+      2rem
+    );
+
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+p {
+  color: var(--ddn-text-soft);
+}
+
+/* Selection and Focus */
+
+::selection {
+  color: #ffffff;
+  background: var(--ddn-primary);
+}
+
+:focus-visible {
+  outline:
+    3px solid rgba(
+      11,
+      95,
+      255,
+      0.28
+    );
+
+  outline-offset: 3px;
+}

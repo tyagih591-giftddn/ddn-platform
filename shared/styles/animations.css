@@ -1,0 +1,165 @@
+/* =========================================
+   DDN SHARED ANIMATIONS
+========================================= */
+
+@keyframes ddnFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ddnFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ddnPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes ddnShimmer {
+  0% {
+    background-position: -220% 0;
+  }
+
+  100% {
+    background-position: 220% 0;
+  }
+}
+
+@keyframes ddnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ddnSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.card,
+.delivery,
+.tracking-card {
+  animation:
+    ddnFadeUp
+    480ms
+    var(--ddn-transition-slow)
+    both;
+}
+
+.ddn-fade-in {
+  animation:
+    ddnFadeIn
+    320ms
+    ease
+    both;
+}
+
+.ddn-live {
+  animation:
+    ddnPulse
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+.ddn-spinner {
+  width: 22px;
+  height: 22px;
+
+  border:
+    3px solid
+    rgba(11, 95, 255, 0.18);
+
+  border-top-color:
+    var(--ddn-primary);
+
+  border-radius:
+    50%;
+
+  animation:
+    ddnSpin
+    700ms
+    linear
+    infinite;
+}
+
+.ddn-loading,
+.skeleton {
+  border-radius:
+    var(--ddn-radius-sm);
+
+  background:
+    linear-gradient(
+      90deg,
+      #edf2f7 25%,
+      #f8fafc 50%,
+      #edf2f7 75%
+    );
+
+  background-size:
+    220% 100%;
+
+  animation:
+    ddnShimmer
+    1.4s
+    linear
+    infinite;
+}
+
+.ddn-toast {
+  animation:
+    ddnSlideInRight
+    320ms
+    var(--ddn-transition-slow)
+    both;
+}
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior:
+      auto !important;
+
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
+  }
+}

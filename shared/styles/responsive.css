@@ -1,0 +1,131 @@
+/* =========================================
+   DDN RESPONSIVE SYSTEM
+========================================= */
+
+@media (max-width:1200px){
+
+.container{
+
+width:min(calc(100% - 28px),var(--ddn-container));
+
+}
+
+}
+
+@media (max-width:992px){
+
+.container{
+
+width:min(calc(100% - 24px),var(--ddn-container));
+
+}
+
+.card,
+.delivery,
+.tracking-card{
+
+padding:22px;
+
+}
+
+}
+
+@media (max-width:768px){
+
+:root{
+
+--ddn-radius-lg:18px;
+
+}
+
+body{
+
+font-size:15px;
+
+}
+
+.container{
+
+width:min(calc(100% - 18px),var(--ddn-container));
+
+}
+
+.card,
+.delivery,
+.tracking-card{
+
+padding:18px;
+
+}
+
+.navigation-buttons{
+
+display:grid;
+
+grid-template-columns:1fr;
+
+}
+
+.navigation-buttons button{
+
+width:100%;
+
+}
+
+button,
+.button,
+.status-button{
+
+width:100%;
+
+min-height:50px;
+
+}
+
+}
+
+@media (max-width:480px){
+
+.container{
+
+width:min(calc(100% - 14px),var(--ddn-container));
+
+}
+
+.card,
+.delivery,
+.tracking-card{
+
+padding:16px;
+
+border-radius:16px;
+
+}
+
+h1{
+
+font-size:2rem;
+
+}
+
+h2{
+
+font-size:1.45rem;
+
+}
+
+h3{
+
+font-size:1.05rem;
+
+}
+
+input,
+textarea,
+select{
+
+min-height:48px;
+
+}
+
+}
