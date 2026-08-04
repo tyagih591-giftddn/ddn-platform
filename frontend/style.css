@@ -1195,7 +1195,7 @@ button:disabled {
 
 @media (
   max-width:
-    900px
+    760px
 ) {
   .customer-navbar {
     margin-bottom:
