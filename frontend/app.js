@@ -76,10 +76,7 @@ const usePickupLocationButton =
     "usePickupLocationButton"
   );
 
-const useDeliveryLocationButton =
-  document.getElementById(
-    "useDeliveryLocationButton"
-  );
+
 
 const pickupLocationMessage =
   document.getElementById(
@@ -958,6 +955,270 @@ async function initializeGoogleMaps() {
 }
 
 // ======================================
+// RESOLVE TYPED PICKUP ADDRESS
+// ======================================
+
+async function resolveTypedPickupAddress() {
+
+  if (!geocoder) {
+    throw new Error(
+      "Google Geocoder is not ready."
+    );
+  }
+
+  const typedAddress =
+    String(
+      pickupAutocomplete?.value ||
+      pickupLocationInput.value ||
+      ""
+    ).trim();
+
+  if (!typedAddress) {
+    throw new Error(
+      "Please enter the pickup address."
+    );
+  }
+
+  const currentSelectedAddress =
+    pickupLocationInput
+      .value
+      .trim();
+
+  const typedAddressChanged =
+    typedAddress.toLowerCase() !==
+    currentSelectedAddress.toLowerCase();
+
+  /*
+    Agar customer ne Google suggestion
+    select ki thi aur uske valid coordinates
+    already available hain, to dobara
+    geocode karne ki zarurat nahi.
+  */
+  if (
+    !typedAddressChanged &&
+    Number.isFinite(
+      pickupLatitude
+    ) &&
+    Number.isFinite(
+      pickupLongitude
+    )
+  ) {
+    return;
+  }
+
+  pickupLocationMessage.textContent =
+    "Searching the pickup address you entered...";
+
+  const pinCode =
+    pinCodeInput?.value
+      .trim() || "";
+
+  const addressCandidates = [];
+
+  const exactAddress =
+    pinCode &&
+    !typedAddress.includes(
+      pinCode
+    )
+      ? `${typedAddress}, ${pinCode}`
+      : typedAddress;
+
+  addressCandidates.push(
+    exactAddress
+  );
+
+  /*
+    Example:
+    4/8 Kad Road, Shipra Suncity,
+    Indirapuram
+
+    Fallback:
+    Shipra Suncity, Indirapuram
+  */
+  const addressParts =
+    typedAddress
+      .split(",")
+      .map(part =>
+        part.trim()
+      )
+      .filter(Boolean);
+
+  if (
+    addressParts.length >= 2
+  ) {
+    const localityAddress =
+      addressParts
+        .slice(1)
+        .join(", ");
+
+    const localityWithPin =
+      pinCode &&
+      !localityAddress.includes(
+        pinCode
+      )
+        ? `${localityAddress}, ${pinCode}`
+        : localityAddress;
+
+    if (
+      localityWithPin &&
+      !addressCandidates.includes(
+        localityWithPin
+      )
+    ) {
+      addressCandidates.push(
+        localityWithPin
+      );
+    }
+  }
+
+  let selectedResult = null;
+  let matchedCandidate = "";
+  let partialFallback = null;
+  let partialCandidate = "";
+
+  for (
+    const candidate of
+    addressCandidates
+  ) {
+    try {
+      const response =
+        await geocoder.geocode({
+          address:
+            candidate,
+
+          region:
+            "IN"
+        });
+
+      const results =
+        response.results || [];
+
+      if (!results.length) {
+        continue;
+      }
+
+      const completeResult =
+        results.find(
+          result =>
+            !result.partial_match
+        );
+
+      if (completeResult) {
+        selectedResult =
+          completeResult;
+
+        matchedCandidate =
+          candidate;
+
+        break;
+      }
+
+      if (!partialFallback) {
+        partialFallback =
+          results[0];
+
+        partialCandidate =
+          candidate;
+      }
+
+    } catch (error) {
+      console.warn(
+        `Pickup address search failed for "${candidate}":`,
+        error
+      );
+    }
+  }
+
+  if (!selectedResult) {
+    selectedResult =
+      partialFallback;
+
+    matchedCandidate =
+      partialCandidate;
+  }
+
+  if (!selectedResult) {
+    pickupLatitude =
+      null;
+
+    pickupLongitude =
+      null;
+
+    pickupLocationInput.value =
+      typedAddress;
+
+    throw new Error(
+      "Entered pickup address could not be located. Please add road, locality, city and PIN code."
+    );
+  }
+
+  const position =
+    getLatLngLiteral(
+      selectedResult.geometry
+        ?.location
+    );
+
+  if (!position) {
+    throw new Error(
+      "Google did not return valid coordinates for the pickup address."
+    );
+  }
+
+  pickupLatitude =
+    position.lat;
+
+  pickupLongitude =
+    position.lng;
+
+  /*
+    Customer ka exact typed address
+    booking me preserve hoga.
+  */
+  pickupLocationInput.value =
+    typedAddress;
+
+  updatePickupMarker(
+    position
+  );
+
+  if (bookingMap) {
+    if (
+      selectedResult.geometry
+        ?.viewport
+    ) {
+      bookingMap.fitBounds(
+        selectedResult.geometry
+          .viewport
+      );
+    } else {
+      bookingMap.setCenter(
+        position
+      );
+
+      bookingMap.setZoom(
+        17
+      );
+    }
+  }
+
+  const exactMatch =
+    matchedCandidate ===
+    exactAddress &&
+    !selectedResult
+      .partial_match;
+
+  pickupLocationMessage.textContent =
+    exactMatch
+      ? "✅ Entered pickup address located on the map."
+      : `✅ Nearby pickup location found: ${
+          selectedResult
+            .formatted_address
+        }`;
+
+  await updateFareEstimate();
+}
+
+// ======================================
 // PLACE SELECTION
 // ======================================
 
@@ -1327,97 +1588,268 @@ usePickupLocationButton.addEventListener(
 );
 
 // ======================================
-// CURRENT DELIVERY LOCATION BUTTON
+// RESOLVE TYPED DELIVERY ADDRESS
 // ======================================
 
-useDeliveryLocationButton.addEventListener(
-  "click",
-  async function () {
-    const originalText =
-      useDeliveryLocationButton.textContent;
+async function resolveTypedDeliveryAddress() {
 
-    useDeliveryLocationButton.disabled =
-      true;
+  if (!geocoder) {
+    throw new Error(
+      "Google Geocoder is not ready."
+    );
+  }
 
-    useDeliveryLocationButton.textContent =
-      "Getting drop location...";
+  const typedAddress =
+    String(
+      deliveryAutocomplete?.value ||
+      deliveryLocationInput.value ||
+      ""
+    ).trim();
 
-    deliveryLocationMessage.textContent =
-      "Please allow location permission.";
+  if (!typedAddress) {
+    throw new Error(
+      "Please enter the delivery address."
+    );
+  }
 
-    try {
-      const location =
-        await getCurrentLocation();
+  const currentSelectedAddress =
+    deliveryLocationInput
+      .value
+      .trim();
 
-      const result =
-        await reverseGeocodeLocation(
-          location.latitude,
-          location.longitude
-        );
+  const typedAddressChanged =
+    typedAddress.toLowerCase() !==
+    currentSelectedAddress.toLowerCase();
 
-      deliveryLatitude =
-        location.latitude;
+  /*
+    Agar customer ne Google suggestion
+    select ki thi aur uske valid coordinates
+    already available hain, to dobara
+    geocode karne ki zarurat nahi.
+  */
+  if (
+    !typedAddressChanged &&
+    Number.isFinite(
+      deliveryLatitude
+    ) &&
+    Number.isFinite(
+      deliveryLongitude
+    )
+  ) {
+    return;
+  }
 
-      deliveryLongitude =
-        location.longitude;
+  deliveryLocationMessage.textContent =
+    "Searching the address you entered...";
 
-      deliveryLocationInput.value =
-        result.address;
+  const pinCode =
+    pinCodeInput?.value
+      .trim() || "";
 
-      setAutocompleteValue(
-        deliveryAutocomplete,
-        result.address
+  const addressCandidates = [];
+
+  const exactAddress =
+    pinCode &&
+    !typedAddress.includes(
+      pinCode
+    )
+      ? `${typedAddress}, ${pinCode}`
+      : typedAddress;
+
+  addressCandidates.push(
+    exactAddress
+  );
+
+  /*
+    Example:
+    4/8 Kad Road, Shipra Suncity,
+    Indirapuram
+
+    Fallback:
+    Shipra Suncity, Indirapuram
+  */
+  const addressParts =
+    typedAddress
+      .split(",")
+      .map(part =>
+        part.trim()
+      )
+      .filter(Boolean);
+
+  if (
+    addressParts.length >= 2
+  ) {
+    const localityAddress =
+      addressParts
+        .slice(1)
+        .join(", ");
+
+    const localityWithPin =
+      pinCode &&
+      !localityAddress.includes(
+        pinCode
+      )
+        ? `${localityAddress}, ${pinCode}`
+        : localityAddress;
+
+    if (
+      localityWithPin &&
+      !addressCandidates.includes(
+        localityWithPin
+      )
+    ) {
+      addressCandidates.push(
+        localityWithPin
       );
-
-      if (
-        result.pinCode &&
-        pinCodeInput &&
-        !pinCodeInput.value.trim()
-      ) {
-        pinCodeInput.value =
-          result.pinCode;
-      }
-
-      updateDeliveryMarker({
-        lat:
-          deliveryLatitude,
-
-        lng:
-          deliveryLongitude
-      });
-
-      deliveryLocationMessage.textContent =
-        "✅ Current delivery location and address captured.";
-
-      await updateFareEstimate();
-    } catch (error) {
-      console.error(
-        "Delivery current location failed:",
-        error
-      );
-
-      deliveryLatitude =
-        null;
-
-      deliveryLongitude =
-        null;
-
-      deliveryLocationInput.value =
-        "";
-
-      deliveryLocationMessage.textContent =
-        `❌ ${error.message}`;
-
-      await updateFareEstimate();
-    } finally {
-      useDeliveryLocationButton.disabled =
-        false;
-
-      useDeliveryLocationButton.textContent =
-        originalText;
     }
   }
-);
+
+  let selectedResult = null;
+  let matchedCandidate = "";
+  let partialFallback = null;
+  let partialCandidate = "";
+
+  for (
+    const candidate of
+    addressCandidates
+  ) {
+    try {
+      const response =
+        await geocoder.geocode({
+          address:
+            candidate,
+
+          region:
+            "IN"
+        });
+
+      const results =
+        response.results || [];
+
+      if (!results.length) {
+        continue;
+      }
+
+      const completeResult =
+        results.find(
+          result =>
+            !result.partial_match
+        );
+
+      if (completeResult) {
+        selectedResult =
+          completeResult;
+
+        matchedCandidate =
+          candidate;
+
+        break;
+      }
+
+      if (!partialFallback) {
+        partialFallback =
+          results[0];
+
+        partialCandidate =
+          candidate;
+      }
+
+    } catch (error) {
+      console.warn(
+        `Address search failed for "${candidate}":`,
+        error
+      );
+    }
+  }
+
+  if (!selectedResult) {
+    selectedResult =
+      partialFallback;
+
+    matchedCandidate =
+      partialCandidate;
+  }
+
+  if (!selectedResult) {
+    deliveryLatitude =
+      null;
+
+    deliveryLongitude =
+      null;
+
+    deliveryLocationInput.value =
+      typedAddress;
+
+    throw new Error(
+      "Entered delivery address could not be located. Please add road, locality, city and PIN code."
+    );
+  }
+
+  const position =
+    getLatLngLiteral(
+      selectedResult.geometry
+        ?.location
+    );
+
+  if (!position) {
+    throw new Error(
+      "Google did not return valid coordinates for the delivery address."
+    );
+  }
+
+  deliveryLatitude =
+    position.lat;
+
+  deliveryLongitude =
+    position.lng;
+
+  /*
+    Customer ka exact typed address
+    booking me preserve hoga.
+  */
+  deliveryLocationInput.value =
+    typedAddress;
+
+  updateDeliveryMarker(
+    position
+  );
+
+  if (bookingMap) {
+    if (
+      selectedResult.geometry
+        ?.viewport
+    ) {
+      bookingMap.fitBounds(
+        selectedResult.geometry
+          .viewport
+      );
+    } else {
+      bookingMap.setCenter(
+        position
+      );
+
+      bookingMap.setZoom(
+        17
+      );
+    }
+  }
+
+  const exactMatch =
+    matchedCandidate ===
+    exactAddress &&
+    !selectedResult
+      .partial_match;
+
+  deliveryLocationMessage.textContent =
+    exactMatch
+      ? "✅ Entered delivery address located on the map."
+      : `✅ Nearby map location found: ${
+          selectedResult
+            .formatted_address
+        }`;
+
+  await updateFareEstimate();
+}
 
 // ======================================
 // BOOKING FORM SUBMIT
@@ -1439,6 +1871,30 @@ bookingForm.addEventListener(
 
     const formData =
       new FormData(bookingForm);
+
+      try {
+
+  await resolveTypedPickupAddress();
+
+  await resolveTypedDeliveryAddress();
+
+} catch (addressError) {
+
+  console.error(
+    "Address resolution failed:",
+    addressError
+  );
+
+  bookingResult.innerHTML = `
+    <p>
+      ❌ ${escapeHtml(
+        addressError.message
+      )}
+    </p>
+  `;
+
+  return;
+}
 
     // Submit se pehle ensure karenge ki
     // latest road distance calculate ho chuki hai.
