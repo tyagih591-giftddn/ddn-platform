@@ -1498,7 +1498,7 @@ async function reverseGeocodeLocation(
 // CURRENT PICKUP LOCATION BUTTON
 // ======================================
 
-usePickupLocationButton.addEventListener(
+usePickupLocationButton?.addEventListener(
   "click",
   async function () {
     const originalText =
