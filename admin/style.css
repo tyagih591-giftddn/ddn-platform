@@ -462,3 +462,335 @@ select:focus {
   font-weight: 600;
   color: #2563eb;
 }
+
+/* ===============================
+   DDN ADMIN PROFESSIONAL BRANDING
+================================ */
+
+body {
+  background:
+    radial-gradient(
+      circle at 90% 8%,
+      rgba(255, 122, 0, 0.12),
+      transparent 26%
+    ),
+    linear-gradient(
+      180deg,
+      #f8fafc 0%,
+      #eef2f7 100%
+    );
+
+  color: #1f2937;
+}
+
+/* ===============================
+   ADMIN BRAND
+================================ */
+
+.admin-brand {
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+}
+
+.admin-brand-logo {
+  width: 66px;
+
+  height: 66px;
+
+  flex: 0 0 66px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 7px;
+
+  border-radius: 19px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #242424,
+      #111111
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      122,
+      0,
+      0.34
+    );
+
+  box-shadow:
+    0 14px 34px
+    rgba(
+      15,
+      23,
+      42,
+      0.18
+    );
+
+  overflow: hidden;
+}
+
+.admin-brand-logo img {
+  width: 100%;
+
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+}
+
+.admin-brand-text h1 {
+  margin: 0;
+
+  color: #171717;
+
+  font-size:
+    clamp(
+      1.65rem,
+      3vw,
+      2.3rem
+    );
+
+  line-height: 1.1;
+
+  letter-spacing: -0.03em;
+}
+
+.admin-brand-text p {
+  margin:
+    7px
+    0
+    0;
+
+  color: #6b7280;
+
+  font-size: 0.92rem;
+
+  font-weight: 600;
+}
+
+/* ===============================
+   PREMIUM ADMIN LOGIN
+================================ */
+
+#loginSection {
+  position: relative;
+
+  max-width: 480px;
+
+  margin:
+    70px
+    auto;
+
+  padding: 38px;
+
+  border:
+    1px solid
+    rgba(
+      15,
+      23,
+      42,
+      0.08
+    );
+
+  border-radius: 26px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.94
+    );
+
+  box-shadow:
+    0 28px 70px
+    rgba(
+      15,
+      23,
+      42,
+      0.13
+    );
+
+  overflow: hidden;
+}
+
+#loginSection::before {
+  content: "";
+
+  position: absolute;
+
+  width: 190px;
+
+  height: 190px;
+
+  top: -105px;
+
+  right: -80px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(
+      255,
+      122,
+      0,
+      0.16
+    );
+
+  filter: blur(4px);
+
+  pointer-events: none;
+}
+
+#loginSection .admin-brand {
+  position: relative;
+
+  z-index: 1;
+}
+
+#loginForm {
+  position: relative;
+
+  z-index: 1;
+
+  display: grid;
+
+  gap: 17px;
+
+  margin-top: 32px;
+}
+
+#loginForm input {
+  min-height: 52px;
+
+  padding:
+    14px
+    16px;
+
+  border:
+    1px solid
+    #d7dce3;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#loginForm input:focus {
+  outline: none;
+
+  border-color: #ff7a00;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(
+      255,
+      122,
+      0,
+      0.13
+    );
+}
+
+#loginForm button {
+  min-height: 52px;
+
+  margin-top: 4px;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff8a00,
+      #ff6200
+    );
+
+  box-shadow:
+    0 14px 30px
+    rgba(
+      255,
+      122,
+      0,
+      0.28
+    );
+
+  font-weight: 800;
+}
+
+#loginForm button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #ff9419,
+      #f25700
+    );
+
+  transform:
+    translateY(-2px);
+}
+
+#loginMessage {
+  min-height: 22px;
+
+  margin: 2px 0 0;
+
+  color: #dc2626;
+
+  font-size: 0.9rem;
+
+  font-weight: 600;
+
+  text-align: center;
+}
+
+/* ===============================
+   BRANDING RESPONSIVE
+================================ */
+
+@media (max-width: 600px) {
+
+  #loginSection {
+    margin:
+      26px
+      14px;
+
+    padding: 27px 22px;
+
+    border-radius: 22px;
+  }
+
+  .admin-brand-logo {
+    width: 56px;
+
+    height: 56px;
+
+    flex-basis: 56px;
+
+    border-radius: 16px;
+  }
+
+  .admin-brand-text h1 {
+    font-size: 1.45rem;
+  }
+
+  .admin-brand-text p {
+    font-size: 0.78rem;
+  }
+
+}
