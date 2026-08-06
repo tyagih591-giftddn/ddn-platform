@@ -15,7 +15,7 @@
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   >
 
-  <link rel="stylesheet"href="style.css?v=13">
+  <link rel="stylesheet"href="style.css?v=15">
   >
 </head>
 
@@ -127,46 +127,120 @@
 
     </div>
 
-<div class="dashboard">
+    <div class="dashboard">
 
   <button
     type="button"
     class="card dashboard-filter-card active-filter-card"
     data-booking-filter="all"
   >
-    <h3>Total Bookings</h3>
-    <h2 id="totalBookings">0</h2>
+    <span class="dashboard-card-icon">
+      📦
+    </span>
+
+    <span class="dashboard-card-content">
+      <span class="dashboard-card-label">
+        Total Bookings
+      </span>
+
+      <strong
+        id="totalBookings"
+        class="dashboard-card-value"
+      >
+        0
+      </strong>
+
+      <span class="dashboard-card-link">
+        View all bookings →
+      </span>
+    </span>
   </button>
+
 
   <button
     type="button"
     class="card dashboard-filter-card"
     data-booking-filter="pending"
   >
-    <h3>Pending</h3>
-    <h2 id="pendingBookings">0</h2>
+    <span class="dashboard-card-icon">
+      ⏳
+    </span>
+
+    <span class="dashboard-card-content">
+      <span class="dashboard-card-label">
+        Pending
+      </span>
+
+      <strong
+        id="pendingBookings"
+        class="dashboard-card-value"
+      >
+        0
+      </strong>
+
+      <span class="dashboard-card-link">
+        View pending bookings →
+      </span>
+    </span>
   </button>
+
 
   <button
     type="button"
     class="card dashboard-filter-card"
     data-booking-filter="completed"
   >
-    <h3>Completed</h3>
-    <h2 id="completedBookings">0</h2>
+    <span class="dashboard-card-icon">
+      ✅
+    </span>
+
+    <span class="dashboard-card-content">
+      <span class="dashboard-card-label">
+        Completed
+      </span>
+
+      <strong
+        id="completedBookings"
+        class="dashboard-card-value"
+      >
+        0
+      </strong>
+
+      <span class="dashboard-card-link">
+        View completed bookings →
+      </span>
+    </span>
   </button>
+
 
   <button
     type="button"
     class="card dashboard-filter-card"
     data-booking-filter="active"
   >
-    <h3>Active Deliveries</h3>
-    <h2 id="activeBookings">0</h2>
+    <span class="dashboard-card-icon">
+      🛵
+    </span>
+
+    <span class="dashboard-card-content">
+      <span class="dashboard-card-label">
+        Active Deliveries
+      </span>
+
+      <strong
+        id="activeBookings"
+        class="dashboard-card-value"
+      >
+        0
+      </strong>
+
+      <span class="dashboard-card-link">
+        View active deliveries →
+      </span>
+    </span>
   </button>
 
 </div>
-
 
 
     <!-- Admin Live Map -->
@@ -263,6 +337,6 @@
 
 <script src="https://ddn-platform.onrender.com/socket.io/socket.io.js"></script>
 
-<script src="app.js?v=13"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
