@@ -1836,11 +1836,18 @@ body {
 
 .booking-action-control {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr)
-    auto;
-  gap: 12px;
+  grid-template-columns: 1fr 180px;
+  gap: 14px;
   align-items: center;
+}
+
+.booking-action-control input,
+.booking-action-control select {
+  width: 100%;
+}
+
+.booking-action-control button {
+  width: 100%;
 }
 
 .booking-action-control input,
@@ -1866,12 +1873,23 @@ body {
 
 .booking-action-control button,
 .booking-acceptance-card button {
+
+  width: 100%;
+
+  height: 48px;
+
   min-height: 48px;
+
   margin: 0;
+
   padding: 12px 20px;
+
   border-radius: 12px;
+
   font-weight: 800;
+
   white-space: nowrap;
+
 }
 
 .assign-rider-button,
@@ -1914,5 +1932,108 @@ body {
   .booking-action-control button,
   .booking-acceptance-card button {
     width: 100%;
+  }
+}
+
+/* ===============================
+   FINAL BOOKING ACTIONS PANEL
+================================ */
+
+.booking-actions-final {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.booking-action-panel {
+  padding: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 8px 22px
+    rgba(15, 23, 42, 0.06);
+}
+
+.booking-action-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.booking-action-panel-heading h4 {
+  margin: 0 0 5px;
+  color: #171717;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.booking-action-panel-heading p {
+  margin: 0;
+  color: #667085;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.booking-action-panel label {
+  display: block;
+  margin-bottom: 10px;
+  color: #344054;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.booking-action-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    170px;
+  gap: 12px;
+  align-items: center;
+}
+
+.booking-action-row input,
+.booking-action-row select {
+  width: 100%;
+  max-width: none;
+  height: 48px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d7dce3;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.booking-action-row input:focus,
+.booking-action-row select:focus {
+  outline: none;
+  border-color: #ff7a00;
+  box-shadow:
+    0 0 0 4px
+    rgba(255, 122, 0, 0.12);
+}
+
+.booking-action-row button,
+.booking-action-panel-heading button {
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .booking-action-panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .booking-action-row {
+    grid-template-columns: 1fr;
   }
 }
