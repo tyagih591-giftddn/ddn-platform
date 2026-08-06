@@ -1784,3 +1784,135 @@ body {
   }
 
 }
+
+/* ===============================
+   PROFESSIONAL BOOKING ACTION PANEL
+================================ */
+
+.booking-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.booking-action-card {
+  padding: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 8px 22px
+    rgba(15, 23, 42, 0.06);
+}
+
+.booking-acceptance-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.booking-action-heading h4 {
+  margin: 0 0 5px;
+  color: #171717;
+  font-size: 1rem;
+}
+
+.booking-action-heading p {
+  margin: 0;
+  color: #667085;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.booking-action-card label {
+  display: block;
+  margin-bottom: 10px;
+  color: #344054;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.booking-action-control {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.booking-action-control input,
+.booking-action-control select {
+  width: 100%;
+  max-width: none;
+  min-height: 48px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d7dce3;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.booking-action-control input:focus,
+.booking-action-control select:focus {
+  outline: none;
+  border-color: #ff7a00;
+  box-shadow:
+    0 0 0 4px
+    rgba(255, 122, 0, 0.12);
+}
+
+.booking-action-control button,
+.booking-acceptance-card button {
+  min-height: 48px;
+  margin: 0;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.assign-rider-button,
+.update-status-button {
+  background:
+    linear-gradient(
+      135deg,
+      #1f2937,
+      #111827
+    );
+}
+
+.assign-rider-button:hover:not(:disabled),
+.update-status-button:hover:not(:disabled) {
+  background:
+    linear-gradient(
+      135deg,
+      #ff8a00,
+      #ff6200
+    );
+  transform: translateY(-2px);
+}
+
+.booking-action-control button:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
+}
+
+@media (max-width: 700px) {
+  .booking-acceptance-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .booking-action-control {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-action-control button,
+  .booking-acceptance-card button {
+    width: 100%;
+  }
+}

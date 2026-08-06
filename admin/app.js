@@ -1559,190 +1559,203 @@ const bookingTime =
 
               <div class="booking-actions">
 
-              <label
-                for="rider-${bookingId}"
-              >
-                <strong>
-                  Assign Rider:
-                </strong>
-              </label>
+  <div class="booking-action-card booking-acceptance-card">
 
-              <input
-                type="text"
-                id="rider-${bookingId}"
-                placeholder="Enter rider username"
-                value="${
-                  booking.assignedRider
-                    ? escapeHtml(
-                        booking.assignedRider
-                      )
-                    : ""
-                }"
-${
-  booking.adminAccepted
-    ? ""
-    : "disabled"
-}
+    <div class="booking-action-heading">
 
-              >
+      <h4>
+        Admin Acceptance
+      </h4>
 
-              ${
-  booking.status === "Pending" &&
-  !booking.adminAccepted
-    ? `
+      <p>
+        Confirm the order before assigning a rider.
+      </p>
+
+    </div>
+
+    ${
+      booking.status === "Pending" &&
+      !booking.adminAccepted
+        ? `
+          <button
+            type="button"
+            class="accept-order-button"
+            onclick="
+              acceptOrder(
+                '${bookingId}'
+              )
+            "
+          >
+            🟢 Accept Order
+          </button>
+        `
+        : `
+          <span class="status">
+            ${
+              booking.adminAccepted
+                ? "Accepted"
+                : "Not Required"
+            }
+          </span>
+        `
+    }
+
+  </div>
+
+
+  <div class="booking-action-card">
+
+    <label
+      for="rider-${bookingId}"
+    >
+      Assign Rider
+    </label>
+
+    <div class="booking-action-control">
+
+      <input
+        type="text"
+        id="rider-${bookingId}"
+        placeholder="Enter rider username"
+        value="${
+          booking.assignedRider
+            ? escapeHtml(
+                booking.assignedRider
+              )
+            : ""
+        }"
+        ${
+          booking.adminAccepted
+            ? ""
+            : "disabled"
+        }
+      >
+
       <button
         type="button"
-        class="accept-order-button"
+        class="assign-rider-button"
+        ${
+          booking.adminAccepted
+            ? ""
+            : "disabled"
+        }
         onclick="
-          acceptOrder(
+          assignRider(
             '${bookingId}'
           )
         "
       >
-        🟢 Accept Order
+        ${
+          booking.adminAccepted
+            ? "Assign Rider"
+            : "Accept Order First"
+        }
       </button>
 
-      <br><br>
-    `
-    : `
-      <p>
-        <strong>
-          Admin Acceptance:
-        </strong>
+    </div>
 
-        <span class="status">
+  </div>
+
+
+  <div class="booking-action-card">
+
+    <label
+      for="status-${bookingId}"
+    >
+      Update Status
+    </label>
+
+    <div class="booking-action-control">
+
+      <select
+        id="status-${bookingId}"
+      >
+
+        <option
+          value="Pending"
           ${
-            booking.adminAccepted
-              ? "Accepted"
-              : "Not Required"
+            booking.status === "Pending"
+              ? "selected"
+              : ""
           }
-        </span>
-      </p>
-    `
-}
+        >
+          Pending
+        </option>
 
-             <button
-  type="button"
-  ${
-    booking.adminAccepted
-      ? ""
-      : "disabled"
-  }
-  onclick="
-    assignRider(
-      '${bookingId}'
-    )
-  "
->
-  ${
-    booking.adminAccepted
-      ? "Assign Rider"
-      : "Accept Order First"
-  }
-</button>
+        <option
+          value="Assigned"
+          ${
+            booking.status === "Assigned"
+              ? "selected"
+              : ""
+          }
+        >
+          Assigned
+        </option>
 
-              <br><br>
+        <option
+          value="Picked Up"
+          ${
+            booking.status === "Picked Up"
+              ? "selected"
+              : ""
+          }
+        >
+          Picked Up
+        </option>
 
-              <label
-                for="status-${bookingId}"
-              >
-                <strong>
-                  Update Status:
-                </strong>
-              </label>
+        <option
+          value="Out for Delivery"
+          ${
+            booking.status === "Out for Delivery"
+              ? "selected"
+              : ""
+          }
+        >
+          Out for Delivery
+        </option>
 
-              <select
-                id="status-${bookingId}"
-              >
+        <option
+          value="Delivered"
+          ${
+            booking.status === "Delivered"
+              ? "selected"
+              : ""
+          }
+        >
+          Delivered
+        </option>
 
-                <option
-                  value="Pending"
-                  ${
-                    booking.status ===
-                    "Pending"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Pending
-                </option>
+        <option
+          value="Cancelled"
+          ${
+            booking.status === "Cancelled"
+              ? "selected"
+              : ""
+          }
+        >
+          Cancelled
+        </option>
 
-                <option
-                  value="Assigned"
-                  ${
-                    booking.status ===
-                    "Assigned"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Assigned
-                </option>
+      </select>
 
-                <option
-                  value="Picked Up"
-                  ${
-                    booking.status ===
-                    "Picked Up"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Picked Up
-                </option>
+      <button
+        type="button"
+        class="update-status-button"
+        onclick="
+          updateStatus(
+            '${bookingId}'
+          )
+        "
+      >
+        Update Status
+      </button>
 
-                <option
-                  value="Out for Delivery"
-                  ${
-                    booking.status ===
-                    "Out for Delivery"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Out for Delivery
-                </option>
+    </div>
 
-                <option
-                  value="Delivered"
-                  ${
-                    booking.status ===
-                    "Delivered"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Delivered
-                </option>
+  </div>
 
-                <option
-                  value="Cancelled"
-                  ${
-                    booking.status ===
-                    "Cancelled"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Cancelled
-                </option>
-
-              </select>
-
-              <button
-                type="button"
-                onclick="
-                  updateStatus(
-                    '${bookingId}'
-                  )
-                "
-              >
-                Update Status
-              </button>
-
-            </div>
-
-            </div>
+</div>
 
           `;
 
