@@ -794,3 +794,103 @@ body {
   }
 
 }
+
+/* ===============================
+   PREMIUM ADMIN HEADER
+================================ */
+
+.admin-header {
+
+  align-items: center;
+
+  padding: 20px 22px;
+
+  margin-bottom: 28px;
+
+  border:
+    1px solid
+    rgba(
+      15,
+      23,
+      42,
+      0.08
+    );
+
+  border-radius: 22px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.82
+    );
+
+  box-shadow:
+    0 18px 45px
+    rgba(
+      15,
+      23,
+      42,
+      0.08
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+}
+
+.admin-header-actions {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+}
+
+.logout-button {
+
+  min-width: 118px;
+
+  min-height: 46px;
+
+  padding:
+    12px
+    20px;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff8a00,
+      #ff6200
+    );
+
+  box-shadow:
+    0 12px 26px
+    rgba(
+      255,
+      122,
+      0,
+      0.24
+    );
+
+  font-weight: 800;
+
+}
+
+.logout-button:hover {
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff971f,
+      #e95700
+    );
+
+  transform: translateY(-2px);
+
+} 
