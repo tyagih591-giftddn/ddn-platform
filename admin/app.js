@@ -1397,9 +1397,27 @@ const bookingTime =
 
             <div class="booking">
 
-              <h3>
-                ${bookingId}
-              </h3>
+              <div class="booking-header">
+
+  <div>
+
+    <h3>
+      ${bookingId}
+    </h3>
+
+    <small>
+      DDN Delivery Booking
+    </small>
+
+  </div>
+
+  <span class="status">
+    ${escapeHtml(
+      booking.status
+    )}
+  </span>
+
+</div>
 
               <p>
                 <strong>
@@ -1521,18 +1539,7 @@ const bookingTime =
   )}
 </p>
 
-              <p>
-                <strong>
-                  Current Status:
-                </strong>
-
-                <span class="status">
-                  ${escapeHtml(
-                    booking.status
-                  )}
-                </span>
-              </p>
-
+              
               <p>
                 <strong>
                   Assigned Rider:
