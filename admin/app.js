@@ -1557,53 +1557,57 @@ const bookingTime =
 
               <hr>
 
-              <div class="booking-actions">
+              <div class="booking-actions-final">
 
-  <div class="booking-action-card booking-acceptance-card">
+  <div class="booking-action-panel">
 
-    <div class="booking-action-heading">
+    <div class="booking-action-panel-heading">
 
-      <h4>
-        Admin Acceptance
-      </h4>
+      <div>
 
-      <p>
-        Confirm the order before assigning a rider.
-      </p>
+        <h4>
+          Admin Acceptance
+        </h4>
+
+        <p>
+          Confirm the booking before rider assignment.
+        </p>
+
+      </div>
+
+      ${
+        booking.status === "Pending" &&
+        !booking.adminAccepted
+          ? `
+            <button
+              type="button"
+              class="accept-order-button"
+              onclick="
+                acceptOrder(
+                  '${bookingId}'
+                )
+              "
+            >
+              Accept Order
+            </button>
+          `
+          : `
+            <span class="status">
+              ${
+                booking.adminAccepted
+                  ? "Accepted"
+                  : "Not Required"
+              }
+            </span>
+          `
+      }
 
     </div>
-
-    ${
-      booking.status === "Pending" &&
-      !booking.adminAccepted
-        ? `
-          <button
-            type="button"
-            class="accept-order-button"
-            onclick="
-              acceptOrder(
-                '${bookingId}'
-              )
-            "
-          >
-            🟢 Accept Order
-          </button>
-        `
-        : `
-          <span class="status">
-            ${
-              booking.adminAccepted
-                ? "Accepted"
-                : "Not Required"
-            }
-          </span>
-        `
-    }
 
   </div>
 
 
-  <div class="booking-action-card">
+  <div class="booking-action-panel">
 
     <label
       for="rider-${bookingId}"
@@ -1611,7 +1615,7 @@ const bookingTime =
       Assign Rider
     </label>
 
-    <div class="booking-action-control">
+    <div class="booking-action-row">
 
       <input
         type="text"
@@ -1657,7 +1661,7 @@ const bookingTime =
   </div>
 
 
-  <div class="booking-action-card">
+  <div class="booking-action-panel">
 
     <label
       for="status-${bookingId}"
@@ -1665,7 +1669,7 @@ const bookingTime =
       Update Status
     </label>
 
-    <div class="booking-action-control">
+    <div class="booking-action-row">
 
       <select
         id="status-${bookingId}"
@@ -1757,6 +1761,8 @@ const bookingTime =
 
 </div>
 
+</div>
+              
           `;
 
         }
