@@ -1557,6 +1557,8 @@ const bookingTime =
 
               <hr>
 
+              <div class="booking-actions">
+
               <label
                 for="rider-${bookingId}"
               >
@@ -1737,6 +1739,8 @@ ${
               >
                 Update Status
               </button>
+
+            </div>
 
             </div>
 
