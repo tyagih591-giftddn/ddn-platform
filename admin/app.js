@@ -1419,10 +1419,13 @@ const bookingTime =
 
 </div>
 
+<div class="booking-details-grid">
+
               <p>
                 <strong>
                   Customer:
                 </strong>
+                
 
                 ${escapeHtml(
                   booking.customerName
@@ -1549,6 +1552,8 @@ const bookingTime =
                   ${assignedRider}
                 </span>
               </p>
+
+              </div>
 
               <hr>
 

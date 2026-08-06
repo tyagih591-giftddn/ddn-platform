@@ -1624,3 +1624,78 @@ body {
   }
 
 }
+
+/* ===============================
+   BOOKING DETAILS GRID
+================================ */
+
+.booking-details-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+
+  margin-bottom: 22px;
+
+}
+
+.booking-details-grid p {
+
+  margin: 0;
+
+  padding: 14px 16px;
+
+  border:
+    1px solid
+    rgba(
+      15,
+      23,
+      42,
+      0.08
+    );
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 12px
+    rgba(
+      15,
+      23,
+      42,
+      0.05
+    );
+
+}
+
+.booking-details-grid strong {
+
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #ff6200;
+
+  font-size: 0.82rem;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.05em;
+
+}
+
+@media (max-width: 768px) {
+
+  .booking-details-grid {
+
+    grid-template-columns: 1fr;
+
+  }
+
+}
