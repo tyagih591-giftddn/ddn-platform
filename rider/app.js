@@ -1118,21 +1118,6 @@ ${
                 </span>
               </p>
 
-              <button
-                class="status-button"
-                type="button"
-                onclick="
-  acceptDelivery(
-    '${rawBookingId}',
-    this
-  )
-"
-                ${
-                  booking.status ===
-                  "Assigned"
-                    ? ""
-                    : "disabled"
-                }
               
                 ${
   booking.status === "Assigned"
