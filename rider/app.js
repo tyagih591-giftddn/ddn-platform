@@ -912,362 +912,441 @@ const deliveriesWithRouteMetrics =
 
           return `
 
-            <div class="delivery">
+  <div class="delivery">
 
-              <h3>
-                ${bookingId}
-              </h3>
+    <div class="delivery-header">
 
-              <p>
-                <strong>
-                  Assigned Rider:
-                </strong>
+      <div>
+        <h3>
+          ${bookingId}
+        </h3>
 
-                ${escapeHtml(
-                  booking.assignedRider
-                )}
-              </p>
+        <span class="delivery-subtitle">
+          DDN Delivery
+        </span>
+      </div>
 
-              <p>
-                <strong>
-                  Customer:
-                </strong>
+      <span class="status">
+        ${escapeHtml(
+          booking.status
+        )}
+      </span>
 
-                ${escapeHtml(
-                  booking.customerName
-                )}
-              </p>
+    </div>
 
-              <p>
-                <strong>
-                  Mobile:
-                </strong>
 
-                ${escapeHtml(
-                  booking.mobileNumber
-                )}
-              </p>
+    <div class="delivery-info-grid">
 
-              <p>
-                <strong>
-                  Pickup:
-                </strong>
+      <div class="delivery-info-item">
+        <span class="delivery-info-label">
+          Assigned Rider
+        </span>
 
-                ${escapeHtml(
-                  booking.pickupLocation
-                )}
-              </p>
-
-              <p>
-                <strong>
-                  Delivery:
-                </strong>
-
-                ${escapeHtml(
-                  booking.deliveryLocation
-                )}
-              </p>
-
-              <p class="rider-earning">
-  <strong>
-    You will earn:
-  </strong>
-
-  ₹${
-    booking.riderEarning !== null &&
-    booking.riderEarning !== undefined
-      ? escapeHtml(
-          booking.riderEarning
-        )
-      : "Not available"
-  }
-</p>
-
-${
-  booking.remainingRoute
-    ? `
-      <div class="remaining-route">
-
-        <p>
-          <strong>
-            Current Destination:
-          </strong>
-
+        <strong>
           ${escapeHtml(
-            booking
-              .remainingRoute
-              .destinationType
+            booking.assignedRider
           )}
-        </p>
+        </strong>
+      </div>
 
-        <p>
-          <strong>
-            Remaining Distance:
-          </strong>
 
+      <div class="delivery-info-item">
+        <span class="delivery-info-label">
+          Customer
+        </span>
+
+        <strong>
           ${escapeHtml(
-            booking
-              .remainingRoute
-              .distanceKm
-          )} km
-        </p>
+            booking.customerName
+          )}
+        </strong>
+      </div>
 
-        <p>
-          <strong>
-            Live ETA:
-          </strong>
 
-          ${
-            booking
-              .remainingRoute
-              .durationMinutes !==
-            null
-              ? `${escapeHtml(
+      <div class="delivery-info-item">
+        <span class="delivery-info-label">
+          Mobile
+        </span>
+
+        <strong>
+          ${escapeHtml(
+            booking.mobileNumber
+          )}
+        </strong>
+      </div>
+
+
+      <div class="delivery-info-item rider-earning">
+        <span class="delivery-info-label">
+          Your Earning
+        </span>
+
+        <strong>
+          ₹${
+            booking.riderEarning !== null &&
+            booking.riderEarning !== undefined
+              ? escapeHtml(
+                  booking.riderEarning
+                )
+              : "Not available"
+          }
+        </strong>
+      </div>
+
+    </div>
+
+
+    <div class="delivery-route-card">
+
+      <div class="delivery-route-point">
+
+        <span class="route-marker pickup-marker">
+          P
+        </span>
+
+        <div>
+          <span class="delivery-info-label">
+            Pickup
+          </span>
+
+          <p>
+            ${escapeHtml(
+              booking.pickupLocation
+            )}
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="delivery-route-line"></div>
+
+
+      <div class="delivery-route-point">
+
+        <span class="route-marker delivery-marker">
+          D
+        </span>
+
+        <div>
+          <span class="delivery-info-label">
+            Delivery
+          </span>
+
+          <p>
+            ${escapeHtml(
+              booking.deliveryLocation
+            )}
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    ${
+      booking.remainingRoute
+        ? `
+          <div class="remaining-route">
+
+            <div class="route-metric">
+
+              <span>
+                Current Destination
+              </span>
+
+              <strong>
+                ${escapeHtml(
                   booking
                     .remainingRoute
-                    .durationMinutes
-                )} minutes`
-              : "Calculating..."
-          }
-        </p>
+                    .destinationType
+                )}
+              </strong>
 
-      </div>
-    `
-    : `
-      <div class="remaining-route">
-
-        <p>
-          <strong>
-            Live Route:
-          </strong>
-
-          GPS route information is temporarily unavailable.
-        </p>
-
-      </div>
-    `
-}
-
-<div class="navigation-buttons">
-
-  ${
-  booking.status === "Accepted"
-    ? `
-      <button
-        class="status-button"
-        type="button"
-        onclick="
-          openNavigation(
-            '${escapeHtml(
-              booking.customerPickupLatitude
-            )}',
-            '${escapeHtml(
-              booking.customerPickupLongitude
-            )}',
-            '${escapeHtml(
-              booking.pickupLocation
-            )}'
-          )
-        "
-      >
-        📍 Navigate to Pickup
-      </button>
-    `
-    : ""
-}
-
-${
-  booking.status === "Picked Up" ||
-  booking.status === "Out for Delivery" ||
-  booking.status === "Reached Drop Location"
-    ? `
-      <button
-        class="status-button"
-        type="button"
-        onclick="
-          openNavigation(
-            '${escapeHtml(
-              booking.customerDeliveryLatitude
-            )}',
-            '${escapeHtml(
-              booking.customerDeliveryLongitude
-            )}',
-            '${escapeHtml(
-              booking.deliveryLocation
-            )}'
-          )
-        "
-      >
-        📍 Navigate to Delivery
-      </button>
-    `
-    : ""
-}
-
-</div>
-
-              <p>
-                <strong>
-                  Status:
-                </strong>
-
-                <span class="status">
-                  ${escapeHtml(
-                    booking.status
-                  )}
-                </span>
-              </p>
-
-              
-                ${
-  booking.status === "Assigned"
-    ? `
-      <div class="delivery-decision-actions">
-
-        <button
-          class="status-button"
-          type="button"
-          onclick="
-            acceptDelivery(
-              '${rawBookingId}',
-              this
-            )
-          "
-        >
-          Accept Delivery
-        </button>
-
-        <button
-          class="status-button reject-delivery-button"
-          type="button"
-          onclick="
-            rejectDelivery(
-              '${rawBookingId}',
-              this
-            )
-          "
-        >
-          Reject Delivery
-        </button>
-
-      </div>
-    `
-    : ""
-}
-
-${
-  booking.status ===
-  "Accepted"
-    ? `
-
-      <div class="proof-section">
-
-        <p>
-          <strong>
-            Pickup Proof Photo:
-          </strong>
-        </p>
-
-        <input
-          id="pickup-photo-${rawBookingId}"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="environment"
-        >
-
-        <br><br>
-
-        <button
-          class="status-button"
-          type="button"
-          onclick="
-            uploadProof(
-              '${rawBookingId}',
-              'pickup',
-              this
-            )
-          "
-        >
-          Upload Pickup Photo
-        </button>
-
-        <p
-          id="pickup-message-${rawBookingId}"
-        ></p>
-
-      </div>
-
-    `
-    : ""
-}
-
-  ${
-  booking.status === "Picked Up"
-    ? `
-      <button
-        class="status-button"
-        type="button"
-        onclick="updateStatus('${rawBookingId}', 'Out for Delivery')"
-      >
-        Out for Delivery
-      </button>
-    `
-    : ""
-}
-
-${
-  booking.status === "Out for Delivery"
-    ? `
-      <button
-        class="status-button"
-        type="button"
-        onclick="updateStatus('${rawBookingId}', 'Reached Drop Location')"
-      >
-        Reached Drop Location
-      </button>
-    `
-    : ""
-}
-
-${
-  booking.status === "Reached Drop Location"
-    ? `
-      <div class="proof-section">
-
-        <p>
-          <strong>
-            Delivery Proof Photo:
-          </strong>
-        </p>
-
-        <input
-          id="delivery-photo-${rawBookingId}"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="environment"
-        >
-
-        <br><br>
-
-        <button
-          class="status-button"
-          type="button"
-          onclick="uploadProof('${rawBookingId}', 'delivery', this)"
-        >
-          Upload Delivery Photo
-        </button>
-
-        <p
-          id="delivery-message-${rawBookingId}"
-        ></p>
-
-      </div>
-    `
-    : ""
-}
             </div>
 
-          `;
+
+            <div class="route-metric">
+
+              <span>
+                Remaining Distance
+              </span>
+
+              <strong>
+                ${escapeHtml(
+                  booking
+                    .remainingRoute
+                    .distanceKm
+                )} km
+              </strong>
+
+            </div>
+
+
+            <div class="route-metric">
+
+              <span>
+                Live ETA
+              </span>
+
+              <strong>
+                ${
+                  booking
+                    .remainingRoute
+                    .durationMinutes !== null
+                    ? `${escapeHtml(
+                        booking
+                          .remainingRoute
+                          .durationMinutes
+                      )} minutes`
+                    : "Calculating..."
+                }
+              </strong>
+
+            </div>
+
+          </div>
+        `
+        : `
+          <div class="remaining-route">
+
+            <p>
+              <strong>
+                Live Route:
+              </strong>
+
+              GPS route information is temporarily unavailable.
+            </p>
+
+          </div>
+        `
+    }
+
+
+    <div class="navigation-buttons">
+
+      ${
+        booking.status === "Accepted"
+          ? `
+            <button
+              class="status-button"
+              type="button"
+              onclick="
+                openNavigation(
+                  '${escapeHtml(
+                    booking.customerPickupLatitude
+                  )}',
+                  '${escapeHtml(
+                    booking.customerPickupLongitude
+                  )}',
+                  '${escapeHtml(
+                    booking.pickupLocation
+                  )}'
+                )
+              "
+            >
+              📍 Navigate to Pickup
+            </button>
+          `
+          : ""
+      }
+
+
+      ${
+        booking.status === "Picked Up" ||
+        booking.status === "Out for Delivery" ||
+        booking.status === "Reached Drop Location"
+          ? `
+            <button
+              class="status-button"
+              type="button"
+              onclick="
+                openNavigation(
+                  '${escapeHtml(
+                    booking.customerDeliveryLatitude
+                  )}',
+                  '${escapeHtml(
+                    booking.customerDeliveryLongitude
+                  )}',
+                  '${escapeHtml(
+                    booking.deliveryLocation
+                  )}'
+                )
+              "
+            >
+              📍 Navigate to Delivery
+            </button>
+          `
+          : ""
+      }
+
+    </div>
+
+
+    ${
+      booking.status === "Assigned"
+        ? `
+          <div class="delivery-decision-actions">
+
+            <button
+              class="status-button accept-delivery-button"
+              type="button"
+              onclick="
+                acceptDelivery(
+                  '${rawBookingId}',
+                  this
+                )
+              "
+            >
+              Accept Delivery
+            </button>
+
+            <button
+              class="status-button reject-delivery-button"
+              type="button"
+              onclick="
+                rejectDelivery(
+                  '${rawBookingId}',
+                  this
+                )
+              "
+            >
+              Reject Delivery
+            </button>
+
+          </div>
+        `
+        : ""
+    }
+
+
+    ${
+      booking.status === "Accepted"
+        ? `
+          <div class="proof-section">
+
+            <p>
+              <strong>
+                Pickup Proof Photo
+              </strong>
+            </p>
+
+            <input
+              id="pickup-photo-${rawBookingId}"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+            >
+
+            <button
+              class="status-button"
+              type="button"
+              onclick="
+                uploadProof(
+                  '${rawBookingId}',
+                  'pickup',
+                  this
+                )
+              "
+            >
+              Upload Pickup Photo
+            </button>
+
+            <p
+              id="pickup-message-${rawBookingId}"
+            ></p>
+
+          </div>
+        `
+        : ""
+    }
+
+
+    ${
+      booking.status === "Picked Up"
+        ? `
+          <button
+            class="status-button"
+            type="button"
+            onclick="
+              updateStatus(
+                '${rawBookingId}',
+                'Out for Delivery'
+              )
+            "
+          >
+            Out for Delivery
+          </button>
+        `
+        : ""
+    }
+
+
+    ${
+      booking.status === "Out for Delivery"
+        ? `
+          <button
+            class="status-button"
+            type="button"
+            onclick="
+              updateStatus(
+                '${rawBookingId}',
+                'Reached Drop Location'
+              )
+            "
+          >
+            Reached Drop Location
+          </button>
+        `
+        : ""
+    }
+
+
+    ${
+      booking.status === "Reached Drop Location"
+        ? `
+          <div class="proof-section">
+
+            <p>
+              <strong>
+                Delivery Proof Photo
+              </strong>
+            </p>
+
+            <input
+              id="delivery-photo-${rawBookingId}"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+            >
+
+            <button
+              class="status-button"
+              type="button"
+              onclick="
+                uploadProof(
+                  '${rawBookingId}',
+                  'delivery',
+                  this
+                )
+              "
+            >
+              Upload Delivery Photo
+            </button>
+
+            <p
+              id="delivery-message-${rawBookingId}"
+            ></p>
+
+          </div>
+        `
+        : ""
+    }
+
+  </div>
+
+`;
 
         }
 
