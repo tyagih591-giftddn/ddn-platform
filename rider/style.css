@@ -636,3 +636,29 @@ button:hover {
   }
 
 }
+
+/* ===============================
+   RIDER ACTION SPACING FIX
+================================ */
+
+.navigation-buttons {
+  margin-bottom: 18px;
+}
+
+.proof-section {
+  margin-top: 18px;
+}
+
+.proof-section input[type="file"] {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 16px;
+}
+
+.proof-section .status-button {
+  margin-top: 4px;
+}
+
+.delivery > .status-button {
+  margin-top: 16px;
+}
