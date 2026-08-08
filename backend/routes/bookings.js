@@ -1095,15 +1095,32 @@ router.patch(
         });
       }
 
-      return res.json({
-        success: true,
-        message:
-          "Delivery accepted successfully",
-        booking:
-          formatBooking(
-            result.rows[0]
-          )
-      });
+      const acceptedBooking =
+  formatBooking(
+    result.rows[0]
+  );
+
+const io =
+  req.app.get("io");
+
+if (io) {
+
+  io.emit(
+    "booking-status-updated",
+    acceptedBooking
+  );
+
+}
+
+return res.json({
+  success: true,
+
+  message:
+    "Delivery accepted successfully",
+
+  booking:
+    acceptedBooking
+});
     } catch (error) {
       console.error(
         "Accept delivery error:",
@@ -1442,15 +1459,32 @@ router.patch(
         });
       }
 
-      return res.json({
-        success: true,
-        message:
-          "Delivery rejected and returned for reassignment",
-        booking:
-          formatBooking(
-            result.rows[0]
-          )
-      });
+      const rejectedBooking =
+  formatBooking(
+    result.rows[0]
+  );
+
+const io =
+  req.app.get("io");
+
+if (io) {
+
+  io.emit(
+    "booking-status-updated",
+    rejectedBooking
+  );
+
+}
+
+return res.json({
+  success: true,
+
+  message:
+    "Delivery rejected and returned for reassignment",
+
+  booking:
+    rejectedBooking
+});
     } catch (error) {
       console.error(
         "Reject delivery error:",

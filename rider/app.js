@@ -968,6 +968,21 @@ const deliveriesWithRouteMetrics =
                 )}
               </p>
 
+              <p class="rider-earning">
+  <strong>
+    You will earn:
+  </strong>
+
+  ₹${
+    booking.riderEarning !== null &&
+    booking.riderEarning !== undefined
+      ? escapeHtml(
+          booking.riderEarning
+        )
+      : "Not available"
+  }
+</p>
+
 ${
   booking.remainingRoute
     ? `
@@ -1035,45 +1050,59 @@ ${
 
 <div class="navigation-buttons">
 
-  <button
-    class="status-button"
-    type="button"
-    onclick="
-      openNavigation(
-        '${escapeHtml(
-          booking.customerPickupLatitude
-        )}',
-        '${escapeHtml(
-          booking.customerPickupLongitude
-        )}',
-        '${escapeHtml(
-          booking.pickupLocation
-        )}'
-      )
-    "
-  >
-    📍 Navigate to Pickup
-  </button>
+  ${
+  booking.status === "Accepted"
+    ? `
+      <button
+        class="status-button"
+        type="button"
+        onclick="
+          openNavigation(
+            '${escapeHtml(
+              booking.customerPickupLatitude
+            )}',
+            '${escapeHtml(
+              booking.customerPickupLongitude
+            )}',
+            '${escapeHtml(
+              booking.pickupLocation
+            )}'
+          )
+        "
+      >
+        📍 Navigate to Pickup
+      </button>
+    `
+    : ""
+}
 
-  <button
-    class="status-button"
-    type="button"
-    onclick="
-      openNavigation(
-        '${escapeHtml(
-          booking.customerDeliveryLatitude
-        )}',
-        '${escapeHtml(
-          booking.customerDeliveryLongitude
-        )}',
-        '${escapeHtml(
-          booking.deliveryLocation
-        )}'
-      )
-    "
-  >
-    📍 Navigate to Delivery
-  </button>
+${
+  booking.status === "Picked Up" ||
+  booking.status === "Out for Delivery" ||
+  booking.status === "Reached Drop Location"
+    ? `
+      <button
+        class="status-button"
+        type="button"
+        onclick="
+          openNavigation(
+            '${escapeHtml(
+              booking.customerDeliveryLatitude
+            )}',
+            '${escapeHtml(
+              booking.customerDeliveryLongitude
+            )}',
+            '${escapeHtml(
+              booking.deliveryLocation
+            )}'
+          )
+        "
+      >
+        📍 Navigate to Delivery
+      </button>
+    `
+    : ""
+}
 
 </div>
 
@@ -1093,104 +1122,137 @@ ${
                 class="status-button"
                 type="button"
                 onclick="
-                  updateStatus(
-                    '${rawBookingId}',
-                    'Accepted'
-                  )
-                "
+  acceptDelivery(
+    '${rawBookingId}',
+    this
+  )
+"
                 ${
                   booking.status ===
                   "Assigned"
                     ? ""
                     : "disabled"
                 }
-              >
-                Accept Delivery
-              </button>
+              
+                ${
+  booking.status === "Assigned"
+    ? `
+      <div class="delivery-decision-actions">
+
+        <button
+          class="status-button"
+          type="button"
+          onclick="
+            acceptDelivery(
+              '${rawBookingId}',
+              this
+            )
+          "
+        >
+          Accept Delivery
+        </button>
+
+        <button
+          class="status-button reject-delivery-button"
+          type="button"
+          onclick="
+            rejectDelivery(
+              '${rawBookingId}',
+              this
+            )
+          "
+        >
+          Reject Delivery
+        </button>
+
+      </div>
+    `
+    : ""
+}
+
+${
+  booking.status ===
+  "Accepted"
+    ? `
+
+      <div class="proof-section">
+
+        <p>
+          <strong>
+            Pickup Proof Photo:
+          </strong>
+        </p>
+
+        <input
+          id="pickup-photo-${rawBookingId}"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          capture="environment"
+        >
+
+        <br><br>
+
+        <button
+          class="status-button"
+          type="button"
+          onclick="
+            uploadProof(
+              '${rawBookingId}',
+              'pickup',
+              this
+            )
+          "
+        >
+          Upload Pickup Photo
+        </button>
+
+        <p
+          id="pickup-message-${rawBookingId}"
+        ></p>
+
+      </div>
+
+    `
+    : ""
+}
+
+  ${
+  booking.status === "Picked Up"
+    ? `
+      <button
+        class="status-button"
+        type="button"
+        onclick="
+          updateStatus(
+            '${rawBookingId}',
+            'Out for Delivery'
+          )
+        "
+      >
+        Out for Delivery
+      </button>
+    `
+    : ""
+}
 
               ${
-                booking.status ===
-                "Accepted"
-                  ? `
-
-                    <div class="proof-section">
-
-                      <p>
-                        <strong>
-                          Pickup Proof Photo:
-                        </strong>
-                      </p>
-
-                      <input
-                        id="pickup-photo-${rawBookingId}"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        capture="environment"
-                      >
-
-                      <br><br>
-
-                      <button
-                        class="status-button"
-                        type="button"
-                        onclick="
-                          uploadProof(
-  '${rawBookingId}',
-  'pickup',
-  this
-)
-                        "
-                      >
-                        Upload Pickup Photo
-                      </button>
-
-                      <p
-                        id="pickup-message-${rawBookingId}"
-                      ></p>
-
-                    </div>
-
-                  `
-                  : ""
-              }
-
-              <button
-                class="status-button"
-                type="button"
-                onclick="
-                  updateStatus(
-                    '${rawBookingId}',
-                    'Out for Delivery'
-                  )
-                "
-                ${
-                  booking.status ===
-                  "Picked Up"
-                    ? ""
-                    : "disabled"
-                }
-              >
-                Out for Delivery
-              </button>
-
-              <button
-                class="status-button"
-                type="button"
-                onclick="
-                  updateStatus(
-                    '${rawBookingId}',
-                    'Reached Drop Location'
-                  )
-                "
-                ${
-                  booking.status ===
-                  "Out for Delivery"
-                    ? ""
-                    : "disabled"
-                }
-              >
-                Reached Drop Location
-              </button>
+  booking.status === "Out for Delivery"
+    ? `
+      <button
+        class="status-button"
+        type="button"
+        onclick="
+          updateStatus(
+            '${rawBookingId}',
+            'Reached Drop Location'
+          )
+        "
+      >
+        Reached Drop Location
+      </button>
+    `
+    : ""
+}
 
               ${
                 booking.status ===
@@ -1346,68 +1408,7 @@ function getCurrentLocation() {
 
 }
 
-// ===============================
-// START LIVE RIDER LOCATION
-// ===============================
 
-async function sendRiderLocation() {
-
-  const token = getRiderToken();
-
-  if (!token) {
-    return;
-  }
-
-  try {
-
-    const location =
-      await getCurrentLocation();
-
-    await fetch(
-      RIDER_LOCATION_API,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-
-        body: JSON.stringify({
-          latitude: location.latitude,
-          longitude: location.longitude
-        })
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Location Update Error:",
-      error
-    );
-
-  }
-
-}
-
-function startLiveLocationTracking() {
-
-  if (riderLocationInterval) {
-    clearInterval(
-      riderLocationInterval
-    );
-  }
-
-  sendRiderLocation();
-
-  riderLocationInterval =
-    setInterval(
-      sendRiderLocation,
-      15000
-    );
-
-}
 
 // ===============================
 // START LIVE RIDER LOCATION
@@ -1801,6 +1802,218 @@ async function uploadProof(
         isPickup
           ? "Upload Pickup Photo"
           : "Upload Delivery Photo";
+    }
+  }
+}
+
+// ===============================
+// ACCEPT DELIVERY — RIDER
+// ===============================
+
+async function acceptDelivery(
+  bookingId,
+  actionButton = null
+) {
+
+  const token =
+    getRiderToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
+
+  const confirmed =
+    confirm(
+      "Accept this delivery?"
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (actionButton) {
+
+    actionButton.disabled = true;
+
+    actionButton.textContent =
+      "Accepting...";
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}/${encodeURIComponent(
+          bookingId
+        )}/accept`,
+        {
+          method: "PATCH",
+
+          headers: {
+            "Authorization":
+              `Bearer ${token}`
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      return;
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Unable to accept delivery."
+      );
+    }
+
+    stopRiderAlarm();
+
+    alert(
+      data.message ||
+      "Delivery accepted successfully!"
+    );
+
+    await loadDeliveries();
+
+  } catch (error) {
+
+    console.error(
+      "Accept delivery error:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Unable to accept delivery."
+    );
+
+    if (actionButton) {
+
+      actionButton.disabled = false;
+
+      actionButton.textContent =
+        "Accept Delivery";
+    }
+  }
+}
+
+// ===============================
+// REJECT DELIVERY — RIDER
+// ===============================
+
+async function rejectDelivery(
+  bookingId,
+  actionButton = null
+) {
+
+  const token =
+    getRiderToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
+
+  const confirmed =
+    confirm(
+      "Reject this delivery? It will be returned for reassignment."
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  if (actionButton) {
+
+    actionButton.disabled = true;
+
+    actionButton.textContent =
+      "Rejecting...";
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}/${encodeURIComponent(
+          bookingId
+        )}/reject`,
+        {
+          method: "PATCH",
+
+          headers: {
+            "Authorization":
+              `Bearer ${token}`
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      return;
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Unable to reject delivery."
+      );
+    }
+
+    stopRiderAlarm();
+
+    alert(
+      data.message ||
+      "Delivery rejected successfully."
+    );
+
+    await loadDeliveries();
+
+  } catch (error) {
+
+    console.error(
+      "Reject delivery error:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Unable to reject delivery."
+    );
+
+    if (actionButton) {
+
+      actionButton.disabled = false;
+
+      actionButton.textContent =
+        "Reject Delivery";
     }
   }
 }
