@@ -137,3 +137,197 @@ button:hover {
     font-size: 1.5rem;
   }
 }
+
+/* ===============================
+   DDN RIDER DASHBOARD HEADER
+================================ */
+
+.rider-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  background: #ffffff;
+  padding: 16px 18px;
+
+  border-radius: 16px;
+
+  border: 1px solid
+    rgba(17, 24, 39, 0.06);
+
+  box-shadow:
+    0 8px 24px
+    rgba(17, 24, 39, 0.08);
+}
+
+.rider-dashboard-header .rider-brand {
+  margin-bottom: 0;
+}
+
+.rider-logout-button {
+  margin: 0;
+
+  background: #ff6b00;
+  color: #ffffff;
+
+  font-weight: 700;
+
+  padding: 11px 18px;
+
+  border-radius: 9px;
+
+  box-shadow:
+    0 6px 16px
+    rgba(255, 107, 0, 0.20);
+}
+
+.rider-logout-button:hover {
+  background: #e85f00;
+}
+
+
+/* ===============================
+   RIDER HEADER MOBILE
+================================ */
+
+@media (max-width: 600px) {
+
+  .rider-dashboard-header {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .rider-dashboard-header
+  .rider-brand {
+    min-width: 0;
+  }
+
+  .rider-dashboard-header
+  .rider-brand-text h1 {
+    font-size: 1.25rem;
+  }
+
+  .rider-dashboard-header
+  .rider-brand-text .tagline {
+    font-size: 0.78rem;
+  }
+
+  .rider-logout-button {
+    flex-shrink: 0;
+    padding: 10px 14px;
+  }
+
+}
+
+/* ===============================
+   RIDER DELIVERIES WORKSPACE
+================================ */
+
+.rider-deliveries-section {
+  margin-top: 22px;
+  padding: 24px;
+  border-radius: 18px;
+  border: 1px solid
+    rgba(17, 24, 39, 0.06);
+
+  box-shadow:
+    0 10px 30px
+    rgba(17, 24, 39, 0.08);
+}
+
+.rider-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rider-section-heading h2 {
+  margin: 5px 0 5px;
+  color: #171717;
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
+}
+
+.rider-section-heading p {
+  margin: 0;
+  color: #667085;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.rider-section-kicker {
+  display: inline-block;
+
+  color: #ff6b00;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+.refresh-deliveries-button {
+  flex-shrink: 0;
+
+  margin: 0;
+
+  padding: 11px 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #1f2937,
+      #111827
+    );
+
+  color: #ffffff;
+
+  border-radius: 10px;
+
+  font-weight: 700;
+
+  box-shadow:
+    0 6px 16px
+    rgba(17, 24, 39, 0.14);
+}
+
+.refresh-deliveries-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #ff8a00,
+      #ff6200
+    );
+
+  transform: translateY(-1px);
+}
+
+
+/* ===============================
+   RIDER DELIVERIES MOBILE
+================================ */
+
+@media (max-width: 600px) {
+
+  .rider-deliveries-section {
+    padding: 18px;
+  }
+
+  .rider-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .refresh-deliveries-button {
+    width: 100%;
+  }
+
+}

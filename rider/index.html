@@ -83,53 +83,78 @@
     style="display: none;"
   >
 
-    <div class="rider-brand">
+    <header class="rider-dashboard-header">
 
-  <div class="rider-brand-logo">
-    <img
-      src="../frontend/assets/logo/ddn-logo.png"
-      alt="DDN Logo"
-    >
+  <div class="rider-brand">
+
+    <div class="rider-brand-logo">
+      <img
+        src="../frontend/assets/logo/ddn-logo.png"
+        alt="DDN Logo"
+      >
+    </div>
+
+    <div class="rider-brand-text">
+
+      <h1>
+        DDN Rider Panel
+      </h1>
+
+      <p class="tagline">
+        District Delivery Network
+      </p>
+
+    </div>
+
   </div>
 
-  <div class="rider-brand-text">
+  <button
+    type="button"
+    id="logoutButton"
+    class="rider-logout-button"
+  >
+    Logout
+  </button>
 
-    <h1>
-      DDN Rider Panel
-    </h1>
+</header>
 
-    <p class="tagline">
-      District Delivery Network
-    </p>
+    <section class="card rider-deliveries-section">
 
-  </div>
+  <div class="rider-section-heading">
 
-</div>
+    <div>
 
-    <button id="logoutButton">
-      Logout
-    </button>
-
-    <section class="card">
+      <span class="rider-section-kicker">
+        LIVE DELIVERY WORKSPACE
+      </span>
 
       <h2>
         Assigned Deliveries
       </h2>
 
-      <button
-        type="button"
-        onclick="loadDeliveries()"
-      >
-        Refresh Deliveries
-      </button>
+      <p>
+        Manage your active delivery tasks and current route.
+      </p>
 
-      <div id="deliveriesContainer">
-        <p>
-          Loading deliveries...
-        </p>
-      </div>
+    </div>
 
-    </section>
+    <button
+      type="button"
+      class="refresh-deliveries-button"
+      onclick="loadDeliveries()"
+    >
+      Refresh Deliveries
+    </button>
+
+  </div>
+
+  <div id="deliveriesContainer">
+    <p>
+      Loading deliveries...
+    </p>
+  </div>
+
+</section>
 
   </main>
 
