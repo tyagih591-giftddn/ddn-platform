@@ -70,3 +70,70 @@ button:hover {
   margin-top: 10px;
   margin-right: 8px;
 }
+
+/* ===============================
+   DDN RIDER BRANDING
+================================ */
+
+.rider-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.rider-brand-logo {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #ff9a1f,
+      #ff6200
+    );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 12px 26px
+    rgba(255, 122, 0, 0.22);
+}
+
+.rider-brand-logo img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.rider-brand-text h1 {
+  margin: 0 0 4px;
+  color: #171717;
+  font-size: 1.75rem;
+  letter-spacing: -0.03em;
+}
+
+.rider-brand-text .tagline {
+  margin: 0;
+  color: #667085;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .rider-brand-logo {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    border-radius: 16px;
+  }
+
+  .rider-brand-logo img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .rider-brand-text h1 {
+    font-size: 1.5rem;
+  }
+}
