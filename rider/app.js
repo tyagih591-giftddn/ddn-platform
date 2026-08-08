@@ -1222,12 +1222,7 @@ ${
       <button
         class="status-button"
         type="button"
-        onclick="
-          updateStatus(
-            '${rawBookingId}',
-            'Out for Delivery'
-          )
-        "
+        onclick="updateStatus('${rawBookingId}', 'Out for Delivery')"
       >
         Out for Delivery
       </button>
@@ -1235,18 +1230,13 @@ ${
     : ""
 }
 
-              ${
+${
   booking.status === "Out for Delivery"
     ? `
       <button
         class="status-button"
         type="button"
-        onclick="
-          updateStatus(
-            '${rawBookingId}',
-            'Reached Drop Location'
-          )
-        "
+        onclick="updateStatus('${rawBookingId}', 'Reached Drop Location')"
       >
         Reached Drop Location
       </button>
@@ -1254,52 +1244,42 @@ ${
     : ""
 }
 
-              ${
-                booking.status ===
-                "Reached Drop Location"
-                  ? `
+${
+  booking.status === "Reached Drop Location"
+    ? `
+      <div class="proof-section">
 
-                    <div class="proof-section">
+        <p>
+          <strong>
+            Delivery Proof Photo:
+          </strong>
+        </p>
 
-                      <p>
-                        <strong>
-                          Delivery Proof Photo:
-                        </strong>
-                      </p>
+        <input
+          id="delivery-photo-${rawBookingId}"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          capture="environment"
+        >
 
-                      <input
-                        id="delivery-photo-${rawBookingId}"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        capture="environment"
-                      >
+        <br><br>
 
-                      <br><br>
+        <button
+          class="status-button"
+          type="button"
+          onclick="uploadProof('${rawBookingId}', 'delivery', this)"
+        >
+          Upload Delivery Photo
+        </button>
 
-                      <button
-                        class="status-button"
-                        type="button"
-                        onclick="
-                          uploadProof(
-  '${rawBookingId}',
-  'delivery',
-  this
-)
-                        "
-                      >
-                        Upload Delivery Photo
-                      </button>
+        <p
+          id="delivery-message-${rawBookingId}"
+        ></p>
 
-                      <p
-                        id="delivery-message-${rawBookingId}"
-                      ></p>
-
-                    </div>
-
-                  `
-                  : ""
-              }
-
+      </div>
+    `
+    : ""
+}
             </div>
 
           `;
