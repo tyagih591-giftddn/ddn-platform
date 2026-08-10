@@ -1,0 +1,26 @@
+{
+  "id": "/ddn-platform/rider/",
+  "name": "DDN Rider",
+  "short_name": "DDN Rider",
+  "description": "DDN Rider delivery application",
+  "start_url": "/ddn-platform/rider/",
+  "scope": "/ddn-platform/rider/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6b00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/ddn-rider-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/ddn-rider-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
