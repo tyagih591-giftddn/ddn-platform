@@ -918,6 +918,94 @@ router.patch(
 );
 
 // ===============================
+// MARK RIDER AS RESIGNED — ADMIN
+// ===============================
+
+router.patch(
+  "/admin/riders/:username/resign",
+  authenticateToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const username =
+        normalizeUsername(
+          req.params.username
+        );
+
+      const resignationReason =
+        cleanText(
+          req.body.resignationReason
+        );
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rider username is required"
+        });
+      }
+
+      if (!resignationReason) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Resignation reason is required"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE riders
+          SET
+            account_status = 'resigned',
+            is_active = FALSE,
+            availability_status = 'offline',
+            resigned_at = CURRENT_TIMESTAMP,
+            resignation_reason = $2,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE username = $1
+          RETURNING *
+          `,
+          [
+            username,
+            resignationReason
+          ]
+        );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Rider not found"
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Rider marked as resigned successfully",
+        rider:
+          formatRider(
+            result.rows[0]
+          )
+      });
+    } catch (error) {
+      console.error(
+        "Resign rider error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to mark rider as resigned"
+      });
+    }
+  }
+);
+
+// ===============================
 // RIDER AVAILABILITY
 // ===============================
 

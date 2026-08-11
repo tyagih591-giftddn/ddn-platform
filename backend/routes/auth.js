@@ -420,18 +420,20 @@ router.post(
         );
 
       await pool.query(
-        `
-        UPDATE riders
-        SET
-          password_hash = $1,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2
-        `,
-        [
-          passwordHash,
-          rider.id
-        ]
-      );
+  `
+  UPDATE riders
+  SET
+    password_hash = $1,
+    password_reset_required = FALSE,
+    last_password_reset_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
+  WHERE id = $2
+  `,
+  [
+    passwordHash,
+    rider.id
+  ]
+);
 
       return res.json({
         success: true,
