@@ -2649,3 +2649,129 @@ body {
   }
 
 }
+
+/* ===============================
+   RIDER ACTION BUTTONS
+================================ */
+
+.rider-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rider-action-button {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  box-shadow:
+    0 8px 18px
+    rgba(15, 23, 42, 0.10);
+}
+
+.rider-approve-button {
+  background:
+    linear-gradient(
+      135deg,
+      #16a34a,
+      #15803d
+    );
+}
+
+.rider-approve-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #22c55e,
+      #15803d
+    );
+}
+
+.rider-correction-button {
+  background:
+    linear-gradient(
+      135deg,
+      #d97706,
+      #b45309
+    );
+}
+
+.rider-correction-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #f59e0b,
+      #b45309
+    );
+}
+
+.rider-reject-button,
+.rider-block-button {
+  background:
+    linear-gradient(
+      135deg,
+      #dc2626,
+      #b91c1c
+    );
+}
+
+.rider-reject-button:hover,
+.rider-block-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #ef4444,
+      #b91c1c
+    );
+}
+
+.rider-resign-button {
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #5b21b6
+    );
+}
+
+.rider-resign-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #8b5cf6,
+      #5b21b6
+    );
+}
+
+.rider-password-button {
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #1d4ed8
+    );
+}
+
+.rider-password-button:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #3b82f6,
+      #1d4ed8
+    );
+}
+
+@media (max-width: 700px) {
+
+  .rider-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .rider-action-button {
+    width: 100%;
+  }
+
+}
