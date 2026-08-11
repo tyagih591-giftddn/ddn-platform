@@ -4,6 +4,9 @@ const API_URL =
 const LOGIN_API =
   "https://ddn-platform.onrender.com/api/auth/login";
 
+  const CHANGE_RIDER_PASSWORD_API =
+  "https://ddn-platform.onrender.com/api/auth/change-rider-password";
+
 const RIDER_LOCATION_API =
   "https://ddn-platform.onrender.com/api/rider/location";
 
@@ -319,6 +322,15 @@ function showLoginScreen(
     .style.display =
     "none";
 
+    document
+  .getElementById(
+    "passwordChangeSection"
+  )
+  .style.display =
+  "none";
+
+
+
   document
     .getElementById(
       "loginSection"
@@ -484,9 +496,28 @@ loginForm.addEventListener(
       );
 
       loginMessage.textContent =
-        "";
+  "";
 
-      showDashboard();
+if (
+  data.passwordResetRequired === true
+) {
+
+  localStorage.setItem(
+    "ddnRiderPasswordResetRequired",
+    "true"
+  );
+
+  showPasswordChangeScreen();
+
+} else {
+
+  localStorage.removeItem(
+    "ddnRiderPasswordResetRequired"
+  );
+
+  showDashboard();
+
+}
 
     } catch (error) {
 
@@ -584,6 +615,223 @@ document
 }
   );
 
+  // ===============================
+// SHOW PASSWORD CHANGE SCREEN
+// ===============================
+
+function showPasswordChangeScreen() {
+
+  document
+    .getElementById(
+      "loginSection"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "dashboardSection"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "passwordChangeSection"
+    )
+    .style.display =
+    "block";
+
+  const form =
+    document.getElementById(
+      "passwordChangeForm"
+    );
+
+  if (form) {
+    form.reset();
+  }
+
+  const message =
+    document.getElementById(
+      "passwordChangeMessage"
+    );
+
+  if (message) {
+    message.textContent = "";
+  }
+
+}
+
+// ===============================
+// RIDER CHANGE PASSWORD
+// ===============================
+
+const passwordChangeForm =
+  document.getElementById(
+    "passwordChangeForm"
+  );
+
+if (passwordChangeForm) {
+
+  passwordChangeForm.addEventListener(
+    "submit",
+    async function (e) {
+
+      e.preventDefault();
+
+      const currentPassword =
+        document
+          .getElementById(
+            "currentRiderPassword"
+          )
+          .value;
+
+      const newPassword =
+        document
+          .getElementById(
+            "newRiderPassword"
+          )
+          .value;
+
+      const confirmPassword =
+        document
+          .getElementById(
+            "confirmRiderPassword"
+          )
+          .value;
+
+      const messageElement =
+        document.getElementById(
+          "passwordChangeMessage"
+        );
+
+      if (
+        newPassword.length < 8
+      ) {
+        messageElement.textContent =
+          "New password must be at least 8 characters.";
+
+        messageElement.style.color =
+          "red";
+
+        return;
+      }
+
+      if (
+        newPassword !==
+        confirmPassword
+      ) {
+        messageElement.textContent =
+          "New password and confirm password do not match.";
+
+        messageElement.style.color =
+          "red";
+
+        return;
+      }
+
+      const token =
+        getRiderToken();
+
+      if (!token) {
+
+        clearRiderLogin();
+
+        showLoginScreen(
+          "Please login again."
+        );
+
+        return;
+      }
+
+      messageElement.textContent =
+        "Changing password...";
+
+      messageElement.style.color =
+        "#333";
+
+      try {
+
+        const response =
+          await fetch(
+            CHANGE_RIDER_PASSWORD_API,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+
+                "Authorization":
+                  `Bearer ${token}`
+              },
+
+              body: JSON.stringify({
+                currentPassword,
+                newPassword,
+                confirmPassword
+              })
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (
+          handleAuthError(
+            response,
+            data
+          )
+        ) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            "Unable to change password."
+          );
+        }
+
+        localStorage.removeItem(
+          "ddnRiderPasswordResetRequired"
+        );
+
+        messageElement.textContent =
+          "Password changed successfully.";
+
+        messageElement.style.color =
+          "green";
+
+        document
+          .getElementById(
+            "passwordChangeSection"
+          )
+          .style.display =
+          "none";
+
+        await showDashboard();
+
+      } catch (error) {
+
+        console.error(
+          "Rider password change error:",
+          error
+        );
+
+        messageElement.textContent =
+          error.message ||
+          "Unable to change password.";
+
+        messageElement.style.color =
+          "red";
+
+      }
+
+    }
+  );
+
+}
 
 // ===============================
 // CHECK SAVED LOGIN
@@ -608,7 +856,23 @@ if (
   savedRiderToken
 ) {
 
-  showDashboard();
+  const passwordResetRequired =
+    localStorage.getItem(
+      "ddnRiderPasswordResetRequired"
+    );
+
+  if (
+    passwordResetRequired ===
+    "true"
+  ) {
+
+    showPasswordChangeScreen();
+
+  } else {
+
+    showDashboard();
+
+  }
 
 } else {
 

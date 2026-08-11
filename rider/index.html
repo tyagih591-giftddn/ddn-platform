@@ -95,6 +95,70 @@
 
   </div>
 
+<!-- Rider Mandatory Password Change -->
+<section
+  id="passwordChangeSection"
+  class="container"
+  style="display: none;"
+>
+
+  <div class="rider-brand">
+
+    <div class="rider-brand-logo">
+      <img
+        src="../frontend/assets/logo/ddn-logo.png"
+        alt="DDN Logo"
+      >
+    </div>
+
+    <div class="rider-brand-text">
+
+      <h1>
+        Change Password
+      </h1>
+
+      <p class="tagline">
+        For security, set your own password before continuing
+      </p>
+
+    </div>
+
+  </div>
+
+  <form id="passwordChangeForm">
+
+    <input
+      type="password"
+      id="currentRiderPassword"
+      placeholder="Temporary / Current Password"
+      required
+    >
+
+    <input
+      type="password"
+      id="newRiderPassword"
+      placeholder="New Password"
+      minlength="8"
+      required
+    >
+
+    <input
+      type="password"
+      id="confirmRiderPassword"
+      placeholder="Confirm New Password"
+      minlength="8"
+      required
+    >
+
+    <button type="submit">
+      Change Password
+    </button>
+
+    <p id="passwordChangeMessage"></p>
+
+  </form>
+
+</section>
 
   <!-- Rider Dashboard -->
   <main

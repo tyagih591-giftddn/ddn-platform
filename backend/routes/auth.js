@@ -160,6 +160,8 @@ router.post(
         });
       }
 
+      let passwordResetRequired = false;
+
       let tokenPayload;
 
       if (role === "admin") {
@@ -208,11 +210,12 @@ router.post(
           await pool.query(
             `
             SELECT
-              id,
-              username,
-              password_hash,
-              is_active
-            FROM riders
+  id,
+  username,
+  password_hash,
+  is_active,
+  password_reset_required
+FROM riders
             WHERE LOWER(username) = $1
             LIMIT 1
             `,
@@ -266,6 +269,9 @@ router.post(
           });
         }
 
+        passwordResetRequired =
+  rider.password_reset_required === true;
+
         await pool.query(
   `
   UPDATE riders
@@ -300,18 +306,27 @@ router.post(
         );
 
       return res.json({
-        success: true,
-        message:
-          "Login successful",
-        role:
-          tokenPayload.role,
-        username:
-          tokenPayload.username,
-        riderId:
-          tokenPayload.riderId ||
-          null,
-        token
-      });
+  success: true,
+  message:
+    "Login successful",
+
+  role:
+    tokenPayload.role,
+
+  username:
+    tokenPayload.username,
+
+  riderId:
+    tokenPayload.riderId ||
+    null,
+
+  passwordResetRequired:
+    tokenPayload.role === "rider"
+      ? passwordResetRequired
+      : false,
+
+  token
+});
     } catch (error) {
       console.error(
         "Login error:",
@@ -424,7 +439,7 @@ router.post(
   UPDATE riders
   SET
     password_hash = $1,
-    password_reset_required = FALSE,
+    password_reset_required = TRUE,
     last_password_reset_at = CURRENT_TIMESTAMP,
     updated_at = CURRENT_TIMESTAMP
   WHERE id = $2
@@ -457,6 +472,202 @@ router.post(
         success: false,
         message:
           "Rider password reset failed"
+      });
+    }
+  }
+);
+
+// ===============================
+// RIDER CHANGE PASSWORD
+// RIDER ONLY
+// ===============================
+
+router.post(
+  "/change-rider-password",
+  async (req, res) => {
+    try {
+      const token =
+        getBearerToken(req);
+
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Rider authorization token is required"
+        });
+      }
+
+      const decoded =
+        jwt.verify(
+          token,
+          process.env.JWT_SECRET
+        );
+
+      if (
+        !decoded ||
+        decoded.role !== "rider" ||
+        !decoded.riderId
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Rider access required"
+        });
+      }
+
+      const currentPassword =
+        cleanText(
+          req.body.currentPassword
+        );
+
+      const newPassword =
+        cleanText(
+          req.body.newPassword
+        );
+
+      const confirmPassword =
+        cleanText(
+          req.body.confirmPassword
+        );
+
+      if (
+        !currentPassword ||
+        !newPassword ||
+        !confirmPassword
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Current password, new password and confirm password are required"
+        });
+      }
+
+      if (
+        newPassword !==
+        confirmPassword
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "New password and confirm password do not match"
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "New password must be at least 8 characters long"
+        });
+      }
+
+      if (
+        currentPassword ===
+        newPassword
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "New password must be different from current password"
+        });
+      }
+
+      const riderResult =
+        await pool.query(
+          `
+          SELECT
+            id,
+            username,
+            password_hash,
+            password_reset_required
+          FROM riders
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [decoded.riderId]
+        );
+
+      if (
+        riderResult.rows.length === 0
+      ) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Rider not found"
+        });
+      }
+
+      const rider =
+        riderResult.rows[0];
+
+      const currentPasswordMatches =
+        await bcrypt.compare(
+          currentPassword,
+          rider.password_hash
+        );
+
+      if (!currentPasswordMatches) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Current password is incorrect"
+        });
+      }
+
+      const newPasswordHash =
+        await bcrypt.hash(
+          newPassword,
+          12
+        );
+
+      await pool.query(
+        `
+        UPDATE riders
+        SET
+          password_hash = $1,
+          password_reset_required = FALSE,
+          last_password_reset_at =
+            CURRENT_TIMESTAMP,
+          updated_at =
+            CURRENT_TIMESTAMP
+        WHERE id = $2
+        `,
+        [
+          newPasswordHash,
+          rider.id
+        ]
+      );
+
+      return res.json({
+        success: true,
+        message:
+          "Password changed successfully"
+      });
+
+    } catch (error) {
+
+      if (
+        error.name ===
+          "JsonWebTokenError" ||
+        error.name ===
+          "TokenExpiredError"
+      ) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Invalid or expired authorization token"
+        });
+      }
+
+      console.error(
+        "Rider change password error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to change rider password"
       });
     }
   }
