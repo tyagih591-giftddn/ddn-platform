@@ -46,10 +46,52 @@ function formatRider(rider) {
     verificationStatus:
       rider.verification_status,
     applicationStatus:
-      rider.application_status,
-    isActive: rider.is_active,
-    createdAt: rider.created_at,
-    updatedAt: rider.updated_at
+  rider.application_status,
+
+accountStatus:
+  rider.account_status,
+
+isActive:
+  rider.is_active,
+
+applicationSubmittedAt:
+  rider.application_submitted_at,
+
+approvedAt:
+  rider.approved_at,
+
+approvedBy:
+  rider.approved_by,
+
+rejectionReason:
+  rider.rejection_reason,
+
+correctionNotes:
+  rider.correction_notes,
+
+blockedAt:
+  rider.blocked_at,
+
+blockedReason:
+  rider.blocked_reason,
+
+resignedAt:
+  rider.resigned_at,
+
+resignationReason:
+  rider.resignation_reason,
+
+passwordResetRequired:
+  rider.password_reset_required,
+
+lastPasswordResetAt:
+  rider.last_password_reset_at,
+
+createdAt:
+  rider.created_at,
+
+updatedAt:
+  rider.updated_at
   };
 }
 
@@ -215,6 +257,7 @@ router.post(
             mobile_number,
             verification_status,
             application_status,
+            account_status,
             is_active
           )
           VALUES
@@ -226,7 +269,8 @@ router.post(
             $5,
             $6,
             $7,
-            $8
+            $8,
+            $9
           )
           RETURNING *
           `,
@@ -238,7 +282,8 @@ router.post(
             mobileNumber || null,
             "verified",
             "approved",
-            true
+            "active",
+             true
           ]
         );
 
@@ -321,11 +366,23 @@ router.get(
             availability_status,
             verification_status,
             application_status,
+            account_status,
+            application_submitted_at,
+            approved_at,
+            approved_by,
+            rejection_reason,
+            correction_notes,
+            blocked_at,
+            blocked_reason,
+            resigned_at,
+            resignation_reason,
+            password_reset_required,
+            last_password_reset_at,
             is_active,
             created_at,
             updated_at
-          FROM riders
-          ORDER BY created_at DESC
+            FROM riders
+            ORDER BY created_at DESC
         `);
 
       return res.json({
@@ -378,17 +435,24 @@ router.patch(
           `
           UPDATE riders
           SET
-            verification_status =
-              'verified',
-            application_status =
-              'approved',
-            is_active = TRUE,
-            updated_at =
-              CURRENT_TIMESTAMP
+  verification_status = 'verified',
+  application_status = 'approved',
+  account_status = 'active',
+  is_active = TRUE,
+  approved_at = CURRENT_TIMESTAMP,
+  approved_by = $2,
+  rejection_reason = NULL,
+  correction_notes = NULL,
+  blocked_at = NULL,
+  blocked_reason = NULL,
+  updated_at = CURRENT_TIMESTAMP
           WHERE username = $1
-          RETURNING *
-          `,
-          [username]
+RETURNING *
+`,
+[
+  username,
+  req.user.username || "admin"
+]
         );
 
       if (result.rows.length === 0) {
@@ -418,6 +482,187 @@ router.patch(
         success: false,
         message:
           "Failed to approve rider"
+      });
+    }
+  }
+);
+
+// ===============================
+// REJECT RIDER — ADMIN ONLY
+// ===============================
+
+router.patch(
+  "/admin/riders/:username/reject",
+  authenticateToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const username =
+        normalizeUsername(
+          req.params.username
+        );
+
+      const rejectionReason =
+        cleanText(
+          req.body.rejectionReason
+        );
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rider username is required"
+        });
+      }
+
+      if (!rejectionReason) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rejection reason is required"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE riders
+          SET
+            verification_status = 'rejected',
+            application_status = 'rejected',
+            account_status = 'inactive',
+            is_active = FALSE,
+            rejection_reason = $2,
+            correction_notes = NULL,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE username = $1
+          RETURNING *
+          `,
+          [
+            username,
+            rejectionReason
+          ]
+        );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Rider not found"
+        });
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "Rider application rejected",
+        rider:
+          formatRider(
+            result.rows[0]
+          )
+      });
+
+    } catch (error) {
+      console.error(
+        "Reject rider error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to reject rider"
+      });
+    }
+  }
+);
+
+
+// ===============================
+// REQUEST RIDER CORRECTION
+// ===============================
+
+router.patch(
+  "/admin/riders/:username/request-correction",
+  authenticateToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const username =
+        normalizeUsername(
+          req.params.username
+        );
+
+      const correctionNotes =
+        cleanText(
+          req.body.correctionNotes
+        );
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rider username is required"
+        });
+      }
+
+      if (!correctionNotes) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Correction notes are required"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE riders
+          SET
+            verification_status = 'correction_required',
+            application_status = 'correction_required',
+            account_status = 'pending',
+            is_active = FALSE,
+            correction_notes = $2,
+            rejection_reason = NULL,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE username = $1
+          RETURNING *
+          `,
+          [
+            username,
+            correctionNotes
+          ]
+        );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Rider not found"
+        });
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "Rider correction requested",
+        rider:
+          formatRider(
+            result.rows[0]
+          )
+      });
+
+    } catch (error) {
+      console.error(
+        "Request rider correction error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to request rider correction"
       });
     }
   }
@@ -456,12 +701,17 @@ router.patch(
         await pool.query(
           `
           UPDATE riders
-          SET
-            is_active = $1,
-            updated_at =
-              CURRENT_TIMESTAMP
-          WHERE username = $2
-          RETURNING *
+SET
+  is_active = $1,
+  account_status =
+    CASE
+      WHEN $1 = TRUE
+      THEN 'active'
+      ELSE 'inactive'
+    END,
+  updated_at = CURRENT_TIMESTAMP
+WHERE username = $2
+RETURNING *
           `,
           [
             isActive,
@@ -498,6 +748,170 @@ router.patch(
         success: false,
         message:
           "Failed to update rider"
+      });
+    }
+  }
+);
+
+// ===============================
+// BLOCK RIDER — ADMIN ONLY
+// ===============================
+
+router.patch(
+  "/admin/riders/:username/block",
+  authenticateToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const username =
+        normalizeUsername(
+          req.params.username
+        );
+
+      const blockedReason =
+        cleanText(
+          req.body.blockedReason
+        );
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rider username is required"
+        });
+      }
+
+      if (!blockedReason) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Block reason is required"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE riders
+          SET
+            is_active = FALSE,
+            account_status = 'blocked',
+            blocked_at = CURRENT_TIMESTAMP,
+            blocked_reason = $2,
+            availability_status = 'offline',
+            updated_at = CURRENT_TIMESTAMP
+          WHERE username = $1
+          RETURNING *
+          `,
+          [
+            username,
+            blockedReason
+          ]
+        );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Rider not found"
+        });
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "Rider blocked successfully",
+        rider:
+          formatRider(
+            result.rows[0]
+          )
+      });
+
+    } catch (error) {
+      console.error(
+        "Block rider error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to block rider"
+      });
+    }
+  }
+);
+
+
+// ===============================
+// UNBLOCK RIDER — ADMIN ONLY
+// ===============================
+
+router.patch(
+  "/admin/riders/:username/unblock",
+  authenticateToken,
+  allowRoles("admin"),
+  async (req, res) => {
+    try {
+      const username =
+        normalizeUsername(
+          req.params.username
+        );
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Rider username is required"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE riders
+          SET
+            is_active = TRUE,
+            account_status = 'active',
+            blocked_at = NULL,
+            blocked_reason = NULL,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE username = $1
+          AND application_status = 'approved'
+          AND verification_status = 'verified'
+          RETURNING *
+          `,
+          [username]
+        );
+
+      if (result.rows.length === 0) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Only approved and verified riders can be unblocked"
+        });
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "Rider unblocked successfully",
+        rider:
+          formatRider(
+            result.rows[0]
+          )
+      });
+
+    } catch (error) {
+      console.error(
+        "Unblock rider error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to unblock rider"
       });
     }
   }

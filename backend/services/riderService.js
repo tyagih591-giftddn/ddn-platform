@@ -215,7 +215,8 @@ async function createRider(riderData) {
         $11,
         $12,
         $13,
-        $14
+        $14,
+        $15
       )
       RETURNING
         id,
@@ -247,6 +248,7 @@ async function createRider(riderData) {
         vehicleType || null,
         vehicleNumber || null,
         "offline",
+        "pending",
         "pending",
         "pending",
         false
@@ -298,6 +300,7 @@ async function getRiderById(riderId) {
       availability_status,
       verification_status,
       application_status,
+      account_status,
       is_active,
       created_at,
       updated_at

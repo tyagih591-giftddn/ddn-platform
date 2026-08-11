@@ -312,6 +312,115 @@ await pool.query(`
     last_location_updated_at TIMESTAMPTZ
   `);
 
+// ===============================
+// RIDER ACCOUNT LIFECYCLE
+// ===============================
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  account_status VARCHAR(30)
+`);
+
+await pool.query(`
+  UPDATE riders
+  SET account_status =
+    CASE
+      WHEN
+        application_status = 'approved'
+        AND verification_status = 'verified'
+        AND is_active = TRUE
+      THEN 'active'
+
+      WHEN
+        application_status = 'pending'
+      THEN 'pending'
+
+      ELSE 'inactive'
+    END
+  WHERE account_status IS NULL
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ALTER COLUMN account_status
+  SET DEFAULT 'pending'
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ALTER COLUMN account_status
+  SET NOT NULL
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  application_submitted_at TIMESTAMPTZ
+  NOT NULL DEFAULT CURRENT_TIMESTAMP
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  approved_at TIMESTAMPTZ
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  approved_by VARCHAR(150)
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  rejection_reason TEXT
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  correction_notes TEXT
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  blocked_at TIMESTAMPTZ
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  blocked_reason TEXT
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  resigned_at TIMESTAMPTZ
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  resignation_reason TEXT
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  password_reset_required BOOLEAN
+  NOT NULL DEFAULT FALSE
+`);
+
+await pool.query(`
+  ALTER TABLE riders
+  ADD COLUMN IF NOT EXISTS
+  last_password_reset_at TIMESTAMPTZ
+`);
+
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS
     idx_riders_rider_code
