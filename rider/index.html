@@ -93,6 +93,24 @@
 
     </form>
 
+    <div class="rider-onboarding-entry">
+
+  <p>
+    New to DDN?
+  </p>
+
+  <button
+    type="button"
+    id="openRiderApplicationButton"
+    class="rider-apply-button"
+  >
+    Apply to Join DDN
+  </button>
+
+</div>
+
+
+
   </div>
 
 <!-- Rider Mandatory Password Change -->
@@ -155,6 +173,148 @@
     </button>
 
     <p id="passwordChangeMessage"></p>
+
+  </form>
+
+</section>
+
+<!-- New Rider Application -->
+<section
+  id="riderApplicationSection"
+  class="container"
+  style="display: none;"
+>
+
+  <div class="rider-brand">
+
+    <div class="rider-brand-logo">
+      <img
+        src="../frontend/assets/logo/ddn-logo.png"
+        alt="DDN Logo"
+      >
+    </div>
+
+    <div class="rider-brand-text">
+      <h1>Join DDN as a Rider</h1>
+
+      <p class="tagline">
+        Submit your rider application for verification
+      </p>
+    </div>
+
+  </div>
+
+  <form id="riderApplicationForm">
+
+    <input
+      type="text"
+      id="applicationFullName"
+      placeholder="Full Name"
+      autocomplete="name"
+      required
+    >
+
+    <input
+  type="text"
+  id="applicationUsername"
+  placeholder="Choose Rider Username"
+  minlength="3"
+  maxlength="50"
+  autocomplete="username"
+  required
+>
+
+<input
+  type="password"
+  id="applicationPassword"
+  placeholder="Create Password"
+  minlength="8"
+  autocomplete="new-password"
+  required
+>
+
+<input
+  type="password"
+  id="applicationConfirmPassword"
+  placeholder="Confirm Password"
+  minlength="8"
+  autocomplete="new-password"
+  required
+>
+
+    <input
+      type="tel"
+      id="applicationMobile"
+      placeholder="10 Digit Mobile Number"
+      inputmode="numeric"
+      pattern="[0-9]{10}"
+      maxlength="10"
+      required
+    >
+
+    <input
+      type="email"
+      id="applicationEmail"
+      placeholder="Email Address"
+      autocomplete="email"
+      required
+    >
+
+    <input
+      type="text"
+      id="applicationWorkingArea"
+      placeholder="Working Area"
+      required
+    >
+
+    <select
+      id="applicationVehicleType"
+      required
+    >
+      <option value="">
+        Select Vehicle Type
+      </option>
+
+      <option value="Bike">
+        Bike
+      </option>
+
+      <option value="Scooter">
+        Scooter
+      </option>
+
+      <option value="Electric Bike">
+        Electric Bike
+      </option>
+
+      <option value="Bicycle">
+        Bicycle
+      </option>
+    </select>
+
+    <input
+      type="text"
+      id="applicationVehicleNumber"
+      placeholder="Vehicle Number"
+      autocomplete="off"
+      required
+    >
+
+    <button
+      type="submit"
+      id="submitRiderApplicationButton"
+    >
+      Submit Application
+    </button>
+
+    <button
+      type="button"
+      id="backToRiderLoginButton"
+    >
+      Back to Login
+    </button>
+
+    <p id="riderApplicationMessage"></p>
 
   </form>
 

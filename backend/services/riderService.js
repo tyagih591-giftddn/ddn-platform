@@ -135,9 +135,9 @@ async function createRider(riderData) {
     throw error;
   }
 
-  if (password.length < 6) {
+  if (password.length < 8) {
     const error = new Error(
-      "Password must be at least 6 characters long"
+      "Password must be at least 8 characters long"
     );
 
     error.statusCode = 400;
@@ -198,6 +198,7 @@ async function createRider(riderData) {
         availability_status,
         verification_status,
         application_status,
+        account_status,
         is_active
       )
       VALUES
@@ -232,6 +233,7 @@ async function createRider(riderData) {
         availability_status,
         verification_status,
         application_status,
+        account_status,
         is_active,
         created_at,
         updated_at

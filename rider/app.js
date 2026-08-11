@@ -7,6 +7,9 @@ const LOGIN_API =
   const CHANGE_RIDER_PASSWORD_API =
   "https://ddn-platform.onrender.com/api/auth/change-rider-password";
 
+  const RIDER_REGISTRATION_API =
+  "https://ddn-platform.onrender.com/api/riders/register";
+
 const RIDER_LOCATION_API =
   "https://ddn-platform.onrender.com/api/rider/location";
 
@@ -324,6 +327,13 @@ function showLoginScreen(
 
     document
   .getElementById(
+    "riderApplicationSection"
+  )
+  .style.display =
+  "none";
+
+    document
+  .getElementById(
     "passwordChangeSection"
   )
   .style.display =
@@ -614,6 +624,352 @@ document
 
 }
   );
+
+// ===============================
+// RIDER APPLICATION NAVIGATION
+// ===============================
+
+function showRiderApplicationScreen() {
+
+  document
+    .getElementById(
+      "loginSection"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "passwordChangeSection"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "dashboardSection"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "riderApplicationSection"
+    )
+    .style.display =
+    "block";
+
+  const form =
+    document.getElementById(
+      "riderApplicationForm"
+    );
+
+  if (form) {
+    form.reset();
+  }
+
+  const message =
+    document.getElementById(
+      "riderApplicationMessage"
+    );
+
+  if (message) {
+    message.textContent = "";
+  }
+
+}
+
+
+const openRiderApplicationButton =
+  document.getElementById(
+    "openRiderApplicationButton"
+  );
+
+if (openRiderApplicationButton) {
+
+  openRiderApplicationButton
+    .addEventListener(
+      "click",
+      showRiderApplicationScreen
+    );
+
+}
+
+
+const backToRiderLoginButton =
+  document.getElementById(
+    "backToRiderLoginButton"
+  );
+
+if (backToRiderLoginButton) {
+
+  backToRiderLoginButton
+    .addEventListener(
+      "click",
+      () => {
+
+        document
+          .getElementById(
+            "riderApplicationSection"
+          )
+          .style.display =
+          "none";
+
+        showLoginScreen();
+
+      }
+    );
+
+}
+
+// ===============================
+// RIDER APPLICATION SUBMIT
+// ===============================
+
+const riderApplicationForm =
+  document.getElementById(
+    "riderApplicationForm"
+  );
+
+if (riderApplicationForm) {
+
+  riderApplicationForm.addEventListener(
+    "submit",
+    async function (e) {
+
+      e.preventDefault();
+
+      const fullName =
+        document
+          .getElementById(
+            "applicationFullName"
+          )
+          .value
+          .trim();
+
+      const username =
+        document
+          .getElementById(
+            "applicationUsername"
+          )
+          .value
+          .trim()
+          .toLowerCase();
+
+      const password =
+        document
+          .getElementById(
+            "applicationPassword"
+          )
+          .value;
+
+      const confirmPassword =
+        document
+          .getElementById(
+            "applicationConfirmPassword"
+          )
+          .value;
+
+      const mobileNumber =
+        document
+          .getElementById(
+            "applicationMobile"
+          )
+          .value
+          .trim();
+
+      const email =
+        document
+          .getElementById(
+            "applicationEmail"
+          )
+          .value
+          .trim();
+
+      const workingArea =
+        document
+          .getElementById(
+            "applicationWorkingArea"
+          )
+          .value
+          .trim();
+
+      const vehicleType =
+        document
+          .getElementById(
+            "applicationVehicleType"
+          )
+          .value;
+
+      const vehicleNumber =
+        document
+          .getElementById(
+            "applicationVehicleNumber"
+          )
+          .value
+          .trim()
+          .toUpperCase();
+
+      const messageElement =
+        document.getElementById(
+          "riderApplicationMessage"
+        );
+
+      const submitButton =
+        document.getElementById(
+          "submitRiderApplicationButton"
+        );
+
+      if (
+        !/^[a-z0-9._-]{3,50}$/.test(
+          username
+        )
+      ) {
+        messageElement.textContent =
+          "Username must contain 3-50 letters, numbers, dots, underscores or hyphens.";
+
+        messageElement.style.color =
+          "red";
+
+        return;
+      }
+
+      if (password.length < 8) {
+        messageElement.textContent =
+          "Password must be at least 8 characters.";
+
+        messageElement.style.color =
+          "red";
+
+        return;
+      }
+
+      if (
+        password !==
+        confirmPassword
+      ) {
+        messageElement.textContent =
+          "Password and confirm password do not match.";
+
+        messageElement.style.color =
+          "red";
+
+        return;
+      }
+
+      if (
+        !/^[0-9]{10}$/.test(
+          mobileNumber
+        )
+      ) {
+        messageElement.textContent =
+          "Enter a valid 10 digit mobile number.";
+
+        messageElement.style.color =
+          "red";
+
+        return;
+      }
+
+      submitButton.disabled =
+        true;
+
+      submitButton.textContent =
+        "Submitting...";
+
+      messageElement.textContent =
+        "Submitting rider application...";
+
+      messageElement.style.color =
+        "#333";
+
+      try {
+
+        const response =
+          await fetch(
+            RIDER_REGISTRATION_API,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                username,
+                password,
+                fullName,
+                mobileNumber,
+                email,
+                workingArea,
+                vehicleType,
+                vehicleNumber
+              })
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            "Unable to submit rider application."
+          );
+        }
+
+        const rider =
+          data.rider || {};
+
+        const riderCode =
+  rider.riderCode ||
+  rider.rider_code ||
+  "Pending";
+
+        messageElement.innerHTML = `
+          Application submitted successfully.<br>
+          Rider Code:
+          <strong>${escapeHtml(
+            riderCode
+          )}</strong><br>
+          Status:
+          <strong>Pending Approval</strong>
+        `;
+
+        messageElement.style.color =
+          "green";
+
+        riderApplicationForm.reset();
+
+      } catch (error) {
+
+        console.error(
+          "Rider registration error:",
+          error
+        );
+
+        messageElement.textContent =
+          error.message ||
+          "Unable to submit rider application.";
+
+        messageElement.style.color =
+          "red";
+
+      } finally {
+
+        submitButton.disabled =
+          false;
+
+        submitButton.textContent =
+          "Submit Application";
+
+      }
+
+    }
+  );
+
+}
 
   // ===============================
 // SHOW PASSWORD CHANGE SCREEN
