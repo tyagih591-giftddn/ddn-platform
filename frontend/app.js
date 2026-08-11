@@ -422,7 +422,7 @@ function calculateCustomerFare(
     );
 
   return (
-    30 +
+    40 +
     extraStartedKilometres * 10
   );
 }

@@ -127,7 +127,7 @@ function calculateDeliveryFare(distanceKm) {
     );
 
   const customerFare =
-    30 +
+    40 +
     extraDistanceSlabs * 10;
 
   const riderEarning =
