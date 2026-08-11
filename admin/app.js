@@ -2581,7 +2581,7 @@ const bookingTime =
 
   ${
     customerFare !== null
-      ? `â‚¹${escapeHtml(
+      ? `₹${escapeHtml(
           customerFare
         )}`
       : "Not available"
@@ -2595,7 +2595,7 @@ const bookingTime =
 
   ${
     riderEarning !== null
-      ? `â‚¹${escapeHtml(
+      ? `₹${escapeHtml(
           riderEarning
         )}`
       : "Not available"
@@ -2609,7 +2609,7 @@ const bookingTime =
 
   ${
     platformEarning !== null
-      ? `â‚¹${escapeHtml(
+      ? `₹${escapeHtml(
           platformEarning
         )}`
       : "Not available"
