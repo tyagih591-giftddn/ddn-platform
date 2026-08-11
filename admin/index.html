@@ -242,6 +242,65 @@
 
 </div>
 
+<!-- Rider Management -->
+<section class="rider-management-section">
+
+  <div class="section-heading">
+
+    <div>
+      <h2>Rider Management</h2>
+
+      <p>
+        Review rider applications and manage rider accounts
+      </p>
+    </div>
+
+    <button
+      type="button"
+      id="refreshRidersButton"
+    >
+      Refresh Riders
+    </button>
+
+  </div>
+
+  <div class="rider-summary">
+
+    <div class="rider-summary-card">
+      <span>Total Riders</span>
+      <strong id="totalRiders">0</strong>
+    </div>
+
+    <div class="rider-summary-card">
+      <span>Pending Approval</span>
+      <strong id="pendingRiders">0</strong>
+    </div>
+
+    <div class="rider-summary-card">
+      <span>Active Riders</span>
+      <strong id="activeRiders">0</strong>
+    </div>
+
+    <div class="rider-summary-card">
+      <span>Blocked Riders</span>
+      <strong id="blockedRiders">0</strong>
+    </div>
+
+  </div>
+
+  <p
+    id="riderManagementMessage"
+    class="rider-management-message"
+  >
+    Loading riders...
+  </p>
+
+  <div id="ridersContainer">
+    <p>Loading riders...</p>
+  </div>
+
+</section>
+
 
     <!-- Admin Live Map -->
     <section class="live-map-section">

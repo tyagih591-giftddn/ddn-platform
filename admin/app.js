@@ -4,6 +4,12 @@ const API_URL =
 const LOGIN_API =
   "https://ddn-platform.onrender.com/api/auth/login";
 
+  const RIDERS_API =
+  "https://ddn-platform.onrender.com/api/admin/riders";
+
+const RESET_RIDER_PASSWORD_API =
+  "https://ddn-platform.onrender.com/api/auth/reset-rider-password";
+
   const SOCKET_URL =
   "https://ddn-platform.onrender.com";
 
@@ -997,9 +1003,11 @@ function showDashboard() {
     .style.display =
     "block";
 
-  loadBookings();
+   loadBookings();
 
-  connectAdminSocket();
+   loadRiders();
+
+   connectAdminSocket();
 
 }
 
@@ -1185,6 +1193,367 @@ dashboardFilterCards.forEach(card => {
 
 });
 
+// ===============================
+// LOAD RIDERS
+// ===============================
+
+async function loadRiders() {
+
+  const container =
+    document.getElementById(
+      "ridersContainer"
+    );
+
+  const messageElement =
+    document.getElementById(
+      "riderManagementMessage"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML =
+    "<p>Loading riders...</p>";
+
+  if (messageElement) {
+    messageElement.textContent =
+      "Loading riders...";
+  }
+
+  const token =
+    getAdminToken();
+
+  if (!token) {
+
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        RIDERS_API,
+        {
+          method: "GET",
+
+          headers: {
+            "Authorization":
+              `Bearer ${token}`
+          },
+
+          cache: "no-store"
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        "Unable to load riders"
+      );
+    }
+
+    const riders =
+      Array.isArray(data.riders)
+        ? data.riders
+        : [];
+
+    const totalRidersElement =
+      document.getElementById(
+        "totalRiders"
+      );
+
+    const pendingRidersElement =
+      document.getElementById(
+        "pendingRiders"
+      );
+
+    const activeRidersElement =
+      document.getElementById(
+        "activeRiders"
+      );
+
+    const blockedRidersElement =
+      document.getElementById(
+        "blockedRiders"
+      );
+
+    const pendingRiders =
+      riders.filter(
+        rider =>
+          rider.applicationStatus ===
+            "pending" ||
+          rider.accountStatus ===
+            "pending"
+      ).length;
+
+    const activeRiders =
+      riders.filter(
+        rider =>
+          rider.accountStatus ===
+            "active" &&
+          rider.isActive === true
+      ).length;
+
+    const blockedRiders =
+      riders.filter(
+        rider =>
+          rider.accountStatus ===
+            "blocked"
+      ).length;
+
+    if (totalRidersElement) {
+      totalRidersElement.textContent =
+        riders.length;
+    }
+
+    if (pendingRidersElement) {
+      pendingRidersElement.textContent =
+        pendingRiders;
+    }
+
+    if (activeRidersElement) {
+      activeRidersElement.textContent =
+        activeRiders;
+    }
+
+    if (blockedRidersElement) {
+      blockedRidersElement.textContent =
+        blockedRiders;
+    }
+
+    if (messageElement) {
+      messageElement.textContent =
+        `${riders.length} rider${
+          riders.length === 1
+            ? ""
+            : "s"
+        } found`;
+    }
+
+    if (riders.length === 0) {
+
+      container.innerHTML =
+        "<p>No riders found.</p>";
+
+      return;
+    }
+
+    container.innerHTML =
+      riders.map(
+        rider => {
+
+          const username =
+            escapeHtml(
+              rider.username ||
+              ""
+            );
+
+          const riderCode =
+            escapeHtml(
+              rider.riderCode ||
+              "Not assigned"
+            );
+
+          const fullName =
+            escapeHtml(
+              rider.fullName ||
+              "Not available"
+            );
+
+          const mobileNumber =
+            escapeHtml(
+              rider.mobileNumber ||
+              "Not available"
+            );
+
+          const email =
+            escapeHtml(
+              rider.email ||
+              "Not available"
+            );
+
+          const workingArea =
+            escapeHtml(
+              rider.workingArea ||
+              "Not available"
+            );
+
+          const vehicleType =
+            escapeHtml(
+              rider.vehicleType ||
+              "Not available"
+            );
+
+          const vehicleNumber =
+            escapeHtml(
+              rider.vehicleNumber ||
+              "Not available"
+            );
+
+          const verificationStatus =
+            escapeHtml(
+              rider.verificationStatus ||
+              "pending"
+            );
+
+          const applicationStatus =
+            escapeHtml(
+              rider.applicationStatus ||
+              "pending"
+            );
+
+          const accountStatus =
+            escapeHtml(
+              rider.accountStatus ||
+              "pending"
+            );
+
+          const availabilityStatus =
+            escapeHtml(
+              rider.availabilityStatus ||
+              "offline"
+            );
+
+          const submittedAt =
+            rider.applicationSubmittedAt
+              ? new Date(
+                  rider.applicationSubmittedAt
+                ).toLocaleString(
+                  "en-IN"
+                )
+              : "Not available";
+
+          return `
+            <div class="rider-management-card">
+
+              <div class="rider-management-card-header">
+
+                <div>
+                  <h3>
+                    ${fullName}
+                  </h3>
+
+                  <small>
+                    ${riderCode}
+                    ·
+                    @${username}
+                  </small>
+                </div>
+
+                <span class="rider-account-status">
+                  ${accountStatus}
+                </span>
+
+              </div>
+
+              <div class="rider-management-details">
+
+                <p>
+                  <strong>Mobile:</strong>
+                  ${mobileNumber}
+                </p>
+
+                <p>
+                  <strong>Email:</strong>
+                  ${email}
+                </p>
+
+                <p>
+                  <strong>Working Area:</strong>
+                  ${workingArea}
+                </p>
+
+                <p>
+                  <strong>Vehicle:</strong>
+                  ${vehicleType}
+                </p>
+
+                <p>
+                  <strong>Vehicle Number:</strong>
+                  ${vehicleNumber}
+                </p>
+
+                <p>
+                  <strong>Verification:</strong>
+                  ${verificationStatus}
+                </p>
+
+                <p>
+                  <strong>Application:</strong>
+                  ${applicationStatus}
+                </p>
+
+                <p>
+                  <strong>Availability:</strong>
+                  ${availabilityStatus}
+                </p>
+
+                <p>
+                  <strong>Application Submitted:</strong>
+                  ${escapeHtml(
+                    submittedAt
+                  )}
+                </p>
+
+              </div>
+
+              <div
+                class="rider-management-actions"
+                data-rider-username="${username}"
+              >
+                <p>
+                  Rider management actions
+                  will appear here.
+                </p>
+              </div>
+
+            </div>
+          `;
+
+        }
+      ).join("");
+
+  } catch (error) {
+
+    console.error(
+      "Load riders error:",
+      error
+    );
+
+    if (messageElement) {
+      messageElement.textContent =
+        "Unable to load riders.";
+    }
+
+    container.innerHTML = `
+      <p>
+        ${escapeHtml(
+          error.message ||
+          "Unable to connect to DDN backend."
+        )}
+      </p>
+    `;
+
+  }
+
+}
 
 // ===============================
 // LOAD BOOKINGS
