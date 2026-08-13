@@ -1,0 +1,18 @@
+{
+  "name": "DDN Customer",
+  "short_name": "DDN Customer",
+  "start_url": "/ddn-platform/frontend/",
+  "scope": "/ddn-platform/frontend/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6b00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/logo/ddn-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
