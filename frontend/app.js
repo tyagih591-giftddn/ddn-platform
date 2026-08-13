@@ -56,6 +56,250 @@ const DEFAULT_MAP_CENTER = {
 };
 
 // ======================================
+// CUSTOMER MOBILE SESSION
+// ======================================
+
+const CUSTOMER_SESSION_KEY =
+  "ddn_customer_session_v1";
+
+const customerEntrySection =
+  document.getElementById(
+    "customerEntrySection"
+  );
+
+const customerEntryForm =
+  document.getElementById(
+    "customerEntryForm"
+  );
+
+const customerEntryName =
+  document.getElementById(
+    "customerEntryName"
+  );
+
+const customerEntryMobile =
+  document.getElementById(
+    "customerEntryMobile"
+  );
+
+const customerEntryMessage =
+  document.getElementById(
+    "customerEntryMessage"
+  );
+
+function getCustomerSession() {
+  try {
+    const savedSession =
+      localStorage.getItem(
+        CUSTOMER_SESSION_KEY
+      );
+
+    if (!savedSession) {
+      return null;
+    }
+
+    const session =
+      JSON.parse(savedSession);
+
+    const customerName =
+      String(
+        session?.customerName || ""
+      ).trim();
+
+    const mobileNumber =
+      String(
+        session?.mobileNumber || ""
+      ).trim();
+
+    if (
+      !customerName ||
+      !/^[0-9]{10}$/.test(
+        mobileNumber
+      )
+    ) {
+      localStorage.removeItem(
+        CUSTOMER_SESSION_KEY
+      );
+
+      return null;
+    }
+
+    return {
+      customerName,
+      mobileNumber
+    };
+  } catch (error) {
+    console.error(
+      "Customer session could not be read:",
+      error
+    );
+
+    localStorage.removeItem(
+      CUSTOMER_SESSION_KEY
+    );
+
+    return null;
+  }
+}
+
+function saveCustomerSession(
+  customerName,
+  mobileNumber
+) {
+  const session = {
+    customerName:
+      String(customerName).trim(),
+
+    mobileNumber:
+      String(mobileNumber).trim(),
+
+    createdAt:
+      new Date().toISOString(),
+
+    // Future backend OTP integration
+    otpVerified:
+      false,
+
+    sessionVersion:
+      1
+  };
+
+  localStorage.setItem(
+    CUSTOMER_SESSION_KEY,
+    JSON.stringify(session)
+  );
+
+  return session;
+}
+
+function fillBookingCustomerDetails(
+  session
+) {
+  if (!session) {
+    return;
+  }
+
+  const customerNameInput =
+    document.querySelector(
+      '#bookingForm input[name="customerName"]'
+    );
+
+  const mobileNumberInput =
+    document.querySelector(
+      '#bookingForm input[name="mobileNumber"]'
+    );
+
+  if (customerNameInput) {
+    customerNameInput.value =
+      session.customerName;
+  }
+
+  if (mobileNumberInput) {
+    mobileNumberInput.value =
+      session.mobileNumber;
+  }
+}
+
+function showCustomerPanel(
+  session
+) {
+  if (customerEntrySection) {
+    customerEntrySection.style.display =
+      "none";
+  }
+
+  fillBookingCustomerDetails(
+    session
+  );
+}
+
+function showCustomerEntry() {
+  if (customerEntrySection) {
+    customerEntrySection.style.display =
+      "";
+  }
+}
+
+function initializeCustomerSession() {
+  const session =
+    getCustomerSession();
+
+  if (session) {
+    showCustomerPanel(
+      session
+    );
+
+    return;
+  }
+
+  showCustomerEntry();
+}
+
+customerEntryForm?.addEventListener(
+  "submit",
+  function (event) {
+    event.preventDefault();
+
+    const customerName =
+      String(
+        customerEntryName?.value || ""
+      ).trim();
+
+    const mobileNumber =
+      String(
+        customerEntryMobile?.value || ""
+      )
+        .replace(/\D/g, "")
+        .trim();
+
+    if (!customerName) {
+      customerEntryMessage.textContent =
+        "Please enter your name.";
+
+      customerEntryName?.focus();
+      return;
+    }
+
+    if (
+      !/^[0-9]{10}$/.test(
+        mobileNumber
+      )
+    ) {
+      customerEntryMessage.textContent =
+        "Please enter a valid 10-digit mobile number.";
+
+      customerEntryMobile?.focus();
+      return;
+    }
+
+    try {
+      const session =
+        saveCustomerSession(
+          customerName,
+          mobileNumber
+        );
+
+      customerEntryMessage.textContent =
+        "";
+
+      showCustomerPanel(
+        session
+      );
+    } catch (error) {
+      console.error(
+        "Customer session could not be saved:",
+        error
+      );
+
+      customerEntryMessage.textContent =
+        "Unable to save your details. Please try again.";
+    }
+  }
+);
+
+initializeCustomerSession();
+
+// ======================================
 // HTML ELEMENTS
 // ======================================
 
@@ -1097,29 +1341,41 @@ async function resolveTypedPickupAddress() {
         continue;
       }
 
-      const completeResult =
-        results.find(
-          result =>
-            !result.partial_match
-        );
+      const acceptableResults =
+  results.filter(
+    result =>
+      !propertyNumbersConflict(
+        candidate,
+        result
+      )
+  );
 
-      if (completeResult) {
-        selectedResult =
-          completeResult;
+const completeResult =
+  acceptableResults.find(
+    result =>
+      !result.partial_match
+  );
 
-        matchedCandidate =
-          candidate;
+if (completeResult) {
+  selectedResult =
+    completeResult;
 
-        break;
-      }
+  matchedCandidate =
+    candidate;
 
-      if (!partialFallback) {
-        partialFallback =
-          results[0];
+  break;
+}
 
-        partialCandidate =
-          candidate;
-      }
+if (
+  !partialFallback &&
+  acceptableResults.length
+) {
+  partialFallback =
+    acceptableResults[0];
+
+  partialCandidate =
+    candidate;
+}
 
     } catch (error) {
       console.warn(
@@ -1588,6 +1844,118 @@ usePickupLocationButton?.addEventListener(
 );
 
 // ======================================
+// ADDRESS NUMBER MATCH HELPERS
+// ======================================
+
+function extractTypedPropertyNumber(
+  address
+) {
+  const text =
+    String(address || "")
+      .trim();
+
+  /*
+    Supports examples:
+    Plot no 1031
+    Plot 1031
+    House no 1031
+    D-236
+    D 236
+    4/8
+    1031
+  */
+  const labelledMatch =
+    text.match(
+      /\b(?:plot|house|flat|shop|unit|door)\s*(?:no\.?|number)?\s*[:#-]?\s*([a-z]?\s*[-/]?\s*\d+(?:\/\d+)?)/i
+    );
+
+  if (labelledMatch) {
+    return labelledMatch[1]
+      .replace(/\s+/g, "")
+      .toLowerCase();
+  }
+
+  const startingMatch =
+    text.match(
+      /^\s*([a-z]?\s*[-/]?\s*\d+(?:\/\d+)?)/i
+    );
+
+  return startingMatch
+    ? startingMatch[1]
+        .replace(/\s+/g, "")
+        .toLowerCase()
+    : "";
+}
+
+function extractGooglePropertyNumber(
+  geocoderResult
+) {
+  const components =
+    geocoderResult
+      ?.address_components ||
+    [];
+
+  const streetNumberComponent =
+    components.find(
+      component =>
+        component.types?.includes(
+          "street_number"
+        )
+    );
+
+  if (
+    streetNumberComponent
+      ?.long_name
+  ) {
+    return String(
+      streetNumberComponent.long_name
+    )
+      .replace(/\s+/g, "")
+      .toLowerCase();
+  }
+
+  const formattedAddress =
+    String(
+      geocoderResult
+        ?.formatted_address ||
+      ""
+    );
+
+  const startingMatch =
+    formattedAddress.match(
+      /^\s*([a-z]?\s*[-/]?\s*\d+(?:\/\d+)?)/i
+    );
+
+  return startingMatch
+    ? startingMatch[1]
+        .replace(/\s+/g, "")
+        .toLowerCase()
+    : "";
+}
+
+function propertyNumbersConflict(
+  typedAddress,
+  geocoderResult
+) {
+  const typedNumber =
+    extractTypedPropertyNumber(
+      typedAddress
+    );
+
+  const googleNumber =
+    extractGooglePropertyNumber(
+      geocoderResult
+    );
+
+  return Boolean(
+    typedNumber &&
+    googleNumber &&
+    typedNumber !==
+      googleNumber
+  );
+}
+
+// ======================================
 // RESOLVE TYPED DELIVERY ADDRESS
 // ======================================
 
@@ -1730,30 +2098,41 @@ async function resolveTypedDeliveryAddress() {
         continue;
       }
 
-      const completeResult =
-        results.find(
-          result =>
-            !result.partial_match
-        );
+      const acceptableResults =
+  results.filter(
+    result =>
+      !propertyNumbersConflict(
+        candidate,
+        result
+      )
+  );
 
-      if (completeResult) {
-        selectedResult =
-          completeResult;
+const completeResult =
+  acceptableResults.find(
+    result =>
+      !result.partial_match
+  );
 
-        matchedCandidate =
-          candidate;
+if (completeResult) {
+  selectedResult =
+    completeResult;
 
-        break;
-      }
+  matchedCandidate =
+    candidate;
 
-      if (!partialFallback) {
-        partialFallback =
-          results[0];
+  break;
+}
 
-        partialCandidate =
-          candidate;
-      }
+if (
+  !partialFallback &&
+  acceptableResults.length
+) {
+  partialFallback =
+    acceptableResults[0];
 
+  partialCandidate =
+    candidate;
+}
     } catch (error) {
       console.warn(
         `Address search failed for "${candidate}":`,
@@ -2178,7 +2557,14 @@ bookingForm.addEventListener(
 
         bookingForm.reset();
 
-        clearMapLocations();
+const savedCustomerSession =
+  getCustomerSession();
+
+fillBookingCustomerDetails(
+  savedCustomerSession
+);
+
+clearMapLocations();
       } else {
         bookingResult.innerHTML = `
           <p>

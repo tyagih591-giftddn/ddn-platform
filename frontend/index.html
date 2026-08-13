@@ -40,6 +40,83 @@ href="style.css?v=12"
 
 <body>
 
+  <!-- ======================================
+     CUSTOMER MOBILE ENTRY
+====================================== -->
+
+<section
+  id="customerEntrySection"
+  class="customer-entry-section"
+  style="display: none;"
+>
+  <div class="customer-entry-card">
+
+    <div class="customer-entry-brand">
+      <img
+        src="assets/logo/ddn-logo.png"
+        alt="DDN – District Delivery Network"
+        class="customer-entry-logo"
+      >
+
+      <h1>
+        Welcome to DDN
+      </h1>
+
+      <p>
+  Enter your details to continue.
+</p>
+    </div>
+
+    <form id="customerEntryForm">
+
+      <label for="customerEntryMobile">
+        Mobile Number
+      </label>
+
+      <form id="customerEntryForm">
+
+  <label for="customerEntryName">
+    Your Name
+  </label>
+
+  <input
+    type="text"
+    id="customerEntryName"
+    placeholder="Enter your name"
+    maxlength="60"
+    autocomplete="name"
+    required
+  >
+
+  <label for="customerEntryMobile">
+    Mobile Number
+  </label>
+
+  <input
+    type="tel"
+    id="customerEntryMobile"
+    placeholder="Enter 10 digit mobile number"
+    maxlength="10"
+    pattern="[0-9]{10}"
+    inputmode="numeric"
+    autocomplete="tel"
+    required
+  >
+
+  <button type="submit">
+    Continue
+  </button>
+
+  <p
+    id="customerEntryMessage"
+    class="customer-entry-message"
+  ></p>
+
+</form>
+
+  </div>
+</section>
+
   <header class="customer-hero">
 
     <div class="customer-hero-glow customer-hero-glow-one"></div>
