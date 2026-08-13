@@ -67,6 +67,11 @@ const customerEntrySection =
     "customerEntrySection"
   );
 
+  const customerApp =
+  document.getElementById(
+    "customerApp"
+  );
+
 const customerEntryForm =
   document.getElementById(
     "customerEntryForm"
@@ -208,15 +213,25 @@ function showCustomerPanel(
       "none";
   }
 
+  if (customerApp) {
+    customerApp.style.display =
+      "";
+  }
+
   fillBookingCustomerDetails(
     session
   );
 }
 
 function showCustomerEntry() {
+  if (customerApp) {
+    customerApp.style.display =
+      "none";
+  }
+
   if (customerEntrySection) {
     customerEntrySection.style.display =
-      "";
+      "flex";
   }
 }
 
