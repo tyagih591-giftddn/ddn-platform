@@ -6,3 +6,16 @@ build/
 .DS_Store
 
 backend/uploads/
+
+# DDN Rider APK signing + build outputs
+rider-apk/android.keystore
+rider-apk/*.keystore
+rider-apk/app-release-signed.apk
+rider-apk/app-release-bundle.aab
+rider-apk/.gradle/
+rider-apk/app/build/
+rider-apk/build/
+
+# Ignore Rider APK generated project, keep only TWA config
+rider-apk/*
+!rider-apk/twa-manifest.json

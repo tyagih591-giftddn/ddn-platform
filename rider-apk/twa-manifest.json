@@ -1,0 +1,51 @@
+{
+  "packageId": "io.github.tyagih591_giftddn.twa",
+  "host": "tyagih591-giftddn.github.io",
+  "name": "DDN Rider",
+  "launcherName": "DDN Rider",
+  "display": "standalone",
+  "themeColor": "#FF6B00",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#FFFFFF",
+  "enableNotifications": true,
+  "startUrl": "/ddn-platform/rider/",
+  "iconUrl": "https://tyagih591-giftddn.github.io/ddn-platform/rider/icons/ddn-rider-512.png",
+  "maskableIconUrl": "https://tyagih591-giftddn.github.io/ddn-platform/rider/icons/ddn-rider-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\HP\\ddn-platform\\rider-apk\\android.keystore",
+    "alias": "ddn-rider"
+  },
+  "appVersionName": "2",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://tyagih591-giftddn.github.io/ddn-platform/rider/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://tyagih591-giftddn.github.io/ddn-platform/rider/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "2"
+}
