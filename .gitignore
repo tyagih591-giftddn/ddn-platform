@@ -19,3 +19,6 @@ rider-apk/build/
 # Ignore Rider APK generated project, keep only TWA config
 rider-apk/*
 !rider-apk/twa-manifest.json
+# Ignore Customer APK generated project, keep only TWA config
+customer-apk/*
+!customer-apk/twa-manifest.json

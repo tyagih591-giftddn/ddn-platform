@@ -1,0 +1,51 @@
+{
+  "packageId": "io.github.tyagih591_giftddn.customer",
+  "host": "tyagih591-giftddn.github.io",
+  "name": "DDN Customer",
+  "launcherName": "DDN Cust",
+  "display": "standalone",
+  "themeColor": "#000000",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#171717",
+  "enableNotifications": true,
+  "startUrl": "/ddn-platform/frontend/",
+  "iconUrl": "https://tyagih591-giftddn.github.io/ddn-platform/frontend/icons/ddn-customer-512.png",
+  "maskableIconUrl": "https://tyagih591-giftddn.github.io/ddn-platform/frontend/icons/ddn-customer-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\HP\\ddn-platform\\customer-apk\\android.keystore",
+    "alias": "ddn-customer"
+  },
+  "appVersionName": "3",
+  "appVersionCode": 3,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://tyagih591-giftddn.github.io/ddn-platform/frontend/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://tyagih591-giftddn.github.io/ddn-platform/frontend/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "3"
+}
