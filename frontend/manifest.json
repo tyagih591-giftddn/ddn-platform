@@ -1,6 +1,6 @@
 {
   "name": "DDN Customer",
-  "short_name": "DDN Customer",
+  "short_name": "DDN Cust",
   "start_url": "/ddn-platform/frontend/",
   "scope": "/ddn-platform/frontend/",
   "display": "standalone",
@@ -9,7 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/logo/ddn-logo.png",
+      "src": "icons/ddn-customer-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/ddn-customer-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
