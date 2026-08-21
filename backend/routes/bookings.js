@@ -245,6 +245,27 @@ function formatBooking(booking) {
           )
         : null,
 
+            codCollected:
+      Boolean(
+        booking.cod_collected
+      ),
+
+    codCollectedAmount:
+      booking.cod_collected_amount !== null &&
+      booking.cod_collected_amount !== undefined
+        ? Number(
+            booking.cod_collected_amount
+          )
+        : null,
+
+    codCollectedAt:
+      booking.cod_collected_at ||
+      null,
+
+    codCollectedBy:
+      booking.cod_collected_by ||
+      null,
+
     status:
   booking.status,
 
@@ -1535,6 +1556,184 @@ return res.json({
 );
 
 // ===============================
+// CONFIRM COD COLLECTION — RIDER ONLY
+// ===============================
+
+router.patch(
+  "/:bookingId/cod-collect",
+  authenticateToken,
+  allowRoles("rider"),
+  async (req, res) => {
+    try {
+      const bookingId =
+        cleanText(
+          req.params.bookingId
+        );
+
+      if (!bookingId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Booking ID is required"
+        });
+      }
+
+      const bookingResult =
+        await pool.query(
+          `
+          SELECT *
+          FROM bookings
+          WHERE booking_id = $1
+          LIMIT 1
+          `,
+          [bookingId]
+        );
+
+      if (
+        bookingResult.rows.length === 0
+      ) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Booking not found"
+        });
+      }
+
+      const booking =
+        bookingResult.rows[0];
+
+      if (
+        booking.assigned_rider !==
+        req.user.username
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "This booking is not assigned to you"
+        });
+      }
+
+      if (
+        booking.payment_type !== "COD"
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This booking is not a COD order"
+        });
+      }
+
+      if (
+        booking.status !==
+        "Reached Drop Location"
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "COD can only be collected after reaching the drop location"
+        });
+      }
+
+      if (booking.cod_collected) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "COD payment has already been collected"
+        });
+      }
+
+      const expectedCodAmount =
+        Number(
+          booking.cod_amount
+        );
+
+      if (
+        !Number.isFinite(
+          expectedCodAmount
+        ) ||
+        expectedCodAmount <= 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Valid COD amount is not available"
+        });
+      }
+
+      const result =
+        await pool.query(
+          `
+          UPDATE bookings
+          SET
+            cod_collected = TRUE,
+            cod_collected_amount = $1,
+            cod_collected_at =
+              CURRENT_TIMESTAMP,
+            cod_collected_by = $2
+          WHERE booking_id = $3
+          AND assigned_rider = $2
+          AND payment_type = 'COD'
+          AND status =
+            'Reached Drop Location'
+          AND cod_collected = FALSE
+          RETURNING *
+          `,
+          [
+            expectedCodAmount,
+            req.user.username,
+            bookingId
+          ]
+        );
+
+      if (
+        result.rows.length === 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "COD payment state changed. Please reload and try again."
+        });
+      }
+
+      const updatedBooking =
+        formatBooking(
+          result.rows[0]
+        );
+
+      const io =
+        req.app.get("io");
+
+      if (io) {
+        io.emit(
+          "booking-status-updated",
+          updatedBooking
+        );
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "COD payment collected successfully",
+        booking:
+          updatedBooking
+      });
+
+    } catch (error) {
+      console.error(
+        "COD collection error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to confirm COD collection"
+      });
+    }
+  }
+);
+
+// ===============================
 // DELIVERY PROOF — RIDER ONLY
 // ===============================
 
@@ -1597,11 +1796,13 @@ router.post(
         await pool.query(
           `
           SELECT
-            booking_id,
-            status,
-            assigned_rider,
-            delivery_photo_url
-          FROM bookings
+  booking_id,
+  status,
+  assigned_rider,
+  delivery_photo_url,
+  payment_type,
+  cod_collected
+FROM bookings
           WHERE booking_id = $1
           LIMIT 1
           `,
@@ -1642,6 +1843,17 @@ router.post(
             "Delivery proof can only be submitted after reaching the drop location"
         });
       }
+
+      if (
+  existingBooking.payment_type === "COD" &&
+  !existingBooking.cod_collected
+) {
+  return res.status(409).json({
+    success: false,
+    message:
+      "COD payment must be collected before submitting delivery proof"
+  });
+}
 
       if (
         existingBooking.delivery_photo_url

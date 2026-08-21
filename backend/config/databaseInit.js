@@ -251,6 +251,31 @@ await pool.query(`
     cod_amount NUMERIC(10, 2)
   `);
 
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    cod_collected BOOLEAN
+    NOT NULL DEFAULT FALSE
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    cod_collected_amount NUMERIC(10, 2)
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    cod_collected_at TIMESTAMP
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    cod_collected_by VARCHAR(100)
+  `);
+
     await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS
     unique_business_merchant_order

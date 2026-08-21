@@ -1923,43 +1923,108 @@ const deliveriesWithRouteMetrics =
     }
 
 
-    ${
+        ${
       booking.status === "Reached Drop Location"
         ? `
-          <div class="proof-section">
+          ${
+            booking.paymentType === "COD" &&
+            !booking.codCollected
+              ? `
+                <div class="proof-section">
 
-            <p>
-              <strong>
-                Delivery Proof Photo
-              </strong>
-            </p>
+                  <p>
+                    <strong>
+                      COD Payment
+                    </strong>
+                  </p>
 
-            <input
-              id="delivery-photo-${rawBookingId}"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-            >
+                  <p>
+                    Collect
+                    <strong>
+                      ₹${
+                        booking.codAmount !== null &&
+                        booking.codAmount !== undefined
+                          ? escapeHtml(
+                              booking.codAmount
+                            )
+                          : "Not available"
+                      }
+                    </strong>
+                    from customer before delivery.
+                  </p>
 
-            <button
-              class="status-button"
-              type="button"
-              onclick="
-                uploadProof(
-                  '${rawBookingId}',
-                  'delivery',
-                  this
-                )
-              "
-            >
-              Upload Delivery Photo
-            </button>
+                  <button
+                    class="status-button"
+                    type="button"
+                    onclick="
+                      confirmCodCollection(
+                        '${rawBookingId}',
+                        this
+                      )
+                    "
+                  >
+                    Confirm Cash Received
+                  </button>
 
-            <p
-              id="delivery-message-${rawBookingId}"
-            ></p>
+                  <p
+                    id="cod-message-${rawBookingId}"
+                  ></p>
 
-          </div>
+                </div>
+              `
+              : `
+                <div class="proof-section">
+
+                  ${
+                    booking.paymentType === "COD" &&
+                    booking.codCollected
+                      ? `
+                        <p>
+                          <strong>
+                            COD ₹${escapeHtml(
+                              booking.codCollectedAmount ??
+                              booking.codAmount
+                            )} received
+                          </strong>
+                        </p>
+                      `
+                      : ""
+                  }
+
+                  <p>
+                    <strong>
+                      Delivery Proof Photo
+                    </strong>
+                  </p>
+
+                  <input
+                    id="delivery-photo-${rawBookingId}"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    capture="environment"
+                  >
+
+                  <button
+                    class="status-button"
+                    type="button"
+                    onclick="
+                      uploadProof(
+                        '${rawBookingId}',
+                        'delivery',
+                        this
+                      )
+                    "
+                  >
+                    Upload Delivery Photo
+                  </button>
+
+                  <p
+                    id="delivery-message-${rawBookingId}"
+                  ></p>
+
+                </div>
+              `
+          }
         `
         : ""
     }
@@ -1991,6 +2056,99 @@ const deliveriesWithRouteMetrics =
 
 }
 
+// ===============================
+// CONFIRM COD COLLECTION
+// ===============================
+
+async function confirmCodCollection(
+  bookingId,
+  actionButton = null
+) {
+  const token =
+    getRiderToken();
+
+  if (!token) {
+    showLoginScreen(
+      "Please login again."
+    );
+
+    return;
+  }
+
+  const messageElement =
+    document.getElementById(
+      `cod-message-${bookingId}`
+    );
+
+  if (actionButton) {
+    actionButton.disabled = true;
+  }
+
+  if (messageElement) {
+    messageElement.textContent =
+      "Confirming COD payment...";
+  }
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/${encodeURIComponent(
+          bookingId
+        )}/cod-collect`,
+        {
+          method: "PATCH",
+          headers: {
+            "Authorization":
+              `Bearer ${token}`,
+            "Content-Type":
+              "application/json"
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (
+      handleAuthError(
+        response,
+        data
+      )
+    ) {
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        "Unable to confirm COD payment"
+      );
+    }
+
+    if (messageElement) {
+      messageElement.textContent =
+        "COD payment received successfully.";
+    }
+
+    await loadDeliveries();
+
+  } catch (error) {
+    console.error(
+      "COD collection error:",
+      error
+    );
+
+    if (messageElement) {
+      messageElement.textContent =
+        error.message ||
+        "Unable to confirm COD payment.";
+    }
+
+    if (actionButton) {
+      actionButton.disabled = false;
+    }
+  }
+}
 
 // ===============================
 // GET CURRENT GPS LOCATION
