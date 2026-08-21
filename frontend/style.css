@@ -1868,3 +1868,26 @@ button:disabled {
   }
 
 }
+
+/* =====================================
+   CUSTOMER MOBILE NAV FIX
+===================================== */
+
+@media (max-width: 600px) {
+
+  .nav-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .nav-links {
+    gap: 14px;
+    flex-wrap: nowrap;
+  }
+
+  .nav-links a {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+}

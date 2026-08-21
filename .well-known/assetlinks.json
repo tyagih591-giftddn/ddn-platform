@@ -1,0 +1,14 @@
+﻿[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.tyagih591_giftddn.customer",
+      "sha256_cert_fingerprints": [
+        "BC:B4:E3:7D:82:83:F3:85:58:91:2D:5B:BF:AC:D7:F3:0F:4F:0C:17:6A:13:C1:C2:41:0D:F9:17:37:E1:3B:45"
+      ]
+    }
+  }
+]
