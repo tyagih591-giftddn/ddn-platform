@@ -18,6 +18,9 @@ const bookingRoutes =
 const riderRoutes =
   require("./routes/riders");
 
+  const businessRoutes =
+  require("./routes/business");
+
 const app = express();
 
 const server =
@@ -99,6 +102,11 @@ app.use(
 app.use(
   "/api/bookings",
   bookingRoutes
+);
+
+app.use(
+  "/api/business",
+  businessRoutes
 );
 
 app.use(

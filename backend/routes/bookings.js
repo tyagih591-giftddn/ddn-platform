@@ -217,6 +217,34 @@ function formatBooking(booking) {
           )
         : null,
 
+            bookingSource:
+      booking.booking_source ||
+      "customer",
+
+    merchantId:
+      booking.merchant_id ||
+      null,
+
+      businessName:
+  booking.business_name ||
+  null,
+
+    merchantOrderId:
+      booking.merchant_order_id ||
+      null,
+
+    paymentType:
+      booking.payment_type ||
+      "PREPAID",
+
+    codAmount:
+      booking.cod_amount !== null &&
+      booking.cod_amount !== undefined
+        ? Number(
+            booking.cod_amount
+          )
+        : null,
+
     status:
   booking.status,
 
@@ -661,13 +689,19 @@ router.get(
         req.user.role === "admin"
       ) {
         result =
-          await pool.query(
-            `
-            SELECT *
-            FROM bookings
-            ORDER BY created_at DESC
-            `
-          );
+  await pool.query(
+    `
+    SELECT
+      bookings.*,
+      business_partners.business_name
+        AS business_name
+    FROM bookings
+    LEFT JOIN business_partners
+      ON bookings.merchant_id =
+         business_partners.merchant_id
+    ORDER BY bookings.created_at DESC
+    `
+  );
       } else {
         result =
           await pool.query(

@@ -215,6 +215,107 @@ await pool.query(`
   NOT NULL DEFAULT FALSE
 `);
 
+  // ===============================
+  // BUSINESS ORDER INTEGRATION
+  // ===============================
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    booking_source VARCHAR(20)
+    NOT NULL DEFAULT 'customer'
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    merchant_id VARCHAR(100)
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    merchant_order_id VARCHAR(150)
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    payment_type VARCHAR(20)
+    NOT NULL DEFAULT 'PREPAID'
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS
+    cod_amount NUMERIC(10, 2)
+  `);
+
+    await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS
+    unique_business_merchant_order
+    ON bookings
+    (
+      merchant_id,
+      merchant_order_id
+    )
+    WHERE
+      booking_source = 'business'
+      AND merchant_id IS NOT NULL
+      AND merchant_order_id IS NOT NULL
+  `);
+
+  // ===============================
+  // BUSINESS PARTNERS
+  // ===============================
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_partners (
+      id SERIAL PRIMARY KEY,
+
+      merchant_id VARCHAR(100)
+        UNIQUE NOT NULL,
+
+      business_name VARCHAR(200)
+        NOT NULL,
+
+      business_type VARCHAR(50)
+        NOT NULL,
+
+      contact_name VARCHAR(150),
+
+      mobile_number VARCHAR(20),
+
+      email VARCHAR(200),
+
+      pickup_location TEXT
+        NOT NULL,
+
+      pin_code VARCHAR(6),
+
+      pickup_latitude
+        DOUBLE PRECISION,
+
+      pickup_longitude
+        DOUBLE PRECISION,
+
+      api_key_hash TEXT
+        NOT NULL,
+
+      is_active BOOLEAN
+        NOT NULL DEFAULT TRUE,
+
+      cod_enabled BOOLEAN
+        NOT NULL DEFAULT FALSE,
+
+      created_at TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+      updated_at TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS riders (
       id SERIAL PRIMARY KEY,

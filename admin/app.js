@@ -2468,6 +2468,45 @@ const platformEarning =
       )
     : null;
 
+    const isBusinessOrder =
+  booking.bookingSource === "business";
+
+const businessName =
+  booking.businessName
+    ? escapeHtml(
+        booking.businessName
+      )
+    : null;
+
+const merchantId =
+  booking.merchantId
+    ? escapeHtml(
+        booking.merchantId
+      )
+    : null;
+
+const merchantOrderId =
+  booking.merchantOrderId
+    ? escapeHtml(
+        booking.merchantOrderId
+      )
+    : null;
+
+const paymentType =
+  booking.paymentType
+    ? escapeHtml(
+        booking.paymentType
+      )
+    : "PREPAID";
+
+const codAmount =
+  booking.codAmount !== null &&
+  booking.codAmount !== undefined
+    ? Number(
+        booking.codAmount
+      )
+    : null;
+
 const bookingTime =
   booking.createdAt
     ? new Date(
@@ -2489,9 +2528,13 @@ const bookingTime =
       ${bookingId}
     </h3>
 
-    <small>
-      DDN Delivery Booking
-    </small>
+   <small>
+  ${
+    isBusinessOrder
+      ? "DDN Business Delivery"
+      : "DDN Delivery Booking"
+  }
+</small>
 
   </div>
 
@@ -2504,6 +2547,66 @@ const bookingTime =
 </div>
 
 <div class="booking-details-grid">
+
+${
+  isBusinessOrder
+    ? `
+      <p>
+        <strong>
+          Order Type:
+        </strong>
+        BUSINESS ORDER
+      </p>
+
+      <p>
+        <strong>
+          Business:
+        </strong>
+        ${businessName || "Not available"}
+      </p>
+
+      <p>
+        <strong>
+          Merchant ID:
+        </strong>
+        ${merchantId || "Not available"}
+      </p>
+
+      <p>
+        <strong>
+          Merchant Order:
+        </strong>
+        ${merchantOrderId || "Not available"}
+      </p>
+
+      <p>
+        <strong>
+          Payment:
+        </strong>
+        ${paymentType}
+      </p>
+
+      ${
+        paymentType === "COD"
+          ? `
+            <p>
+              <strong>
+                COD Collect:
+              </strong>
+              ${
+                codAmount !== null
+                  ? `₹${escapeHtml(
+                      codAmount
+                    )}`
+                  : "Not available"
+              }
+            </p>
+          `
+          : ""
+      }
+    `
+    : ""
+}
 
               <p>
                 <strong>
