@@ -22,3 +22,7 @@ rider-apk/*
 # Ignore Customer APK generated project, keep only TWA config
 customer-apk/*
 !customer-apk/twa-manifest.json
+# Local Capacitor files
+android/
+www/
+capacitor.config.json
